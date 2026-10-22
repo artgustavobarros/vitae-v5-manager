@@ -1,0 +1,27 @@
+{
+  "projectName": "v5-manager",
+  "mode": "file-router",
+  "bundler": "vite",
+  "typescript": true,
+  "tailwind": true,
+  "packageManager": "pnpm",
+  "git": false,
+  "install": false,
+  "intent": true,
+  "addOnOptions": {
+    "drizzle": {
+      "database": "postgresql"
+    }
+  },
+  "projectPreset": "default",
+  "routerOnly": false,
+  "includeExamples": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "drizzle",
+    "better-auth",
+    "shadcn",
+    "nitro"
+  ]
+}

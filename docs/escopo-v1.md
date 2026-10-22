@@ -1,0 +1,110 @@
+# Escopo da v1
+
+Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem o `GLOSSARY.md`.
+
+## Base
+
+- Uma única Crônica, jogada presencialmente, com uso principal no celular.
+- Interface somente em PT-BR. Sem modo offline.
+- Um único Narrador. Jogadores entram com login Google, via Convite para a Crônica.
+- Stack: ver `docs/adr/0001-monolito-tanstack-start-postgres-vps.md`. Tempo real via SSE.
+
+## Personagens e Fichas
+
+- Ciclo: Rascunho → Aguardando aprovação → Ativo → Arquivado. O Narrador pode rejeitar com comentário, e o Personagem volta a Rascunho.
+- O Jogador cria Rascunhos quando quiser e só apaga Rascunhos. Só o Narrador arquiva e reativa.
+- A criação guiada aplica as regras do V5 e bloqueia escolhas inválidas para o Jogador.
+- Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois da aprovação, a Ficha mostra só o valor final.
+- O Tipo de Predador aplica os bônus automaticamente. O Jogador escolhe quando o livro oferece opções.
+- Não há XP. A evolução acontece pela Ficha Liberada:
+  - o Narrador libera a Ficha inteira;
+  - o Jogador edita dentro dos limites do V5 (máx. 5 pontos, poder ≤ nível da Disciplina, amálgamas, Potência do Sangue ≤ teto da Geração);
+  - as mudanças valem na hora;
+  - o Narrador fecha a liberação manualmente e revisa o registro de mudanças.
+- Com a Ficha bloqueada, o Jogador altera sozinho apenas o dano (Vitalidade e Força de Vontade), a Fome e as Manchas. Humanidade só muda com a Ficha Liberada ou pelo Narrador.
+- Valores Derivados são calculados automaticamente: Vitalidade, Força de Vontade e efeitos da Potência do Sangue. Só o Narrador os sobrescreve.
+- A Ficha guarda:
+  - poderes de Disciplina individualmente;
+  - Rituais, Cerimônias e Fórmulas, escolhidos do Catálogo e validados por nível;
+  - Vantagens e Defeitos do Catálogo (7 e 2 pontos na criação);
+  - campos narrativos: Seita, Senhor, Geração, Ambição, Desejo, Convicções com Pedras de Toque, Aparência e História.
+
+  A Ficha não tem retrato.
+- Notas: só o Jogador escreve. O Narrador lê, exceto as Notas marcadas como privadas.
+
+## Narrador
+
+- O Narrador vê e edita todas as Fichas, e suas edições ignoram a validação.
+- PdNs:
+  - o Narrador pode criar PdNs com Ficha completa;
+  - o Narrador pode converter qualquer Personagem de Jogador em PdN;
+  - na conversão, o Jogador perde o acesso e as Notas privadas são apagadas;
+  - um PdN nunca vira Personagem de Jogador.
+- Quando um Jogador é removido da Crônica, os Personagens dele viram PdNs.
+- Opções de criação da Crônica, definidas pelo Narrador:
+  - idades permitidas;
+  - Sangue-Ralo e Caitiff;
+  - clãs permitidos.
+
+  Padrão: Neófito, todos os clãs e sem Sangue-Ralo.
+
+## Coteries
+
+- O Narrador cria, edita e apaga Coteries. Um Personagem pode estar em várias.
+- A Coterie Padrão nasce com a Crônica e não pode ser apagada. Todo Personagem aprovado entra nela automaticamente.
+- Convite de Coterie:
+  - o convite é feito para um Personagem;
+  - o Jogador aceita ou recusa;
+  - o convite fica pendente sem prazo, e o Narrador pode cancelá-lo.
+- O Jogador pode sair de qualquer Coterie.
+- O Narrador:
+  - adiciona PdNs diretamente;
+  - expulsa membros;
+  - ao apagar uma Coterie, deixa os membros sem ela.
+- O Personagem Arquivado sai de todas as Coteries. O PdN convertido permanece nelas.
+- O Jogador só enxerga as Coteries em que tem Personagem.
+- Condição (Vitalidade + Força de Vontade + Fome):
+  - um único botão de compartilhar por Personagem, tudo ou nada, desligado por padrão;
+  - fica visível para Jogadores que dividem ao menos uma Coterie com o Personagem.
+
+## Painéis
+
+- Painel do Narrador: lista única de Personagens Ativos com as Coteries ao lado de cada nome, mais os PdNs fixados. Mostra Condição, Humanidade e Manchas, com atualização em tempo real.
+- Tela do Jogador: lista única com os membros das Coteries dele. A Condição não compartilhada aparece como "oculto".
+- A barra de filtro por Coterie aparece quando a pessoa enxerga 3 ou mais Coteries.
+
+## Combate
+
+- O Bestiário é privado do Narrador e guarda Modelos com a ficha simplificada de antagonista do V5: paradas Físico, Social e Mental, paradas especiais, Vitalidade, Força de Vontade, Disciplinas e notas.
+- No Combate entram:
+  - Personagens;
+  - PdNs;
+  - Inimigos criados a partir de Modelos, cada um com Vitalidade e Força de Vontade próprias.
+- A ordem de turnos é manual (arrastar), com destaque de quem está agindo e contador de Rodadas.
+- Os Jogadores veem a ordem e os Inimigos. Veem a Vitalidade de um Inimigo só se o Narrador liberar.
+- A Condição dos Personagens no Combate segue as mesmas regras de compartilhamento.
+- Há um Combate ativo por vez, descartado ao encerrar.
+
+## Sorteios
+
+- O Narrador aperta um botão e recebe o resultado na hora, sem dados visíveis. Há três Sorteios:
+  - **Ressonância**: sorteia tipo e intensidade. Se der Aguda, sorteia também a Discrasia.
+  - **Discrasia avulsa**: por tipo de Ressonância escolhido ou de qualquer tipo.
+  - **Compulsão**: geral ou de clã.
+- O Narrador pode aplicar o resultado a um Personagem, que passa a ter Ressonância Atual ou Compulsão Ativa até o Narrador encerrar. Se não aplicar, só o Narrador vê.
+
+## Catálogo
+
+- Cobre o livro básico e os clãs dos suplementos: Lasombra, Hecata, Ministério, Banu Haqim, Ravnos, Salubri e Tzimisce.
+- Cada item tem nome, nível, pré-requisitos, custo, referência de página e uma descrição curta escrita pelo projeto. Nenhum texto do livro é copiado.
+- Conteúdo só disponível em inglês é traduzido livremente, com o nome original entre parênteses.
+- Toda tradução passa por uma página de revisão durante o desenvolvimento. A página mostra o original e a tradução proposta, e tem um campo para o Narrador sugerir uma tradução melhor.
+- O Catálogo não é editável dentro do site.
+
+## Fora da v1
+
+- XP.
+- Rolagem de parada de dados para Jogadores.
+- Modo offline.
+- Retrato do Personagem.
+- Resumo dos Personagens dos outros Jogadores fora das Coteries.
