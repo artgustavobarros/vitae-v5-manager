@@ -1,10 +1,9 @@
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { z } from 'zod'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { Separator } from '#/components/ui/separator'
@@ -37,34 +36,34 @@ function Entrar() {
   const { error } = Route.useSearch()
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Umbra</CardTitle>
-          <CardDescription>Fichas da Crônica</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{mensagemErro(error)}</AlertDescription>
-            </Alert>
-          )}
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() =>
-              void authClient.signIn.social({
-                provider: 'google',
-                callbackURL: '/',
-                errorCallbackURL: '/entrar',
-              })
-            }
-          >
-            Entrar com Google
-          </Button>
-          {import.meta.env.DEV && <LoginDev />}
-        </CardContent>
-      </Card>
+    <main
+      className="topo-fome flex min-h-dvh flex-col justify-center px-4"
+      style={{ '--fome-nivel': 2 } as CSSProperties}
+    >
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
+        <div>
+          <h1 className="font-serif text-display">Umbra</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Fichas da Crônica</p>
+        </div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{mensagemErro(error)}</AlertDescription>
+          </Alert>
+        )}
+        <Button
+          size="lg"
+          onClick={() =>
+            void authClient.signIn.social({
+              provider: 'google',
+              callbackURL: '/',
+              errorCallbackURL: '/entrar',
+            })
+          }
+        >
+          Entrar com Google
+        </Button>
+        {import.meta.env.DEV && <LoginDev />}
+      </div>
     </main>
   )
 }
@@ -135,7 +134,7 @@ function LoginDev() {
           </Alert>
         )}
         <div className="flex gap-2">
-          <Button type="submit" className="flex-1">
+          <Button type="submit" variant="secondary" className="flex-1">
             Entrar
           </Button>
           <Button type="button" variant="secondary" className="flex-1" onClick={() => void enviar('criar')}>

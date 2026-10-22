@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as DemoFichaRouteImport } from './routes/demo/ficha'
 import { Route as NarradorConvitesRouteImport } from './routes/narrador/convites'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const EntrarRoute = EntrarRouteImport.update({
   id: '/entrar',
   path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoFichaRoute = DemoFichaRouteImport.update({
+  id: '/demo/ficha',
+  path: '/demo/ficha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NarradorConvitesRoute = NarradorConvitesRouteImport.update({
@@ -38,12 +44,14 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
+  '/demo/ficha': typeof DemoFichaRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
+  '/demo/ficha': typeof DemoFichaRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -51,20 +59,29 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
+  '/demo/ficha': typeof DemoFichaRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/entrar' | '/narrador/convites' | '/api/auth/$'
+  fullPaths:
+    '/' | '/entrar' | '/demo/ficha' | '/narrador/convites' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/entrar' | '/narrador/convites' | '/api/auth/$'
-  id: '__root__' | '/' | '/entrar' | '/narrador/convites' | '/api/auth/$'
+  to: '/' | '/entrar' | '/demo/ficha' | '/narrador/convites' | '/api/auth/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/entrar'
+    | '/demo/ficha'
+    | '/narrador/convites'
+    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EntrarRoute: typeof EntrarRoute
+  DemoFichaRoute: typeof DemoFichaRoute
   NarradorConvitesRoute: typeof NarradorConvitesRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -83,6 +100,13 @@ declare module '@tanstack/react-router' {
       path: '/entrar'
       fullPath: '/entrar'
       preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/ficha': {
+      id: '/demo/ficha'
+      path: '/demo/ficha'
+      fullPath: '/demo/ficha'
+      preLoaderRoute: typeof DemoFichaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/narrador/convites': {
@@ -105,6 +129,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EntrarRoute: EntrarRoute,
+  DemoFichaRoute: DemoFichaRoute,
   NarradorConvitesRoute: NarradorConvitesRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T00:00:00Z",
+  "title": "Design System: Umbra",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Grafite Ameixa",
+        "canonical": "oklch(18.6% 0.007 314.6)",
+        "tonalRamp": [
+          "oklch(15% 0.007 314.6)",
+          "oklch(25% 0.007 314.6)",
+          "oklch(35% 0.007 314.6)",
+          "oklch(45% 0.007 314.6)",
+          "oklch(55% 0.007 314.6)",
+          "oklch(65% 0.007 314.6)",
+          "oklch(80% 0.007 314.6)",
+          "oklch(95% 0.007 314.6)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Grafite Elevado",
+        "canonical": "oklch(21.9% 0.009 317.7)",
+        "tonalRamp": [
+          "oklch(15% 0.009 317.7)",
+          "oklch(25% 0.009 317.7)",
+          "oklch(35% 0.009 317.7)",
+          "oklch(45% 0.009 317.7)",
+          "oklch(55% 0.009 317.7)",
+          "oklch(65% 0.009 317.7)",
+          "oklch(80% 0.009 317.7)",
+          "oklch(95% 0.009 317.7)"
+        ]
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Grafite de Apoio",
+        "canonical": "oklch(25.1% 0.013 314.6)",
+        "tonalRamp": [
+          "oklch(15% 0.013 314.6)",
+          "oklch(25% 0.013 314.6)",
+          "oklch(35% 0.013 314.6)",
+          "oklch(45% 0.013 314.6)",
+          "oklch(55% 0.013 314.6)",
+          "oklch(65% 0.013 314.6)",
+          "oklch(80% 0.013 314.6)",
+          "oklch(95% 0.013 314.6)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Linha",
+        "canonical": "oklch(28.9% 0.014 316.4)",
+        "tonalRamp": [
+          "oklch(15% 0.014 316.4)",
+          "oklch(25% 0.014 316.4)",
+          "oklch(35% 0.014 316.4)",
+          "oklch(45% 0.014 316.4)",
+          "oklch(55% 0.014 316.4)",
+          "oklch(65% 0.014 316.4)",
+          "oklch(80% 0.014 316.4)",
+          "oklch(95% 0.014 316.4)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Linha de Campo",
+        "canonical": "oklch(33.2% 0.020 315.8)",
+        "tonalRamp": [
+          "oklch(15% 0.020 315.8)",
+          "oklch(25% 0.020 315.8)",
+          "oklch(35% 0.020 315.8)",
+          "oklch(45% 0.020 315.8)",
+          "oklch(55% 0.020 315.8)",
+          "oklch(65% 0.020 315.8)",
+          "oklch(80% 0.020 315.8)",
+          "oklch(95% 0.020 315.8)"
+        ]
+      },
+      "marcador": {
+        "role": "neutral",
+        "displayName": "Marcador Vazio",
+        "canonical": "oklch(58.9% 0.027 321.7)",
+        "tonalRamp": [
+          "oklch(15% 0.027 321.7)",
+          "oklch(25% 0.027 321.7)",
+          "oklch(35% 0.027 321.7)",
+          "oklch(45% 0.027 321.7)",
+          "oklch(55% 0.027 321.7)",
+          "oklch(65% 0.027 321.7)",
+          "oklch(80% 0.027 321.7)",
+          "oklch(95% 0.027 321.7)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Tinta Secundária",
+        "canonical": "oklch(70.8% 0.015 325.7)",
+        "tonalRamp": [
+          "oklch(15% 0.015 325.7)",
+          "oklch(25% 0.015 325.7)",
+          "oklch(35% 0.015 325.7)",
+          "oklch(45% 0.015 325.7)",
+          "oklch(55% 0.015 325.7)",
+          "oklch(65% 0.015 325.7)",
+          "oklch(80% 0.015 325.7)",
+          "oklch(95% 0.015 325.7)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "oklch(95.0% 0.006 334.0)",
+        "tonalRamp": [
+          "oklch(15% 0.006 334.0)",
+          "oklch(25% 0.006 334.0)",
+          "oklch(35% 0.006 334.0)",
+          "oklch(45% 0.006 334.0)",
+          "oklch(55% 0.006 334.0)",
+          "oklch(65% 0.006 334.0)",
+          "oklch(80% 0.006 334.0)",
+          "oklch(95% 0.006 334.0)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "Tinta sobre Vinho",
+        "canonical": "oklch(98.3% 0.009 0.1)",
+        "tonalRamp": [
+          "oklch(15% 0.009 0.1)",
+          "oklch(25% 0.009 0.1)",
+          "oklch(35% 0.009 0.1)",
+          "oklch(45% 0.009 0.1)",
+          "oklch(55% 0.009 0.1)",
+          "oklch(65% 0.009 0.1)",
+          "oklch(80% 0.009 0.1)",
+          "oklch(95% 0.009 0.1)"
+        ]
+      },
+      "vinho": {
+        "role": "primary",
+        "displayName": "Vinho",
+        "canonical": "oklch(54.0% 0.180 14.0)",
+        "tonalRamp": [
+          "oklch(15% 0.180 14.0)",
+          "oklch(25% 0.180 14.0)",
+          "oklch(35% 0.180 14.0)",
+          "oklch(45% 0.180 14.0)",
+          "oklch(55% 0.180 14.0)",
+          "oklch(65% 0.180 14.0)",
+          "oklch(80% 0.180 14.0)",
+          "oklch(95% 0.180 14.0)"
+        ]
+      },
+      "vinho-escuro": {
+        "role": "primary",
+        "displayName": "Vinho Escuro",
+        "canonical": "oklch(32.5% 0.094 10.0)",
+        "tonalRamp": [
+          "oklch(15% 0.094 10.0)",
+          "oklch(25% 0.094 10.0)",
+          "oklch(35% 0.094 10.0)",
+          "oklch(45% 0.094 10.0)",
+          "oklch(55% 0.094 10.0)",
+          "oklch(65% 0.094 10.0)",
+          "oklch(80% 0.094 10.0)",
+          "oklch(95% 0.094 10.0)"
+        ]
+      },
+      "fome": {
+        "role": "tertiary",
+        "displayName": "Rosa-Fome",
+        "canonical": "oklch(74.5% 0.159 10.2)",
+        "tonalRamp": [
+          "oklch(15% 0.159 10.2)",
+          "oklch(25% 0.159 10.2)",
+          "oklch(35% 0.159 10.2)",
+          "oklch(45% 0.159 10.2)",
+          "oklch(55% 0.159 10.2)",
+          "oklch(65% 0.159 10.2)",
+          "oklch(80% 0.159 10.2)",
+          "oklch(95% 0.159 10.2)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Vinho (primary)",
+        "aliasOf": "vinho",
+        "canonical": "oklch(54.0% 0.180 14.0)",
+        "tonalRamp": [
+          "oklch(15% 0.180 14.0)",
+          "oklch(25% 0.180 14.0)",
+          "oklch(35% 0.180 14.0)",
+          "oklch(45% 0.180 14.0)",
+          "oklch(55% 0.180 14.0)",
+          "oklch(65% 0.180 14.0)",
+          "oklch(80% 0.180 14.0)",
+          "oklch(95% 0.180 14.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display serifa",
+        "purpose": "Nome do Personagem, título de página, logotipo na entrada. Token text-display 40/44."
+      },
+      "headline": {
+        "displayName": "Título de seção",
+        "purpose": "Títulos de grupo e seção e logotipo da barra, em serifa 24/32."
+      },
+      "numeral": {
+        "displayName": "Numeral da Fome",
+        "purpose": "Só o número da Fome, Jost 600 tabular, em rosa-fome."
+      },
+      "body": {
+        "displayName": "Corpo",
+        "purpose": "Nomes de traços, poderes e itens de navegação."
+      },
+      "body-sm": {
+        "displayName": "Corpo pequeno",
+        "purpose": "Rótulos de trilha, descrições, botões, abas, alertas."
+      },
+      "label": {
+        "displayName": "Legenda",
+        "purpose": "Legenda do horizonte de Humanidade e separadores."
+      }
+    },
+    "typeScale": [
+      {
+        "name": "text-xs",
+        "value": "12px/16px"
+      },
+      {
+        "name": "text-sm",
+        "value": "14px/20px"
+      },
+      {
+        "name": "text-base",
+        "value": "16px/24px"
+      },
+      {
+        "name": "text-xl",
+        "value": "20px/28px"
+      },
+      {
+        "name": "text-2xl",
+        "value": "24px/32px"
+      },
+      {
+        "name": "text-4xl",
+        "value": "36px/40px"
+      },
+      {
+        "name": "text-display",
+        "value": "40px/44px"
+      }
+    ],
+    "shadows": [],
+    "motion": [
+      {
+        "name": "fome-aquece",
+        "value": "--fome-nivel 600ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Transição do calor do topo e da faixa presa quando a Fome muda."
+      },
+      {
+        "name": "aba-sublinhado",
+        "value": "opacity 150ms",
+        "purpose": "Aparição do sublinhado vinho da aba ativa (padrão shadcn)."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px",
+        "purpose": "Grupos de traços em três colunas."
+      }
+    ],
+    "containers": [
+      {
+        "name": "coluna",
+        "value": "768px (max-w-3xl)"
+      },
+      {
+        "name": "entrada",
+        "value": "384px (max-w-sm)"
+      }
+    ],
+    "fomeTint": {
+      "variable": "--fome-nivel",
+      "range": "0-5",
+      "topo": "vinho-escuro 20%/nível no alto, 6%/nível embaixo",
+      "faixa": "vinho-escuro 6%/nível, sólido, sticky top-0"
+    }
+  },
+  "components": [
+    {
+      "name": "Botão principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal da tela (Entrar com Google, Convidar).",
+      "html": "<button class=\"ds-btn-primary\">Convidar</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 16px;border:0;border-radius:8px;background:var(--primary);color:var(--primary-foreground);font:500 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background .15s}.ds-btn-primary:hover{background:color-mix(in oklab,var(--primary) 90%,transparent)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);}"
+    },
+    {
+      "name": "Botão secundário",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ações de apoio (Entrar, Criar conta, Ver Ficha de demonstração).",
+      "html": "<button class=\"ds-btn-secondary\">Criar conta</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 16px;border:0;border-radius:8px;background:var(--secondary);color:var(--secondary-foreground);font:500 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background .15s}.ds-btn-secondary:hover{background:color-mix(in oklab,var(--secondary) 80%,transparent)}.ds-btn-secondary:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);}"
+    },
+    {
+      "name": "Botão fantasma",
+      "kind": "button",
+      "refersTo": "button-ghost-hover",
+      "description": "Ações discretas na barra ou em linhas (Sair, remover convite).",
+      "html": "<button class=\"ds-btn-ghost\">Sair</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;height:32px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:var(--foreground);font:500 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;cursor:pointer}.ds-btn-ghost:hover{background:color-mix(in oklab,var(--accent) 50%,transparent)}.ds-btn-ghost:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);}"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo shadcn com borda de 1px e anel vinho no foco.",
+      "html": "<label class=\"ds-field\"><span>E-mail</span><input class=\"ds-input\" placeholder=\"jogador@gmail.com\"></label>",
+      "css": ".ds-field{display:grid;gap:8px;font:500 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;color:var(--foreground)}.ds-input{height:36px;padding:4px 12px;border:1px solid var(--input);border-radius:8px;background:color-mix(in oklab,var(--input) 30%,transparent);color:var(--foreground);font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif}.ds-input::placeholder{color:var(--muted-foreground)}.ds-input:focus-visible{border-color:var(--ring);outline:none;box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);}"
+    },
+    {
+      "name": "Barra do topo",
+      "kind": "nav",
+      "refersTo": "barra-app",
+      "description": "Logotipo Umbra em serifa à esquerda, contexto à direita.",
+      "html": "<header class=\"ds-barra\"><a href=\"#\" class=\"ds-logo\">Umbra</a><span class=\"ds-ctx\">O Grupo</span></header>",
+      "css": ".ds-barra{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px}.ds-logo{font:400 24px/32px 'Alegreya SC',ui-serif,Georgia,serif;color:var(--foreground);text-decoration:none;border-radius:4px}.ds-logo:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}.ds-ctx{font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;color:var(--muted-foreground)}"
+    },
+    {
+      "name": "Abas sublinhadas",
+      "kind": "nav",
+      "refersTo": "aba-linha",
+      "description": "Abas da Ficha, alinhadas à esquerda, sublinhado vinho na ativa.",
+      "html": "<div class=\"ds-abas\" role=\"tablist\"><button class=\"ds-aba\" aria-selected=\"true\">Atributos</button><button class=\"ds-aba\">Habilidades</button><button class=\"ds-aba\">Disciplinas</button><button class=\"ds-aba\">Notas</button></div>",
+      "css": ".ds-abas{display:flex;gap:16px;border-bottom:1px solid var(--border)}.ds-aba{position:relative;height:36px;padding:0;border:0;background:none;color:var(--muted-foreground);font:500 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;cursor:pointer}.ds-aba:hover{color:var(--foreground)}.ds-aba[aria-selected=true]{color:var(--foreground)}.ds-aba[aria-selected=true]::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--vinho)}.ds-aba:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);}"
+    },
+    {
+      "name": "Trilha de dano",
+      "kind": "custom",
+      "refersTo": "caixa-dano",
+      "description": "Linha de 48px com rótulo e caixas da ficha oficial: vazia, '/' superficial, X agravado em vinho.",
+      "html": "<div class=\"ds-trilha\"><span class=\"ds-rot\">Vitalidade 3/6</span><div class=\"ds-caixas\"><button class=\"ds-cel\" aria-label=\"agravado\"><svg viewBox=\"0 0 24 24\" class=\"ds-caixa ds-agr\"><line x1=\"2\" y1=\"22\" x2=\"22\" y2=\"2\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"2\" y1=\"2\" x2=\"22\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></button><button class=\"ds-cel\" aria-label=\"superficial\"><svg viewBox=\"0 0 24 24\" class=\"ds-caixa ds-sup\"><line x1=\"2\" y1=\"22\" x2=\"22\" y2=\"2\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></button><button class=\"ds-cel\" aria-label=\"vazio\"><svg viewBox=\"0 0 24 24\" class=\"ds-caixa\"></svg></button></div></div>",
+      "css": ".ds-trilha{display:flex;align-items:center;justify-content:space-between;gap:8px;height:48px;font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif}.ds-rot{color:var(--muted-foreground);font-variant-numeric:tabular-nums}.ds-caixas{display:flex}.ds-cel{display:grid;place-items:center;width:40px;height:48px;padding:0;border:0;background:none;border-radius:8px;cursor:pointer}.ds-cel:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}.ds-caixa{width:24px;height:24px;box-sizing:border-box;border:2px solid var(--marcador);border-radius:4px}.ds-sup{border-color:var(--foreground);color:var(--foreground)}.ds-agr{border-color:var(--vinho);color:var(--vinho)}"
+    },
+    {
+      "name": "Trilha de Fome",
+      "kind": "custom",
+      "refersTo": "bolinha-fome",
+      "description": "Numeral rosa-fome e cinco bolinhas de 20px com borda de 2px, cheias em vinho.",
+      "html": "<div class=\"ds-fome\"><span class=\"ds-rot\">Fome</span><div class=\"ds-fome-d\"><span class=\"ds-num\">3</span><span class=\"ds-b ds-on\"></span><span class=\"ds-b ds-on\"></span><span class=\"ds-b ds-on\"></span><span class=\"ds-b\"></span><span class=\"ds-b\"></span></div></div>",
+      "css": ".ds-fome{display:flex;align-items:center;justify-content:space-between;height:48px;font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif}.ds-rot{color:var(--muted-foreground)}.ds-fome-d{display:flex;align-items:center;gap:20px}.ds-num{color:var(--fome);font:600 24px/32px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}.ds-b{width:20px;height:20px;box-sizing:border-box;border:2px solid var(--marcador);border-radius:9999px}.ds-on{border-color:var(--vinho);background:var(--vinho)}"
+    },
+    {
+      "name": "Horizonte de Humanidade",
+      "kind": "custom",
+      "description": "10 segmentos de 4px; Humanidade em tinta da esquerda, Manchas da direita com '/' de 12px.",
+      "html": "<div class=\"ds-hor\"><div class=\"ds-segs\"><i class=\"h\"></i><i class=\"h\"></i><i class=\"h\"></i><i class=\"h\"></i><i class=\"h\"></i><i class=\"h\"></i><i class=\"h\"></i><i></i><i></i><i class=\"m\"><svg viewBox=\"0 0 12 12\"><line x1=\"1\" y1=\"11\" x2=\"11\" y2=\"1\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></i></div><div class=\"ds-leg\"><span>Humanidade 7</span><span>1 Mancha</span></div></div>",
+      "css": ".ds-segs{display:flex;gap:4px}.ds-segs i{position:relative;flex:1;height:4px;border-radius:9999px;background:var(--marcador);margin:22px 0}.ds-segs i.h{background:var(--foreground)}.ds-segs i svg{position:absolute;top:50%;left:50%;width:12px;height:12px;transform:translate(-50%,-50%);color:var(--foreground)}.ds-leg{display:flex;justify-content:space-between;margin-top:-8px;font:400 12px/16px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;color:var(--muted-foreground)}"
+    },
+    {
+      "name": "Topo que aquece",
+      "kind": "custom",
+      "description": "Degradê vinho-escuro sobre grafite proporcional à Fome (0 a 5), com nome em display serifa.",
+      "html": "<section class=\"ds-topo\" style=\"--fome-nivel:3\"><h1 class=\"ds-nome\">Helena Sarmento</h1><p class=\"ds-desc\">Toreador · 12ª Geração · Potência do Sangue 1</p></section>",
+      "css": ".ds-topo{padding:8px 16px 16px;background:linear-gradient(180deg,color-mix(in oklab,var(--vinho-escuro) calc(var(--fome-nivel) * 20%),var(--background)) 0%,color-mix(in oklab,var(--vinho-escuro) calc(var(--fome-nivel) * 6%),var(--background)) 100%)}.ds-nome{margin:0;font:400 40px/44px 'Alegreya SC',ui-serif,Georgia,serif;color:var(--foreground);text-wrap:balance}.ds-desc{margin:4px 0 0;font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;color:var(--muted-foreground)}"
+    },
+    {
+      "name": "Alerta de Compulsão",
+      "kind": "card",
+      "refersTo": "alerta-compulsao",
+      "description": "Único contêiner com borda: estado crítico dito em texto, borda vinho 45% e fundo vinho 15%.",
+      "html": "<div class=\"ds-alerta\" role=\"alert\"><strong>Compulsão ativa: Fome</strong> · até o Narrador encerrar</div>",
+      "css": ".ds-alerta{padding:12px 16px;border:1px solid color-mix(in oklab,var(--vinho) 45%,transparent);border-radius:8px;background:color-mix(in oklab,var(--vinho) 15%,transparent);color:var(--foreground);font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif}.ds-alerta strong{font-weight:600}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Ficha à Meia-Luz",
+    "overview": "Umbra é a ficha oficial de Vampiro: A Máscara 5ª Edição passada a limpo para uma mesa presencial com luz baixa. A página é escura, grafite tingido de ameixa, com tinta clara e uma única cor de estado, o vinho. A estrutura é literária: o nome do Personagem e os títulos de seção em serifa, todo o resto em uma sans neutra, e linhas finas no lugar de cartões. Os marcadores são os da ficha de papel (caixas, \"/\", X, bolinhas, trilha de Humanidade), para que ninguém reaprenda a ler.\n\nO movimento-assinatura é o calor: o topo da Ficha aquece em vinho conforme a Fome sobe de 0 a 5, e a faixa de estado (horizonte de Humanidade, Vitalidade, Força de Vontade, Fome) fica presa no topo ao rolar. A profundidade vem desse calor e da tonalidade, não de sombras.\n\nA densidade é de ferramenta de mesa: linhas de 48px tocáveis com o polegar, rótulo à esquerda e marcadores à direita, uma coluna central de no máximo 768px. A voz visual carrega o clima; os textos ficam neutros, em PT-BR, com os termos oficiais do V5.",
+    "keyCharacteristics": [
+      "Escuro de propósito: grafite ameixa, nunca superfícies claras.",
+      "Vinho é a única cor de estado; o rosa-fome aparece só no numeral da Fome.",
+      "Serifa contada: logotipo, nome do Personagem e títulos de seção.",
+      "Glifos da ficha oficial, com o mesmo traço de 2px.",
+      "Topo que aquece com a Fome; faixa de estado presa.",
+      "Régua de 4px e escala tipográfica fechada."
+    ],
+    "rules": [
+      {
+        "name": "The Voz Única Rule",
+        "body": "O vinho é a única cor de estado. Primary, destructive e ring são o mesmo vinho; não introduza verde, âmbar ou outro vermelho para sucesso, aviso ou erro.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rosa-Fome Rule",
+        "body": "O rosa-fome existe para um único elemento: o numeral da Fome. Em qualquer outro lugar ele é um defeito.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token Rule",
+        "body": "Cores e fontes só por token do tema (`bg-background`, `text-vinho`, `border-marcador`, `font-serif`). Nunca hex em classe, nunca cores fixas da paleta do Tailwind. Transparência é por modificador de opacidade sobre um token (`vinho/15`, `vinho/25`, `vinho/45`).",
+        "section": "colors"
+      },
+      {
+        "name": "The Serifa Contada Rule",
+        "body": "Alegreya SC só no logotipo, no nome do Personagem e em títulos de seção. Rótulos, números, botões, abas e corpo são sempre Jost.",
+        "section": "typography"
+      },
+      {
+        "name": "The Escala Fechada Rule",
+        "body": "Só os sete tamanhos acima. Sem `text-lg`, sem `text-3xl`, sem tamanhos arbitrários.",
+        "section": "typography"
+      },
+      {
+        "name": "The Régua de 4 Rule",
+        "body": "Espaçamento e tamanhos só em passos inteiros do Tailwind (múltiplos de 4px). Sem meios passos (`p-1.5`, `gap-2.5`) e sem valores arbitrários `[...]` no código do projeto.",
+        "section": "layout"
+      },
+      {
+        "name": "The Faixa Presa Rule",
+        "body": "O estado do Personagem (Humanidade, Vitalidade, Força de Vontade, Fome) fica sempre visível no topo da Ficha ao rolar; nome e descrição rolam embora.",
+        "section": "layout"
+      },
+      {
+        "name": "The Calor no Lugar da Sombra Rule",
+        "body": "Superfícies não flutuam. Separação é por linha de 1px, por um degrau de grafite ou pelo calor do vinho, nunca por `box-shadow`.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Topo que Aquece Rule",
+        "body": "A intensidade do vinho no topo da Ficha segue a Fome de 0 a 5 e mais nada. Com Fome 0 o topo é o próprio grafite.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Traço Único Rule",
+        "body": "Toda borda é 1px ou 2px; todo traço de glifo é 2px. Bolinhas de leitura usam 1px; caixas de dano e bolinhas tocáveis de Fome usam 2px.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Ficha Oficial Rule",
+        "body": "Marcadores seguem a ficha de papel: caixa vazia, \"/\" superficial, X agravado com o mesmo traço, bolinhas para traços, trilha de 10 segmentos para Humanidade. Não substitua por barras de progresso, porcentagens ou ícones.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do partir de um componente shadcn para todo controle de interface (botão, campo, aba, alerta, separador).",
+      "Do usar só passos inteiros do Tailwind (múltiplos de 4px) para espaçamento e tamanhos.",
+      "Do usar só `text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-4xl` e `text-display`.",
+      "Do usar cores e fontes por token do tema; bordas de 1px ou 2px.",
+      "Do manter a serifa no logotipo, no nome do Personagem e nos títulos de seção, e Jost em todo o resto.",
+      "Do desenhar dano agravado como o \"/\" do superficial mais o traço oposto, com o mesmo tamanho e traço.",
+      "Do manter a faixa de estado presa e o topo da Ficha aquecendo com a Fome (0 a 5).",
+      "Do dar a todo marcador tocável uma área de pelo menos 40×48px e anel de foco vinho.",
+      "Do escrever rótulos neutros em PT-BR com os termos oficiais do V5."
+    ],
+    "donts": [
+      "Don't usar meios passos (`p-1.5`, `gap-2.5`) nem valores arbitrários `[...]` no código do projeto.",
+      "Don't usar `text-lg` nem `text-3xl`.",
+      "Don't escrever hex ou cores fixas do Tailwind em classes.",
+      "Don't usar Alegreya SC em rótulos, números, botões ou abas.",
+      "Don't usar o rosa-fome fora do numeral da Fome, nem uma segunda cor de estado além do vinho.",
+      "Don't empilhar cartões com sombra nem trocar marcadores da ficha por barras de progresso.",
+      "Don't usar superfícies claras: o mundo é escuro para a mesa à meia-luz.",
+      "Don't depender só de cor para estados críticos (agravado, Fome alta, Compulsão): forma ou texto acompanham."
+    ]
+  }
+}
