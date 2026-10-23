@@ -8,7 +8,7 @@ web
 
 ## Users
 
-- **Narrador**: conduz uma única Crônica presencial de Vampiro: A Máscara 5ª Edição. Administra o site, vê e edita todas as Fichas, aprova Personagens, libera Fichas para evolução, gerencia Coteries, conduz Combates e faz Sorteios durante a sessão.
+- **Narrador**: conduz uma única Crônica presencial de Vampiro: A Máscara 5ª Edição. Administra o site, vê e edita todas as Fichas, cria PdNs, libera Fichas para evolução, gerencia Coteries, conduz Combates e faz Sorteios durante a sessão.
 - **Jogadores**: poucos, convidados pelo Narrador. Usam o celular na mesa para acompanhar e marcar o estado do próprio Personagem (dano, Fome, Manchas) e, fora da sessão, criar e evoluir Personagens.
 
 ## Product Purpose

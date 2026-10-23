@@ -11,10 +11,11 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 ## Personagens e Fichas
 
-- Ciclo: Rascunho → Aguardando aprovação → Ativo → Arquivado. O Narrador pode rejeitar com comentário, e o Personagem volta a Rascunho.
-- O Jogador cria Rascunhos quando quiser e só apaga Rascunhos. Só o Narrador arquiva e reativa.
-- A criação guiada aplica as regras do V5 e bloqueia escolhas inválidas para o Jogador.
-- Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois da aprovação, a Ficha mostra só o valor final.
+- Ciclo: Rascunho → Ativo → Arquivado. Não há aprovação do Narrador: o Personagem vira Ativo quando a criação é concluída, e a Ficha fica bloqueada.
+- O Jogador cria seus próprios Personagens quando quiser, quantos quiser, e só apaga Rascunhos. O Narrador não cria Personagem para um Jogador. Só o Narrador arquiva e reativa.
+- A criação guiada aplica as regras do V5 e bloqueia escolhas inválidas para o Jogador. O Narrador cria PdNs pela mesma criação guiada.
+- Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois de concluída, a Ficha mostra só o valor final.
+- Até a criação guiada existir (fatia 5), Jogador e Narrador criam Personagens por um formulário manual provisório, sem validação do V5.
 - O Tipo de Predador aplica os bônus automaticamente. O Jogador escolhe quando o livro oferece opções.
 - Não há XP. A evolução acontece pela Ficha Liberada:
   - o Narrador libera a Ficha inteira;
@@ -51,7 +52,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 ## Coteries
 
 - O Narrador cria, edita e apaga Coteries. Um Personagem pode estar em várias.
-- A Coterie Padrão nasce com a Crônica e não pode ser apagada. Todo Personagem aprovado entra nela automaticamente.
+- A Coterie Padrão nasce com a Crônica e não pode ser apagada. O Narrador escolhe quais Personagens entram nela; nenhum entra automaticamente.
 - Convite de Coterie:
   - o convite é feito para um Personagem;
   - o Jogador aceita ou recusa;

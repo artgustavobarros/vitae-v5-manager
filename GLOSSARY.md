@@ -39,7 +39,7 @@ Grupo de Personagens que o Narrador cria, edita e apaga; um Personagem pode esta
 _Avoid_: Grupo, party, bando
 
 **Coterie Padrão**:
-A Coterie que nasce com a Crônica e não pode ser apagada; todo Personagem aprovado entra nela automaticamente.
+A Coterie que nasce com a Crônica e não pode ser apagada; o Narrador escolhe quais Personagens entram nela.
 _Avoid_: Grupo principal, coterie geral
 
 **Convite de Coterie**:
