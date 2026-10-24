@@ -7,7 +7,7 @@ import { Label } from '#/components/ui/label'
 import { PODERES, TIPOS_PREDADOR, tipoPredador } from '#/domain/catalogo'
 import type { EscolhasPredador } from '#/domain/criacao'
 import type { Disciplina, Ficha, Habilidade } from '#/domain/ficha'
-import { nomeDisciplina } from './tracos'
+import { nomeDisciplina, nomeHabilidade } from './tracos'
 
 export function CamposTipoPredadorCriacao({
   ficha,
@@ -253,18 +253,20 @@ export function CamposTipoPredadorCriacao({
                         key={opt.habilidade}
                         type="button"
                         onClick={() => alterarHabilidadeEspecializacao(opt.habilidade)}
-                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        className={`cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
                           ativo ? 'border-vinho bg-vinho text-white' : 'bg-background hover:bg-muted'
                         }`}
                       >
-                        {opt.habilidade}
+                        {nomeHabilidade(opt.habilidade)}
                       </button>
                     )
                   })}
                 </div>
 
                 <div className="flex flex-col gap-1 pt-1">
-                  <Label className="text-xs text-muted-foreground">Especialização:</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Especialização em {nomeHabilidade(escolhas.especializacao.habilidade)}:
+                  </Label>
                   <Input
                     value={escolhas.especializacao.especializacao}
                     onChange={(e) => alterarTextoEspecializacao(e.target.value)}

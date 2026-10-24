@@ -159,13 +159,13 @@ export function validarHabilidadesCriacao(
   const pessoais = especializacoes.filter((e) => e.origem !== 'predador')
 
   for (const esp of pessoais) {
+    const nomeHab = HABILIDADES.find((h) => h.id === esp.habilidade)?.nome ?? esp.habilidade
     if (!esp.especializacao || esp.especializacao.trim().length === 0) {
-      erros.push(`Especialização em "${esp.habilidade}" possui texto vazio.`)
+      erros.push(`Especialização em "${nomeHab}" possui texto vazio.`)
     }
 
     const valorHab = habilidades[esp.habilidade] ?? 0
     if (valorHab < 1) {
-      const nomeHab = HABILIDADES.find((h) => h.id === esp.habilidade)?.nome ?? esp.habilidade
       erros.push(
         `Especialização "${esp.especializacao}" requer ao menos 1 ponto na perícia ${nomeHab} (atual: ${valorHab}).`,
       )

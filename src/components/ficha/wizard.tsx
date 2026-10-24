@@ -29,7 +29,7 @@ import {
 import { itemCatalogo, tipoPredador } from '#/domain/catalogo'
 import type { OpcoesCriacaoCronica } from '#/domain/cronica'
 import type { Ficha, Habilidade } from '#/domain/ficha'
-import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeDisciplina, nomeSeita, rotuloGeracao } from './tracos'
+import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeDisciplina, nomeHabilidade, nomeSeita, rotuloGeracao } from './tracos'
 
 import { CamposAtributosCriacao } from './wizard-atributos'
 import { CamposHabilidadesCriacao } from './wizard-habilidades'
@@ -374,7 +374,7 @@ function Revisao({
                   </span>
                 )}
                 <span>
-                  • Especialização: {escolhasPredador.especializacao.habilidade} (
+                  • Especialização: {nomeHabilidade(escolhasPredador.especializacao.habilidade)} (
                   {escolhasPredador.especializacao.especializacao})
                 </span>
               </div>

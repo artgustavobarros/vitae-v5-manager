@@ -26,6 +26,8 @@ export const habilidadesDoGrupo = (grupo: Grupo) => HABILIDADES.filter((h) => h.
 export const nomeCla = (ficha: Ficha) => CLAS.find((c) => c.id === ficha.cla)?.nome ?? ''
 export const nomeSeita = (ficha: Ficha) => SEITAS.find((s) => s.id === ficha.seita)?.nome ?? ''
 export const nomeDisciplina = (id: Disciplina) => DISCIPLINAS.find((d) => d.id === id)?.nome ?? id
+export const nomeHabilidade = (id: string) => HABILIDADES.find((h) => h.id === id)?.nome ?? id
+export const nomeAtributo = (id: string) => ATRIBUTOS.find((a) => a.id === id)?.nome ?? id
 
 /** "12ª Geração". */
 export const rotuloGeracao = (geracao: number) => `${geracao}ª Geração`
