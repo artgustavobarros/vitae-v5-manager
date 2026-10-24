@@ -1,9 +1,10 @@
+import { useEffect } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 import { Combobox } from '#/components/combobox'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import { TIPOS_PREDADOR, tipoPredador } from '#/domain/catalogo'
+import { PODERES, TIPOS_PREDADOR, tipoPredador } from '#/domain/catalogo'
 import type { EscolhasPredador } from '#/domain/criacao'
 import type { Disciplina, Ficha, Habilidade } from '#/domain/ficha'
 import { nomeDisciplina } from './tracos'
@@ -21,6 +22,25 @@ export function CamposTipoPredadorCriacao({
 }) {
   const predadorAtual = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
 
+  function obterPoderInicial(discId: Disciplina): string | undefined {
+    const nivelAtual = ficha.disciplinas.find((d) => d.disciplina === discId)?.nivel ?? 0
+    const novoNivel = nivelAtual + 1
+    const opcoes = PODERES.filter(
+      (p) => p.disciplina === discId && p.nivel <= novoNivel && !ficha.poderes.includes(p.id),
+    )
+    return opcoes[0]?.id
+  }
+
+  // Garante que haja um poder selecionado se já houver disciplina escolhida
+  useEffect(() => {
+    if (escolhas && escolhas.disciplina && !escolhas.poder) {
+      const poderInicial = obterPoderInicial(escolhas.disciplina)
+      if (poderInicial) {
+        onMudarEscolhas({ ...escolhas, poder: poderInicial })
+      }
+    }
+  }, [escolhas?.disciplina, escolhas?.poder])
+
   function selecionarPredador(id: string | null) {
     onMudarPredador(id)
     if (!id) return
@@ -32,6 +52,7 @@ export function CamposTipoPredadorCriacao({
     const primeiraEsp = p.opcoesEspecializacao[0]
     onMudarEscolhas({
       disciplina: primeiraDisc,
+      poder: obterPoderInicial(primeiraDisc),
       especializacao: {
         habilidade: primeiraEsp.habilidade,
         especializacao: primeiraEsp.sugestoes[0] ?? '',
@@ -49,7 +70,11 @@ export function CamposTipoPredadorCriacao({
 
   function alterarDisciplina(disc: Disciplina) {
     if (!escolhas) return
-    onMudarEscolhas({ ...escolhas, disciplina: disc })
+    onMudarEscolhas({
+      ...escolhas,
+      disciplina: disc,
+      poder: obterPoderInicial(disc),
+    })
   }
 
   function alterarHabilidadeEspecializacao(hab: Habilidade) {
@@ -140,37 +165,78 @@ export function CamposTipoPredadorCriacao({
       {predadorAtual && escolhas && (
         <Card className="border-border/60 bg-muted/20">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="font-serif text-base text-foreground">{predadorAtual.nome}</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                {predadorAtual.fonte.livro} p. {predadorAtual.fonte.pagina}
-              </Badge>
-            </div>
+            <CardTitle className="font-serif text-base text-foreground">{predadorAtual.nome}</CardTitle>
             <CardDescription className="text-xs">{predadorAtual.descricao}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 text-sm">
-            {/* Disciplina extra (+1 ponto) */}
-            <div className="flex flex-col gap-2 rounded-md border bg-background p-3">
-              <span className="text-xs font-semibold text-vinho uppercase tracking-wider">
-                +1 Ponto em Disciplina (escolha 1)
-              </span>
+            {/* Disciplina extra (+1 ponto) e Poder Adicional */}
+            <div className="flex flex-col gap-3 rounded-md border bg-background p-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-vinho uppercase tracking-wider">
+                  +1 Ponto em Disciplina (escolha 1)
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  Ganhe +1 ponto na Disciplina e escolha um poder adicional desse nível ou inferior.
+                </p>
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 {predadorAtual.opcoesDisciplina.map((discId) => {
                   const ativo = escolhas.disciplina === discId
+                  const nivelAtual = ficha.disciplinas.find((d) => d.disciplina === discId)?.nivel ?? 0
+                  const novoNivel = nivelAtual + 1
                   return (
                     <button
                       key={discId}
                       type="button"
                       onClick={() => alterarDisciplina(discId)}
-                      className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      className={`cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
                         ativo ? 'border-vinho bg-vinho text-white' : 'bg-background hover:bg-muted'
                       }`}
                     >
-                      {nomeDisciplina(discId)}
+                      {nomeDisciplina(discId)} ({nivelAtual} → {novoNivel})
                     </button>
                   )
                 })}
               </div>
+
+              {/* Seletor do novo poder para a disciplina escolhida */}
+              {escolhas.disciplina && (
+                <div className="flex flex-col gap-1.5 border-t pt-3">
+                  {(() => {
+                    const nivelAtual =
+                      ficha.disciplinas.find((d) => d.disciplina === escolhas.disciplina)?.nivel ?? 0
+                    const novoNivel = nivelAtual + 1
+                    const opcoesPoder = PODERES.filter(
+                      (p) =>
+                        p.disciplina === escolhas.disciplina &&
+                        p.nivel <= novoNivel &&
+                        (!ficha.poderes.includes(p.id) || p.id === escolhas.poder),
+                    )
+
+                    return (
+                      <>
+                        <Label htmlFor="poder-predador" className="text-xs text-muted-foreground font-medium">
+                          Poder de {nomeDisciplina(escolhas.disciplina)} (Nível {novoNivel} ou inferior):
+                        </Label>
+                        <Combobox
+                          id="poder-predador"
+                          opcoes={opcoesPoder.map((p) => ({
+                            valor: p.id,
+                            rotulo: `${p.nome} (Nível ${p.nivel})`,
+                            original: p.nomeOriginal,
+                            descricao: p.descricao,
+                          }))}
+                          valor={escolhas.poder ?? null}
+                          onChange={(pId) => onMudarEscolhas({ ...escolhas, poder: pId })}
+                          placeholder="Selecionar poder..."
+                          busca="Buscar poder"
+                        />
+                      </>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
 
             {/* Especialização de Habilidade */}

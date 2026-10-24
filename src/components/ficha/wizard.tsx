@@ -29,7 +29,7 @@ import {
 import { itemCatalogo, tipoPredador } from '#/domain/catalogo'
 import type { OpcoesCriacaoCronica } from '#/domain/cronica'
 import type { Ficha, Habilidade } from '#/domain/ficha'
-import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
+import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeDisciplina, nomeSeita, rotuloGeracao } from './tracos'
 
 import { CamposAtributosCriacao } from './wizard-atributos'
 import { CamposHabilidadesCriacao } from './wizard-habilidades'
@@ -128,7 +128,11 @@ export function WizardCriacao({
       }
       case 5:
         if (ficha.cla === 'sangue-ralo') return true
-        return ficha.tipoPredador !== null && escolhasPredador !== null
+        return (
+          ficha.tipoPredador !== null &&
+          escolhasPredador !== null &&
+          Boolean(escolhasPredador.poder)
+        )
       case 6: {
         if (!ficha.cla) return false
         const pred = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
@@ -360,13 +364,15 @@ function Revisao({
           <div className="flex flex-col gap-2 pt-2">
             <div className="flex items-center justify-between">
               <span className="font-medium text-foreground">{predador.nome}</span>
-              <Badge variant="secondary" className="text-xs">
-                {predador.fonte.livro}
-              </Badge>
             </div>
             {escolhasPredador && (
               <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                <span>• +1 em Disciplina: {escolhasPredador.disciplina}</span>
+                <span>• +1 em Disciplina: {nomeDisciplina(escolhasPredador.disciplina)}</span>
+                {escolhasPredador.poder && (
+                  <span>
+                    • Poder Ganho: {itemCatalogo(escolhasPredador.poder)?.nome ?? escolhasPredador.poder}
+                  </span>
+                )}
                 <span>
                   • Especialização: {escolhasPredador.especializacao.habilidade} (
                   {escolhasPredador.especializacao.especializacao})
