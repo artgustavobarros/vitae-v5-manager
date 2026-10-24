@@ -28,6 +28,7 @@ export const ROTULO_CATEGORIA: Record<CategoriaRevisao, string> = {
   vantagem: 'Vantagem',
   defeito: 'Defeito',
   'tipo-coterie': 'Tipo de Coterie',
+  'tipo-predador': 'Tipo de Predador',
   consulta: 'Consulta rápida',
 }
 

@@ -1895,6 +1895,7 @@ const ROTULO_TIPO: Record<ItemCatalogo['tipo'], string> = {
   vantagem: 'Vantagem',
   defeito: 'Defeito',
   'tipo-coterie': 'Tipo de Coterie',
+  'tipo-predador': 'Tipo de Predador',
 }
 
 function subtitulo(item: ItemCatalogo): string {
@@ -1909,6 +1910,7 @@ function subtitulo(item: ItemCatalogo): string {
     case 'defeito':
       return `${ROTULO_TIPO[item.tipo]}${item.escopo === 'coterie' ? ' da Coterie' : ''} · ${item.grupo}`
     case 'tipo-coterie':
+    case 'tipo-predador':
       return ROTULO_TIPO[item.tipo]
   }
 }

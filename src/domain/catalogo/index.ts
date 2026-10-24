@@ -17,8 +17,9 @@ import { PODERES_OFUSCACAO } from './poderes/ofuscacao'
 import { PODERES_POTENCIA } from './poderes/potencia'
 import { PODERES_PRESENCA } from './poderes/presenca'
 import { PODERES_PROTEANISMO } from './poderes/proteanismo'
+import { TIPOS_PREDADOR } from './predadores'
 import { RITUAIS } from './rituais'
-import type { ItemCatalogo, Poder, Ritual, TipoCoterie, Vantagem } from './tipos'
+import type { ItemCatalogo, Poder, Ritual, TipoCoterie, TipoPredador, Vantagem } from './tipos'
 import { VANTAGENS } from './vantagens'
 
 export const PODERES: readonly Poder[] = [
@@ -39,7 +40,7 @@ export const PODERES: readonly Poder[] = [
 export const RITUAIS_TODOS: readonly Ritual[] = [...RITUAIS, ...CERIMONIAS, ...FORMULAS]
 
 export const VANTAGENS_PERSONAGEM: readonly Vantagem[] = VANTAGENS
-export { TIPOS_COTERIE, VANTAGENS_COTERIE }
+export { TIPOS_COTERIE, TIPOS_PREDADOR, VANTAGENS_COTERIE }
 
 /** Grupos de Antecedentes que uma Coterie pode comprar com o fundo comum (Corebook p. 196). */
 export const GRUPOS_ANTECEDENTES_COTERIE = new Set([
@@ -68,6 +69,7 @@ export const CATALOGO: readonly ItemCatalogo[] = [
   ...VANTAGENS_PERSONAGEM,
   ...VANTAGENS_COTERIE,
   ...TIPOS_COTERIE,
+  ...TIPOS_PREDADOR,
 ]
 
 const PORID = new Map<string, ItemCatalogo>(CATALOGO.map((item) => [item.id, item]))
@@ -95,6 +97,11 @@ export function vantagem(id: string): Vantagem | null {
 export function tipoCoterie(id: string): TipoCoterie | null {
   const item = itemCatalogo(id)
   return item?.tipo === 'tipo-coterie' ? item : null
+}
+
+export function tipoPredador(id: string): TipoPredador | null {
+  const item = itemCatalogo(id)
+  return item?.tipo === 'tipo-predador' ? item : null
 }
 
 /** "Compelir (Compel)" quando o nome difere do original. */

@@ -9,7 +9,7 @@
  * - da Coterie: `coterie-vantagem-<nome>`, `coterie-defeito-<nome>`, `tipo-coterie-<nome>`.
  */
 
-import type { Disciplina } from '../ficha'
+import type { Disciplina, Habilidade } from '../ficha'
 import type { Livro } from './livros'
 
 /** certo: nome da edição brasileira ou tradução óbvia; duvida: tradução livre a revisar; ingles: mantido em inglês. */
@@ -90,7 +90,34 @@ export type TipoCoterie = ItemBase & {
   defeitosSugeridos?: string
 }
 
-export type ItemCatalogo = Poder | Ritual | Vantagem | TipoCoterie
+export type EscolhaEspecializacaoPredador = {
+  habilidade: Habilidade
+  sugestoes: string[]
+}
+
+/** Tipo de Predador: caça habitual, aplica bônus e opções na criação (Corebook e Players Guide). */
+export type TipoPredador = ItemBase & {
+  tipo: 'tipo-predador'
+  /** Especializações oferecidas: jogador escolhe uma das habilidades e uma especialização sugerida ou livre */
+  opcoesEspecializacao: EscolhaEspecializacaoPredador[]
+  /** Disciplinas onde ganha 1 ponto. Se tiver 1, é automática; se 2+, escolhe 1. */
+  opcoesDisciplina: Disciplina[]
+  /** Modificador de Humanidade (+1, -1 ou indefinido). */
+  modificadorHumanidade?: number
+  /** Modificador de Potência do Sangue (ex.: +1 Sanguessuga). */
+  modificadorPotenciaSangue?: number
+  /** Vantagens concedidas automaticamente */
+  vantagens: { id: string; nome: string; nivel: Nivel; nota?: string }[]
+  /** Defeitos concedidos automaticamente */
+  defeitos: { id: string; nome: string; nivel: Nivel; nota?: string }[]
+  /** Escolhas adicionais quando o livro dá alternativa de vantagens ou defeitos */
+  escolhasTracos?: {
+    rotulo: string
+    opcoes: { tipo: 'vantagem' | 'defeito'; id: string; nome: string; nivel: Nivel; nota?: string }[]
+  }[]
+}
+
+export type ItemCatalogo = Poder | Ritual | Vantagem | TipoCoterie | TipoPredador
 export type TipoItem = ItemCatalogo['tipo']
 
 /** Termo da consulta rápida de regras (Atributos, Clãs, Domínio, Fome...). */

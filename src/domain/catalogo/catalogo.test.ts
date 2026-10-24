@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { DISCIPLINAS } from '../ficha'
-import { CATALOGO, PODERES, RITUAIS_TODOS, TIPOS_COTERIE, VANTAGENS_COTERIE, VANTAGENS_PERSONAGEM } from './index'
+import {
+  CATALOGO,
+  PODERES,
+  RITUAIS_TODOS,
+  TIPOS_COTERIE,
+  TIPOS_PREDADOR,
+  VANTAGENS_COTERIE,
+  VANTAGENS_PERSONAGEM,
+} from './index'
 import { LIVROS } from './livros'
 
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -40,6 +48,7 @@ describe('Catálogo', () => {
       expect(v.id.startsWith(`coterie-${v.tipo}-`), v.id).toBe(true)
     }
     for (const t of TIPOS_COTERIE) expect(t.id.startsWith('tipo-coterie-'), t.id).toBe(true)
+    for (const p of TIPOS_PREDADOR) expect(p.id.startsWith('tipo-predador-'), p.id).toBe(true)
   })
 
   it('amálgama aponta para outra Disciplina existente', () => {
