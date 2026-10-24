@@ -34,10 +34,18 @@ import { atributosDoGrupo, habilidadesDoGrupo, nomeDisciplina, rotuloGeracao } f
 // Valor da opção "Sem Clã", "Sem Geração" e "Sem Seita" nos combobox.
 const NENHUM = 'nenhum'
 
-function opcoesDe(lista: readonly { id: string; nome: string; nomeOriginal: string }[], semNada: string): OpcaoCombobox[] {
+function opcoesDe(
+  lista: readonly { id: string; nome: string; nomeOriginal?: string }[],
+  semNada: string,
+  incluirOriginal = true,
+): OpcaoCombobox[] {
   return [
     { valor: NENHUM, rotulo: semNada },
-    ...lista.map((x) => ({ valor: x.id, rotulo: x.nome, original: x.nomeOriginal })),
+    ...lista.map((x) => ({
+      valor: x.id,
+      rotulo: x.nome,
+      ...(incluirOriginal && x.nomeOriginal ? { original: x.nomeOriginal } : {}),
+    })),
   ]
 }
 
@@ -188,7 +196,7 @@ export function CamposIdentidade({
         <Campo id="cla" rotulo="Clã">
           <Combobox
             id="cla"
-            opcoes={opcoesDe(clas, 'Sem Clã')}
+            opcoes={opcoesDe(clas, 'Sem Clã', false)}
             valor={ficha.cla ?? NENHUM}
             onChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
             busca="Buscar Clã"

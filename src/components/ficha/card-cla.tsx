@@ -2,7 +2,7 @@ import { Info } from 'lucide-react'
 
 import { TermoRegra } from '#/components/consulta-regra'
 import { Badge } from '#/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { buscarConsultaRegra, CONSULTA_CLAS } from '#/domain/catalogo/regras-consulta'
 import type { Cla } from '#/domain/ficha'
 
@@ -61,7 +61,6 @@ export function CardPerdicaoCompulsaoCla({ cla }: { cla: Cla | null }) {
             </div>
           )}
         </div>
-        {dados.subtitulo && <CardDescription className="text-xs">{dados.subtitulo}</CardDescription>}
       </CardHeader>
       <CardContent className="flex flex-col gap-3 pt-0 text-sm">
         {dados.perdicao && (
