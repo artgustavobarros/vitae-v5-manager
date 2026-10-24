@@ -9,7 +9,6 @@ import { Input } from '#/components/ui/input'
 import type { Papel } from '#/domain/acesso'
 import {
   CAMPO_DO_RITUAL,
-  DISCIPLINA_DO_RITUAL,
   itensSoltos,
   nivelDisciplina,
   opcoesPoderes,
@@ -21,6 +20,8 @@ import {
   situacaoItem,
   TEXTO_MOTIVO,
   temVagaDePoder,
+  temPoderes,
+  tipoRitualDa,
   type Opcao,
   type TipoRitual,
 } from '#/domain/catalogo/escolhas'
@@ -36,18 +37,6 @@ export const ROTULO_RITUAIS: Record<TipoRitual, string> = {
   ritual: 'Rituais',
   cerimonia: 'Cerimônias',
   formula: 'Fórmulas',
-}
-
-const RITUAL_DA_DISCIPLINA: Partial<Record<Disciplina, TipoRitual>> = Object.fromEntries(
-  Object.entries(DISCIPLINA_DO_RITUAL).map(([tipo, disciplina]) => [disciplina, tipo]),
-)
-
-export function tipoRitualDa(disciplina: Disciplina): TipoRitual | null {
-  return RITUAL_DA_DISCIPLINA[disciplina] ?? null
-}
-
-export function temPoderes(disciplina: Disciplina): disciplina is DisciplinaComPoderes {
-  return disciplina !== 'alquimia-de-sangue-ralo'
 }
 
 function opcaoCombobox<T extends Poder | Ritual>({ item, motivos, bloqueado }: Opcao<T>): OpcaoCombobox {
@@ -93,7 +82,6 @@ export function ItemEscolhido({
     </li>
   )
 }
-
 function BotaoRemover({ nome, onClick }: { nome: string; onClick: () => void }) {
   return (
     <Button type="button" variant="ghost" size="icon" aria-label={`Remover ${nome}`} onClick={onClick}>
@@ -404,14 +392,4 @@ export function ListaSoltos({
       </ul>
     </div>
   )
-}
-
-/** Tira o id de qualquer lista de poderes ou Rituais da Ficha. */
-export function semItem(ficha: Ficha, id: string): Partial<Ficha> {
-  return {
-    poderes: ficha.poderes.filter((x) => x !== id),
-    rituais: ficha.rituais.filter((x) => x !== id),
-    cerimonias: ficha.cerimonias.filter((x) => x !== id),
-    formulas: ficha.formulas.filter((x) => x !== id),
-  }
 }

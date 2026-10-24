@@ -245,7 +245,7 @@ export const PODERES_OBLIVIO: Poder[] = [
     tipo: 'poder',
     disciplina: 'oblivio',
     nivel: 4,
-    nome: 'Sudário Estígio',
+    nome: 'Mortalha de Estígia',
     nomeOriginal: 'Stygian Shroud',
     descricao: 'Solta a escuridão de uma sombra próxima por toda a área.',
     custo: 'Um Teste de Despertar',

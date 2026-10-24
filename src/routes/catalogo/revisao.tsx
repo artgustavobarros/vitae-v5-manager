@@ -60,7 +60,7 @@ function RevisaoTraducao() {
         <div>
           <h1 className="font-serif text-display text-balance">Revisão de tradução</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Aprove o nome e a descrição ou sugira outros. A sugestão entra no código, e o item passa a Certo.
+            Aprove o nome e a descrição ou sugira outros. A sugestão fica pendente até a atualização do Catálogo.
           </p>
         </div>
 
@@ -145,6 +145,7 @@ function LinhaRevisao({ item }: { item: ItemRevisao & { status: StatusRevisao } 
       await acao()
       toast.success(aviso)
       setSugerindo(false)
+      window.dispatchEvent(new Event('revisao-atualizada'))
       await router.invalidate()
     } catch {
       toast.error('Não foi possível salvar. Tente de novo.')

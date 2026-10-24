@@ -204,4 +204,10 @@ describe('escolhasInvalidas (servidor, para o Jogador)', () => {
     ]
     expect(escolhasInvalidas(dominacao2, { ...dominacao2, vantagens: dobro }, buscar)).toHaveLength(2)
   })
+
+  it('recusa duplicar uma Vantagem não repetível já salva no mesmo nível', () => {
+    const antes = ficha({ vantagens: [{ id: recursos.id, nivel: 1 }] })
+    const depois = { ...antes, vantagens: [...antes.vantagens, { id: recursos.id, nivel: 1 }] }
+    expect(escolhasInvalidas(antes, depois, buscar)).toContain(recursos.id)
+  })
 })

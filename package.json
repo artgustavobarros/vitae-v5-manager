@@ -15,6 +15,7 @@
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio",
+    "catalogo:aplicar-sugestoes": "tsx scripts/aplicar-sugestoes.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

@@ -6,6 +6,7 @@ import { TermoRegra } from '#/components/consulta-regra'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { semItem, temPoderes, tipoRitualDa } from '#/domain/catalogo/escolhas'
 import {
   CLAS,
   DISCIPLINAS,
@@ -24,15 +25,7 @@ import {
   type Seita,
 } from '#/domain/ficha'
 
-import {
-  CamposPoderes,
-  CamposRituais,
-  CamposVantagensPersonagem,
-  ListaSoltos,
-  semItem,
-  temPoderes,
-  tipoRitualDa,
-} from './catalogo'
+import { CamposPoderes, CamposRituais, CamposVantagensPersonagem, ListaSoltos } from './catalogo'
 import { SeletorPontos } from './marcadores'
 import { atributosDoGrupo, habilidadesDoGrupo, nomeDisciplina, rotuloGeracao } from './tracos'
 

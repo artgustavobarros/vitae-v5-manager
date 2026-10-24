@@ -13,7 +13,6 @@ const CBN = (pagina: number | null): Fonte => ({ livro: 'Chicago by Night', pagi
 const COTBG = (pagina: number | null): Fonte => ({ livro: 'Cults of the Blood Gods', pagina })
 const COTB = (pagina: number | null): Fonte => ({ livro: 'Children of the Blood', pagina })
 const IM = (pagina: number | null): Fonte => ({ livro: 'In Memoriam', pagina })
-const LFSC = (pagina: number | null): Fonte => ({ livro: 'Live from the Succubus Club', pagina })
 
 type Tipo = Omit<TipoCoterie, 'id' | 'tipo'>
 

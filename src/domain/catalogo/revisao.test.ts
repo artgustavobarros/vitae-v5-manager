@@ -59,6 +59,16 @@ describe('statusDe', () => {
     expect(statusDe(revisoes, 'a')).toBe('aprovado')
     expect(statusDe([...revisoes].reverse(), 'a')).toBe('aprovado')
   })
+
+  it('considera aplicada a sugestão quando o texto já está no código', () => {
+    const revisoes: Revisao[] = [
+      { itemId: 'dominacao-1-compelir', status: 'sugerido', sugestaoNome: 'Obrigar', criadoEm: em(1) },
+    ]
+    expect(filaRevisao(itens, revisoes, { confianca: 'duvida', categoria: null, busca: '' })).toHaveLength(1)
+    const atualizado = [{ ...itens[0], nome: 'Obrigar', confianca: 'certo' as const }, ...itens.slice(1)]
+    expect(contarPendentes(atualizado, revisoes)).toBe(2)
+    expect(filaRevisao(atualizado, revisoes, { confianca: 'certo', categoria: null, busca: '' })).toHaveLength(2)
+  })
 })
 
 describe('filaRevisao', () => {

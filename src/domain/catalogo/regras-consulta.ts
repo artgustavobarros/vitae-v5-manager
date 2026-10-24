@@ -5,23 +5,6 @@ import type { ItemCatalogo, ItemConsultaRegra } from './tipos'
 
 export type { ItemConsultaRegra }
 
-const ESCALA_ATRIBUTO = [
-  { nivel: 1, rotulo: 'Fraco', descricao: 'Abaixo da média humana; esforço perceptível para tarefas simples.' },
-  { nivel: 2, rotulo: 'Médio', descricao: 'Capacidade humana comum; padrão para a maioria das pessoas.' },
-  { nivel: 3, rotulo: 'Notável', descricao: 'Claramente acima da média; destaque entre conhecidos.' },
-  { nivel: 4, rotulo: 'Excepcional', descricao: 'Nível profissional de ponta ou talento atlético/intelectual raro.' },
-  { nivel: 5, rotulo: 'Ápice humano', descricao: 'O limite absoluto do potencial humano antes do sobrenatural.' },
-]
-
-const ESCALA_HABILIDADE = [
-  { nivel: 0, rotulo: 'Sem treino', descricao: 'Nenhum conhecimento ou prática; depende puramente do Atributo.' },
-  { nivel: 1, rotulo: 'Novato', descricao: 'Conhecimento introdutório ou amador; princípios básicos entendidos.' },
-  { nivel: 2, rotulo: 'Praticante', descricao: 'Competência sólida; consegue exercer em nível profissional ou cotidiano.' },
-  { nivel: 3, rotulo: 'Especialista', descricao: 'Domínio avançado e confiável mesmo sob pressão.' },
-  { nivel: 4, rotulo: 'Mestre', descricao: 'Autoridade respeitada na área; executa feitos de grande dificuldade.' },
-  { nivel: 5, rotulo: 'Fenômeno', descricao: 'Um dos melhores do mundo no campo de atuação.' },
-]
-
 export const CONSULTA_ATRIBUTOS: Record<string, ItemConsultaRegra> = {
   "forca": {
     "id": "forca",

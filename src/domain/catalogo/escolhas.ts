@@ -29,6 +29,18 @@ export const CAMPO_DO_RITUAL = {
   formula: 'formulas',
 } as const satisfies Record<TipoRitual, keyof Ficha>
 
+const RITUAL_DA_DISCIPLINA: Partial<Record<Disciplina, TipoRitual>> = Object.fromEntries(
+  Object.entries(DISCIPLINA_DO_RITUAL).map(([tipo, disciplina]) => [disciplina, tipo]),
+)
+
+export function tipoRitualDa(disciplina: Disciplina): TipoRitual | null {
+  return RITUAL_DA_DISCIPLINA[disciplina] ?? null
+}
+
+export function temPoderes(disciplina: Disciplina): disciplina is DisciplinaComPoderes {
+  return disciplina !== 'alquimia-de-sangue-ralo'
+}
+
 /** nivel: acima do nível da Disciplina; limite: a Disciplina já tem tantos poderes quanto o nível; amalgama: falta a outra Disciplina. */
 export type Motivo = 'nivel' | 'limite' | 'amalgama'
 
@@ -156,6 +168,16 @@ export function itensSoltos(ficha: Ficha, buscar: Buscar = itemCatalogo): string
   return [...poderes, ...rituais]
 }
 
+/** Tira o id de qualquer lista de poderes ou Rituais da Ficha. */
+export function semItem(ficha: Ficha, id: string): Partial<Ficha> {
+  return {
+    poderes: ficha.poderes.filter((x) => x !== id),
+    rituais: ficha.rituais.filter((x) => x !== id),
+    cerimonias: ficha.cerimonias.filter((x) => x !== id),
+    formulas: ficha.formulas.filter((x) => x !== id),
+  }
+}
+
 /** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos. */
 export function opcoesVantagens(
   escolhidas: readonly EscolhaVantagem[],
@@ -196,9 +218,15 @@ export function escolhasInvalidas(antes: Ficha, depois: Ficha, buscar: Buscar = 
   for (const campo of ['vantagens', 'defeitos'] as const) {
     const tipo = campo === 'vantagens' ? 'vantagem' : 'defeito'
     for (const escolha of depois[campo]) {
-      if (antes[campo].some((e) => e.id === escolha.id && e.nivel === escolha.nivel)) continue
       const item = buscar(escolha.id)
       const repetida = depois[campo].filter((e) => e.id === escolha.id).length > 1
+      const repetivel = (item?.tipo === 'vantagem' || item?.tipo === 'defeito') && item.repetivel
+      const repeticaoNova =
+        repetida &&
+        !repetivel &&
+        depois[campo].filter((e) => e.id === escolha.id).length >
+          antes[campo].filter((e) => e.id === escolha.id).length
+      if (antes[campo].some((e) => e.id === escolha.id && e.nivel === escolha.nivel) && !repeticaoNova) continue
       const valida =
         item?.tipo === tipo &&
         item.escopo === 'personagem' &&

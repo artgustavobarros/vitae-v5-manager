@@ -47,7 +47,13 @@ export type ItemRevisao = {
 
 export type StatusRevisao = 'pendente' | 'sugerido' | 'aprovado'
 
-export type Revisao = { itemId: string; status: 'aprovado' | 'sugerido'; criadoEm: Date }
+export type Revisao = {
+  itemId: string
+  status: 'aprovado' | 'sugerido'
+  criadoEm: Date
+  sugestaoNome?: string | null
+  sugestaoDescricao?: string | null
+}
 
 const ROTULO_CONSULTA: Record<TipoConsulta, string> = {
   atributo: 'Atributo',
@@ -125,12 +131,19 @@ export function itensRevisao(
 }
 
 /** A revisão mais recente do item manda. */
-export function statusDe(revisoes: readonly Revisao[], itemId: string): StatusRevisao {
+export function statusDe(revisoes: readonly Revisao[], itemId: string, item?: ItemRevisao): StatusRevisao {
   let ultima: Revisao | null = null
   for (const r of revisoes) {
     if (r.itemId === itemId && (!ultima || r.criadoEm >= ultima.criadoEm)) ultima = r
   }
-  return ultima?.status ?? 'pendente'
+  if (!ultima) return 'pendente'
+  if (
+    ultima.status === 'sugerido' &&
+    item?.confianca === 'certo' &&
+    (ultima.sugestaoNome == null || ultima.sugestaoNome === item.nome) &&
+    (ultima.sugestaoDescricao == null || ultima.sugestaoDescricao === item.descricao)
+  ) return 'aprovado'
+  return ultima.status
 }
 
 export type FiltroRevisao = {
@@ -146,7 +159,7 @@ export function filaRevisao(
   filtro: FiltroRevisao,
 ): (ItemRevisao & { status: StatusRevisao })[] {
   return itens
-    .map((item) => ({ ...item, status: statusDe(revisoes, item.id) }))
+    .map((item) => ({ ...item, status: statusDe(revisoes, item.id, item) }))
     .filter(
       (item) =>
         item.status !== 'aprovado' &&
@@ -158,5 +171,5 @@ export function filaRevisao(
 
 /** Itens que ainda não foram aprovados nem receberam sugestão; vai no link do menu do Narrador. */
 export function contarPendentes(itens: readonly ItemRevisao[], revisoes: readonly Revisao[]): number {
-  return itens.filter((item) => statusDe(revisoes, item.id) === 'pendente').length
+  return itens.filter((item) => statusDe(revisoes, item.id, item) === 'pendente').length
 }

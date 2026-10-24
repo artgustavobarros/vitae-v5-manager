@@ -32,9 +32,14 @@ function usePendentesRevisao(papel: Papel): number {
   const [pendentes, setPendentes] = useState(0)
   useEffect(() => {
     if (papel !== 'narrador') return
-    contarRevisoesPendentes()
-      .then(setPendentes)
-      .catch(() => setPendentes(0))
+    const atualizar = () => {
+      contarRevisoesPendentes()
+        .then(setPendentes)
+        .catch(() => setPendentes(0))
+    }
+    atualizar()
+    window.addEventListener('revisao-atualizada', atualizar)
+    return () => window.removeEventListener('revisao-atualizada', atualizar)
   }, [papel])
   return pendentes
 }

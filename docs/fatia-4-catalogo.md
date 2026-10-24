@@ -66,6 +66,8 @@ Decisões confirmadas no grill de 2026-10-24. Os termos seguem o `GLOSSARY.md`, 
   - "Aprovar" marca o item como revisado e o tira da fila;
   - "Enviar sugestão" grava em `revisao_traducao`. A sugestão é aplicada no código, e o item passa a "Certo".
 
+Para aplicar as sugestões pendentes no código, execute `pnpm catalogo:aplicar-sugestoes`, revise o diff e publique a nova versão. A revisão sai da fila quando o texto publicado corresponde à sugestão.
+
 ## Pesquisa do conteúdo
 
 - Fonte principal: VTM Wiki. Sai em 3 lotes, cada um com um agente em segundo plano:

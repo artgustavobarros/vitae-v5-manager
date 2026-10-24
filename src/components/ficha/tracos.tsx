@@ -1,6 +1,7 @@
 import { cn } from 'cn'
 
 import { TermoRegra } from '#/components/consulta-regra'
+import { itensSoltos } from '#/domain/catalogo/escolhas'
 import {
   ATRIBUTOS,
   CLAS,
@@ -62,7 +63,7 @@ export function gruposHabilidades(ficha: Ficha, { soComPontos = false } = {}): G
 
 /** Disciplinas só para leitura: nome, pontos e, embaixo, os poderes e Rituais. */
 export function ListaDisciplinas({ ficha, className }: { ficha: Ficha; className?: string }) {
-  if (ficha.disciplinas.length === 0 && ficha.poderes.length === 0) {
+  if (ficha.disciplinas.length === 0 && itensSoltos(ficha).length === 0) {
     return <p className="text-sm text-muted-foreground">Nenhuma Disciplina.</p>
   }
   return (

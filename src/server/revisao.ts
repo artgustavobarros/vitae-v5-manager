@@ -12,7 +12,13 @@ const itemId = z.string().refine((id) => IDS.has(id), 'Item fora do Catálogo')
 
 async function lerRevisoes() {
   return db
-    .select({ itemId: revisaoTraducao.itemId, status: revisaoTraducao.status, criadoEm: revisaoTraducao.criadoEm })
+    .select({
+      itemId: revisaoTraducao.itemId,
+      status: revisaoTraducao.status,
+      criadoEm: revisaoTraducao.criadoEm,
+      sugestaoNome: revisaoTraducao.sugestaoNome,
+      sugestaoDescricao: revisaoTraducao.sugestaoDescricao,
+    })
     .from(revisaoTraducao)
     .orderBy(asc(revisaoTraducao.criadoEm))
 }
