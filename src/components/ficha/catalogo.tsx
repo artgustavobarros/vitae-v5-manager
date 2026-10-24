@@ -67,7 +67,7 @@ export function ItemEscolhido({
   const situacao = situacaoItem(ficha, id)
   return (
     <li className="flex min-h-11 items-center justify-between gap-2 border-b text-base">
-      <div className="flex min-w-0 flex-col py-2">
+      <div className="flex flex-1 min-w-0 flex-col py-2">
         {item ? (
           <TermoRegra tipo="catalogo" id={id} className={cn(situacao !== 'ok' && 'text-vinho')}>
             {item.nome}
@@ -84,7 +84,14 @@ export function ItemEscolhido({
 }
 function BotaoRemover({ nome, onClick }: { nome: string; onClick: () => void }) {
   return (
-    <Button type="button" variant="ghost" size="icon" aria-label={`Remover ${nome}`} onClick={onClick}>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={`Remover ${nome}`}
+      onClick={onClick}
+      className="shrink-0 cursor-pointer text-muted-foreground hover:text-destructive"
+    >
       <Trash2 className="size-4" />
     </Button>
   )
@@ -257,7 +264,7 @@ export function CamposVantagens({
                       }))}
                       valor={String(e.nivel)}
                       onChange={(v) => trocar(i, { nivel: Number(v) })}
-                      className="w-32"
+                      className="w-32 shrink-0"
                     />
                     <Input
                       aria-label={`Nota de ${item?.nome ?? 'item removido'}`}
@@ -265,14 +272,13 @@ export function CamposVantagens({
                       value={e.nota ?? ''}
                       maxLength={200}
                       onChange={(ev) => trocar(i, { nota: ev.target.value || undefined })}
+                      className="flex-1 min-w-0"
+                    />
+                    <BotaoRemover
+                      nome={item?.nome ?? 'item removido'}
+                      onClick={() => onChange(escolhidas.filter((_, j) => j !== i))}
                     />
                   </div>
-                }
-                acao={
-                  <BotaoRemover
-                    nome={item?.nome ?? 'item removido'}
-                    onClick={() => onChange(escolhidas.filter((_, j) => j !== i))}
-                  />
                 }
               />
             )
