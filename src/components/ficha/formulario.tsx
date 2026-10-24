@@ -186,17 +186,13 @@ export function CamposIdentidade({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Campo id="cla" rotulo="Clã">
-          <div className="flex items-center gap-2">
-            <Combobox
-              id="cla"
-              opcoes={opcoesDe(clas, 'Sem Clã')}
-              valor={ficha.cla ?? NENHUM}
-              onChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
-              busca="Buscar Clã"
-              className="flex-1"
-            />
-            {ficha.cla && <InfoRegra tipo="cla" id={ficha.cla} />}
-          </div>
+          <Combobox
+            id="cla"
+            opcoes={opcoesDe(clas, 'Sem Clã')}
+            valor={ficha.cla ?? NENHUM}
+            onChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
+            busca="Buscar Clã"
+          />
         </Campo>
         <Campo id="geracao" rotulo="Geração">
           <Combobox
