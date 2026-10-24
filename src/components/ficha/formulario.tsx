@@ -37,7 +37,7 @@ const NENHUM = 'nenhum'
 function opcoesDe(
   lista: readonly { id: string; nome: string; nomeOriginal?: string }[],
   semNada: string,
-  incluirOriginal = true,
+  incluirOriginal = false,
 ): OpcaoCombobox[] {
   return [
     { valor: NENHUM, rotulo: semNada },
@@ -219,7 +219,7 @@ export function CamposIdentidade({
         <Campo id="seita" rotulo="Seita" opcional>
           <Combobox
             id="seita"
-            opcoes={opcoesDe(SEITAS, 'Sem Seita')}
+            opcoes={opcoesDe(SEITAS, 'Sem Seita', false)}
             valor={ficha.seita ?? NENHUM}
             onChange={(v) => mudar({ seita: v === NENHUM ? null : (v as Seita) })}
             busca="Buscar Seita"
