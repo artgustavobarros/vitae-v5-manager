@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { EditorRichText } from '#/components/ui/editor-rich-text'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { Textarea } from '#/components/ui/textarea'
@@ -81,11 +82,11 @@ export function CamposConviccoesCriacao({
 
               <div className="flex flex-col gap-1">
                 <Label htmlFor={`pedra-${i}`} className="text-xs text-muted-foreground">
-                  Pedra de Toque (Humano mortal e relação):
+                  Pedra de Toque (Opcional — humano mortal e relação):
                 </Label>
                 <Input
                   id={`pedra-${i}`}
-                  placeholder="Ex.: Irmã caçula Clara, pediatra"
+                  placeholder="Ex.: Irmã caçula Clara, pediatra (opcional)"
                   value={par.pedraDeToque}
                   onChange={(e) => alterarPar(i, 'pedraDeToque', e.target.value)}
                   className="text-xs"
@@ -146,10 +147,10 @@ export function CamposConviccoesCriacao({
       </div>
 
       {/* Aparência e História */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="aparencia" className="text-sm font-medium">
-            Aparência
+            Aparência <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
           </Label>
           <Textarea
             id="aparencia"
@@ -159,16 +160,16 @@ export function CamposConviccoesCriacao({
             rows={3}
           />
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="historia" className="text-sm font-medium">
-            História
+            História <span className="text-xs font-normal text-muted-foreground">(Opcional — suporta texto rico/Markdown)</span>
           </Label>
-          <Textarea
+          <EditorRichText
             id="historia"
-            placeholder="Quem era em vida, como foi o Abraço e como sobreviveu até hoje..."
+            placeholder="Quem era em vida, como foi o Abraço e como sobreviveu até hoje (use a barra para formatar em negrito, títulos, listas...)"
             value={ficha.historia}
-            onChange={(e) => mudar({ historia: e.target.value })}
-            rows={4}
+            onChange={(val) => mudar({ historia: val })}
+            rows={6}
           />
         </div>
       </div>

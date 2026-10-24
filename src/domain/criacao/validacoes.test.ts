@@ -512,9 +512,17 @@ describe('validarConviccoes', () => {
     expect(res4.valido).toBe(false)
   })
 
-  it('rejeita convicção ou pedra de toque vazia', () => {
+  it('aceita convicção com ou sem pedra de toque (pedra de toque opcional)', () => {
+    const resSemPedra = validarConviccoes([{ conviccao: 'Nunca roubar', pedraDeToque: '' }])
+    expect(resSemPedra.valido).toBe(true)
+
+    const resComPedra = validarConviccoes([{ conviccao: 'Nunca roubar', pedraDeToque: 'Minha mãe' }])
+    expect(resComPedra.valido).toBe(true)
+  })
+
+  it('rejeita convicção com texto vazio', () => {
     const resVazio = validarConviccoes([
-      { conviccao: 'Nunca roubar', pedraDeToque: '   ' },
+      { conviccao: '   ', pedraDeToque: 'Minha mãe' },
     ])
     expect(resVazio.valido).toBe(false)
   })

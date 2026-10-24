@@ -26,7 +26,7 @@ import {
   type Especializacao,
   type PerfilHabilidade,
 } from '#/domain/criacao'
-import { tipoPredador } from '#/domain/catalogo'
+import { itemCatalogo, tipoPredador } from '#/domain/catalogo'
 import type { OpcoesCriacaoCronica } from '#/domain/cronica'
 import type { Ficha, Habilidade } from '#/domain/ficha'
 import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
@@ -36,6 +36,7 @@ import { CamposHabilidadesCriacao } from './wizard-habilidades'
 import { CamposDisciplinasCriacao } from './wizard-disciplinas'
 import { CamposTipoPredadorCriacao } from './wizard-predador'
 import { CamposConviccoesCriacao } from './wizard-conviccoes'
+import { VisualizadorMarkdown } from '#/components/ui/editor-rich-text'
 
 export const ETAPAS = [
   'Identidade',
@@ -117,7 +118,10 @@ export function WizardCriacao({
         const disciplinasCriacao: DisciplinaCriacao[] = ficha.disciplinas.map((d) => ({
           id: d.disciplina,
           nivel: d.nivel,
-          poderes: ficha.poderes,
+          poderes: ficha.poderes.filter((pid) => {
+            const p = itemCatalogo(pid)
+            return p?.tipo === 'poder' && p.disciplina === d.disciplina
+          }),
         }))
         return validarDisciplinasCriacao(ficha.cla ?? 'caitiff', disciplinasCriacao).valido
       }
@@ -374,7 +378,9 @@ function Revisao({
             ficha.conviccoes.map((c, i) => (
               <div key={i} className="flex flex-col border-b pb-2 text-sm">
                 <span className="font-medium text-foreground">Convicção: "{c.conviccao}"</span>
-                <span className="text-xs text-muted-foreground">Pedra de Toque: {c.pedraDeToque}</span>
+                <span className="text-xs text-muted-foreground">
+                  Pedra de Toque: {c.pedraDeToque?.trim() ? c.pedraDeToque : '(Não informada)'}
+                </span>
               </div>
             ))
           ) : (
@@ -382,6 +388,13 @@ function Revisao({
           )}
           <Dado rotulo="Ambição" valor={ficha.ambicao} />
           <Dado rotulo="Desejo" valor={ficha.desejo} />
+          {ficha.aparencia && <Dado rotulo="Aparência" valor={ficha.aparencia} />}
+          {ficha.historia && (
+            <div className="flex flex-col gap-1 border-b pb-2">
+              <span className="text-sm text-muted-foreground">História:</span>
+              <VisualizadorMarkdown markdown={ficha.historia} />
+            </div>
+          )}
         </div>
       </BlocoRevisao>
     </div>

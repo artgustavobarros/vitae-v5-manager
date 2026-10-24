@@ -428,9 +428,6 @@ export function validarConviccoes(
     if (!c.conviccao || c.conviccao.trim().length === 0) {
       erros.push(`Convicção ${i + 1} não pode estar vazia.`)
     }
-    if (!c.pedraDeToque || c.pedraDeToque.trim().length === 0) {
-      erros.push(`Cada Convicção deve possuir uma Pedra de Toque mortal associada (Convicção ${i + 1}).`)
-    }
   }
 
   return {

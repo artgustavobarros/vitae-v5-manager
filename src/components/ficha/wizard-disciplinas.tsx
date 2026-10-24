@@ -1,5 +1,6 @@
 import { Combobox } from '#/components/combobox'
 import { TermoRegra } from '#/components/consulta-regra'
+import { Badge } from '#/components/ui/badge'
 import { Label } from '#/components/ui/label'
 import { PODERES, itemCatalogo } from '#/domain/catalogo'
 import {
@@ -35,21 +36,68 @@ export function CamposDisciplinasCriacao({
 
   const validacao = validarDisciplinasCriacao(cla, disciplinasCriacao)
 
-  function alterarPontosDisciplina(disciplinaId: Disciplina, novoNivel: number) {
+  // Disciplinas alocadas
+  const discNivel2 = ficha.disciplinas.find((d) => d.nivel === 2)
+  const discNivel1 = ficha.disciplinas.find((d) => d.nivel === 1)
+  const totalPoderes = ficha.poderes.filter((pid) => {
+    const p = itemCatalogo(pid)
+    return p?.tipo === 'poder' && ficha.disciplinas.some((d) => d.disciplina === p.disciplina)
+  }).length
+
+  function alterarPontosDisciplina(disciplinaId: Disciplina, alvo: number) {
     let novasDisciplinas = [...ficha.disciplinas]
-    const index = novasDisciplinas.findIndex((d) => d.disciplina === disciplinaId)
+    const atualIndex = novasDisciplinas.findIndex((d) => d.disciplina === disciplinaId)
+    const nivelAtual = atualIndex !== -1 ? novasDisciplinas[atualIndex].nivel : 0
+    const novoNivel = nivelAtual === alvo ? alvo - 1 : alvo
 
     if (novoNivel <= 0) {
-      if (index !== -1) novasDisciplinas.splice(index, 1)
-    } else {
-      if (index !== -1) {
-        novasDisciplinas[index] = { disciplina: disciplinaId, nivel: novoNivel }
+      if (atualIndex !== -1) novasDisciplinas.splice(atualIndex, 1)
+    } else if (novoNivel === 2) {
+      // Regra V5: Apenas UMA disciplina com nível 2
+      // Se outra já tinha 2, passa para 1 (se vago) ou 0
+      novasDisciplinas = novasDisciplinas.map((d) => {
+        if (d.disciplina === disciplinaId) return { ...d, nivel: 2 }
+        if (d.nivel === 2) return { ...d, nivel: 1 }
+        return d
+      })
+      if (!novasDisciplinas.some((d) => d.disciplina === disciplinaId)) {
+        novasDisciplinas.push({ disciplina: disciplinaId, nivel: 2 })
+      }
+      // Se sobrou mais de uma disciplina em nível 1, mantém a mais recente
+      const outrasNivel1 = novasDisciplinas.filter((d) => d.disciplina !== disciplinaId && d.nivel === 1)
+      if (outrasNivel1.length > 1) {
+        const descartar = outrasNivel1[0].disciplina
+        novasDisciplinas = novasDisciplinas.filter((d) => d.disciplina !== descartar)
+      }
+    } else if (novoNivel === 1) {
+      // Regra V5: Apenas UMA disciplina com nível 1 (além da de nível 2)
+      novasDisciplinas = novasDisciplinas.filter(
+        (d) => d.disciplina === disciplinaId || d.nivel !== 1,
+      )
+      if (atualIndex !== -1) {
+        novasDisciplinas = novasDisciplinas.map((d) =>
+          d.disciplina === disciplinaId ? { ...d, nivel: 1 } : d,
+        )
       } else {
-        novasDisciplinas.push({ disciplina: disciplinaId, nivel: novoNivel })
+        novasDisciplinas.push({ disciplina: disciplinaId, nivel: 1 })
       }
     }
 
-    mudar({ disciplinas: novasDisciplinas })
+    // Poda poderes da disciplina cujo nível caiu ou foi zerada
+    const outrosPoderes = ficha.poderes.filter((pid) => {
+      const p = itemCatalogo(pid)
+      return p?.tipo === 'poder' && p.disciplina !== disciplinaId
+    })
+    const poderesDesta = ficha.poderes.filter((pid) => {
+      const p = itemCatalogo(pid)
+      return p?.tipo === 'poder' && p.disciplina === disciplinaId
+    })
+    const poderesPodados = poderesDesta.slice(0, Math.max(0, novoNivel))
+
+    mudar({
+      disciplinas: novasDisciplinas,
+      poderes: [...outrosPoderes, ...poderesPodados],
+    })
   }
 
   function escolherPoder(disciplinaId: Disciplina, slotIndex: number, poderId: string) {
@@ -73,16 +121,39 @@ export function CamposDisciplinasCriacao({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-4">
+      <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold">Disciplinas na Criação (V5)</span>
-          <span className="text-xs text-muted-foreground">Regra 2/1 de Clã</span>
+          <span className="text-xs text-muted-foreground font-medium">Orçamento 2/1 de Clã</span>
         </div>
         <p className="text-xs text-muted-foreground">
           {ehSangueRalo
-            ? 'Sangue-Ralo não possui Disciplinas de Clã na criação inicial.'
-            : 'Aloque 2 pontos em uma Disciplina de clã e 1 ponto em outra. Para cada ponto, escolha um poder do Catálogo.'}
+            ? 'Sangue-Ralo não possui Disciplinas de Clã na criação inicial (utiliza Alquimia de Sangue-Ralo).'
+            : 'Aloque exatamente 2 pontos em uma Disciplina e 1 ponto em outra. Para cada ponto de disciplina alocado, selecione um poder.'}
         </p>
+
+        {!ehSangueRalo && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-border/40">
+            <div className="flex items-center justify-between rounded-md border bg-background/50 px-3 py-2 text-xs">
+              <span className="text-muted-foreground">Disciplina em 2 Pontos:</span>
+              <Badge variant={discNivel2 ? 'default' : 'outline'} className="font-mono text-xs">
+                {discNivel2 ? nomeDisciplina(discNivel2.disciplina) : '0/1'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-md border bg-background/50 px-3 py-2 text-xs">
+              <span className="text-muted-foreground">Disciplina em 1 Ponto:</span>
+              <Badge variant={discNivel1 ? 'default' : 'outline'} className="font-mono text-xs">
+                {discNivel1 ? nomeDisciplina(discNivel1.disciplina) : '0/1'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-md border bg-background/50 px-3 py-2 text-xs">
+              <span className="text-muted-foreground">Poderes Escolhidos:</span>
+              <Badge variant={totalPoderes === 3 ? 'default' : 'outline'} className="font-mono text-xs">
+                {totalPoderes} / 3
+              </Badge>
+            </div>
+          </div>
+        )}
 
         {regrasCriacao && !validacao.valido && (
           <div className="mt-2 flex flex-col gap-1">
@@ -102,11 +173,6 @@ export function CamposDisciplinasCriacao({
             const alocacao = ficha.disciplinas.find((d) => d.disciplina === discId)
             const nivel = alocacao?.nivel ?? 0
 
-            // Poderes disponíveis desta disciplina até o nível alocado
-            const poderesDisponiveis = PODERES.filter(
-              (p) => p.disciplina === discId && p.nivel <= Math.max(1, nivel),
-            )
-
             const poderesEscolhidos = ficha.poderes.filter((pid) => {
               const p = itemCatalogo(pid)
               return p?.tipo === 'poder' && p.disciplina === discId
@@ -116,15 +182,18 @@ export function CamposDisciplinasCriacao({
               <div key={discId} className="flex flex-col gap-3 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <TermoRegra tipo="disciplina" id={discId}>
-                    {discNome}
+                    <span className="font-medium text-foreground hover:text-vinho transition-colors cursor-pointer">
+                      {discNome}
+                    </span>
                   </TermoRegra>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {[1, 2].map((n) => (
                       <button
                         key={n}
                         type="button"
-                        onClick={() => alterarPontosDisciplina(discId, nivel === n ? n - 1 : n)}
-                        className={`h-8 w-8 rounded-full border text-xs font-semibold transition-colors ${
+                        onClick={() => alterarPontosDisciplina(discId, n)}
+                        aria-label={`${discNome} nível ${n}`}
+                        className={`h-8 w-8 rounded-full border text-xs font-semibold transition-colors cursor-pointer ${
                           nivel >= n ? 'border-vinho bg-vinho text-white' : 'bg-background hover:bg-muted'
                         }`}
                       >
@@ -134,25 +203,36 @@ export function CamposDisciplinasCriacao({
                   </div>
                 </div>
 
-                {/* Seletores de poderes obrigatórios para os pontos alocados */}
+                {/* Seletores de poderes para os pontos alocados */}
                 {nivel > 0 && (
-                  <div className="flex flex-col gap-2 border-t pt-2">
+                  <div className="flex flex-col gap-3 border-t pt-3">
                     <span className="text-xs font-medium text-muted-foreground">
                       Escolha {nivel} {nivel === 1 ? 'poder' : 'poderes'}:
                     </span>
                     {Array.from({ length: nivel }, (_, slotIndex) => {
                       const poderAtual = poderesEscolhidos[slotIndex] ?? ''
+                      // Poder 1 deve ser de nível 1; Poder 2 pode ser de nível 1 ou 2
+                      const maxNivelPoder = slotIndex + 1
+                      const opcoesPoder = PODERES.filter(
+                        (p) =>
+                          p.disciplina === discId &&
+                          p.nivel <= maxNivelPoder &&
+                          (!poderesEscolhidos.includes(p.id) || p.id === poderAtual),
+                      )
+
                       return (
                         <div key={slotIndex} className="flex flex-col gap-1">
-                          <Label className="text-xs text-muted-foreground">Poder {slotIndex + 1}:</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Poder {slotIndex + 1} (Nível {slotIndex === 0 ? '1' : '1 ou 2'}):
+                          </Label>
                           <Combobox
-                            opcoes={poderesDisponiveis.map((p) => ({
+                            opcoes={opcoesPoder.map((p) => ({
                               valor: p.id,
                               rotulo: `${p.nome} (Nível ${p.nivel})`,
                               original: p.nomeOriginal,
                               descricao: p.descricao,
                             }))}
-                            valor={poderAtual}
+                            valor={poderAtual || null}
                             onChange={(pId) => escolherPoder(discId, slotIndex, pId)}
                             placeholder="Selecionar poder..."
                             busca="Buscar poder"

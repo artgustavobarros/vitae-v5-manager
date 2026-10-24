@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
+import { VisualizadorMarkdown } from '#/components/ui/editor-rich-text'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Label } from '#/components/ui/label'
@@ -215,6 +216,22 @@ export function FichaPersonagem({
                 </div>
               ))}
             </dl>
+
+            {ficha.aparencia && (
+              <div className="mt-6 flex flex-col gap-1 border-t pt-4">
+                <h3 className="font-serif text-lg font-semibold">Aparência</h3>
+                <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{ficha.aparencia}</p>
+              </div>
+            )}
+
+            {ficha.historia && (
+              <div className="mt-6 flex flex-col gap-2 border-t pt-4">
+                <h3 className="font-serif text-lg font-semibold">História</h3>
+                <div className="text-sm text-foreground/90 leading-relaxed">
+                  <VisualizadorMarkdown markdown={ficha.historia} />
+                </div>
+              </div>
+            )}
 
             <section className="mt-8 flex flex-col gap-4 border-t pt-4">
               <h2 className="font-serif text-2xl">Vantagens e Defeitos</h2>
