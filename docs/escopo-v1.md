@@ -135,7 +135,8 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 ## Catálogo
 
-- Cobre o livro básico e os clãs dos suplementos: Lasombra, Hecata, Ministério, Banu Haqim, Ravnos, Salubri e Tzimisce.
+- Cobre todo livro que a VTM Wiki (vtm.paradoxwikis.com) cita como fonte, exceto as Loresheets. O que faltar na wiki vem dos PDFs do Narrador.
+- Nomes seguem a edição brasileira quando existir; a referência de página é sempre da edição em inglês.
 - Cada item tem nome, nível, pré-requisitos, custo, referência de página e uma descrição curta escrita pelo projeto. Nenhum texto do livro é copiado.
 - Conteúdo só disponível em inglês é traduzido livremente, com o nome original entre parênteses.
 - Toda tradução passa por uma página de revisão durante o desenvolvimento. A página mostra o original e a tradução proposta, e tem um campo para o Narrador sugerir uma tradução melhor.
@@ -150,3 +151,4 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - Notificação push no celular com o site fechado.
 - Retrato do Personagem.
 - Resumo dos Personagens dos outros Jogadores fora das Coteries.
+- Loresheets.
