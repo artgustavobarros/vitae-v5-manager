@@ -10,14 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContaRouteImport } from './routes/conta'
 import { Route as EntrarRouteImport } from './routes/entrar'
-import { Route as DemoFichaRouteImport } from './routes/demo/ficha'
+import { Route as ConviteTokenRouteImport } from './routes/convite/$token'
 import { Route as NarradorConvitesRouteImport } from './routes/narrador/convites'
+import { Route as NarradorPersonagensRouteImport } from './routes/narrador/personagens'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as PersonagensIdIndexRouteImport } from './routes/personagens/$id/index'
+import { Route as PersonagensIdEditarRouteImport } from './routes/personagens/$id/editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContaRoute = ContaRouteImport.update({
+  id: '/conta',
+  path: '/conta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntrarRoute = EntrarRouteImport.update({
@@ -25,9 +34,9 @@ const EntrarRoute = EntrarRouteImport.update({
   path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoFichaRoute = DemoFichaRouteImport.update({
-  id: '/demo/ficha',
-  path: '/demo/ficha',
+const ConviteTokenRoute = ConviteTokenRouteImport.update({
+  id: '/convite/$token',
+  path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NarradorConvitesRoute = NarradorConvitesRouteImport.update({
@@ -35,55 +44,107 @@ const NarradorConvitesRoute = NarradorConvitesRouteImport.update({
   path: '/narrador/convites',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NarradorPersonagensRoute = NarradorPersonagensRouteImport.update({
+  id: '/narrador/personagens',
+  path: '/narrador/personagens',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonagensIdIndexRoute = PersonagensIdIndexRouteImport.update({
+  id: '/personagens/$id/',
+  path: '/personagens/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonagensIdEditarRoute = PersonagensIdEditarRouteImport.update({
+  id: '/personagens/$id/editar',
+  path: '/personagens/$id/editar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
-  '/demo/ficha': typeof DemoFichaRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/narrador/convites': typeof NarradorConvitesRoute
+  '/narrador/personagens': typeof NarradorPersonagensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/personagens/$id/editar': typeof PersonagensIdEditarRoute
+  '/personagens/$id/': typeof PersonagensIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
-  '/demo/ficha': typeof DemoFichaRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/narrador/convites': typeof NarradorConvitesRoute
+  '/narrador/personagens': typeof NarradorPersonagensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/personagens/$id/editar': typeof PersonagensIdEditarRoute
+  '/personagens/$id': typeof PersonagensIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
-  '/demo/ficha': typeof DemoFichaRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/narrador/convites': typeof NarradorConvitesRoute
+  '/narrador/personagens': typeof NarradorPersonagensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/personagens/$id/editar': typeof PersonagensIdEditarRoute
+  '/personagens/$id/': typeof PersonagensIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/entrar' | '/demo/ficha' | '/narrador/convites' | '/api/auth/$'
+    | '/'
+    | '/conta'
+    | '/entrar'
+    | '/convite/$token'
+    | '/narrador/convites'
+    | '/narrador/personagens'
+    | '/api/auth/$'
+    | '/personagens/$id/editar'
+    | '/personagens/$id/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/entrar' | '/demo/ficha' | '/narrador/convites' | '/api/auth/$'
+  to:
+    | '/'
+    | '/conta'
+    | '/entrar'
+    | '/convite/$token'
+    | '/narrador/convites'
+    | '/narrador/personagens'
+    | '/api/auth/$'
+    | '/personagens/$id/editar'
+    | '/personagens/$id'
   id:
     | '__root__'
     | '/'
+    | '/conta'
     | '/entrar'
-    | '/demo/ficha'
+    | '/convite/$token'
     | '/narrador/convites'
+    | '/narrador/personagens'
     | '/api/auth/$'
+    | '/personagens/$id/editar'
+    | '/personagens/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContaRoute: typeof ContaRoute
   EntrarRoute: typeof EntrarRoute
-  DemoFichaRoute: typeof DemoFichaRoute
+  ConviteTokenRoute: typeof ConviteTokenRoute
   NarradorConvitesRoute: typeof NarradorConvitesRoute
+  NarradorPersonagensRoute: typeof NarradorPersonagensRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  PersonagensIdEditarRoute: typeof PersonagensIdEditarRoute
+  PersonagensIdIndexRoute: typeof PersonagensIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,6 +156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conta': {
+      id: '/conta'
+      path: '/conta'
+      fullPath: '/conta'
+      preLoaderRoute: typeof ContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/entrar': {
       id: '/entrar'
       path: '/entrar'
@@ -102,11 +170,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/ficha': {
-      id: '/demo/ficha'
-      path: '/demo/ficha'
-      fullPath: '/demo/ficha'
-      preLoaderRoute: typeof DemoFichaRouteImport
+    '/convite/$token': {
+      id: '/convite/$token'
+      path: '/convite/$token'
+      fullPath: '/convite/$token'
+      preLoaderRoute: typeof ConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/narrador/convites': {
@@ -116,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NarradorConvitesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/narrador/personagens': {
+      id: '/narrador/personagens'
+      path: '/narrador/personagens'
+      fullPath: '/narrador/personagens'
+      preLoaderRoute: typeof NarradorPersonagensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -123,15 +198,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personagens/$id/': {
+      id: '/personagens/$id/'
+      path: '/personagens/$id'
+      fullPath: '/personagens/$id/'
+      preLoaderRoute: typeof PersonagensIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personagens/$id/editar': {
+      id: '/personagens/$id/editar'
+      path: '/personagens/$id/editar'
+      fullPath: '/personagens/$id/editar'
+      preLoaderRoute: typeof PersonagensIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContaRoute: ContaRoute,
   EntrarRoute: EntrarRoute,
-  DemoFichaRoute: DemoFichaRoute,
+  ConviteTokenRoute: ConviteTokenRoute,
   NarradorConvitesRoute: NarradorConvitesRoute,
+  NarradorPersonagensRoute: NarradorPersonagensRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  PersonagensIdEditarRoute: PersonagensIdEditarRoute,
+  PersonagensIdIndexRoute: PersonagensIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

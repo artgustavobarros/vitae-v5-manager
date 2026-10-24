@@ -4,6 +4,7 @@ import {
   alternarCaixaDano,
   alternarFome,
   alternarMancha,
+  alternarPontos,
   caixasDano,
   type Dano,
 } from './trilhas'
@@ -65,6 +66,20 @@ describe('alternarFome', () => {
 
   it('tocar numa bolinha abaixo do valor desce até ela', () => {
     expect(alternarFome(4, 1)).toBe(2)
+  })
+})
+
+describe('alternarPontos', () => {
+  it('tocar numa bolinha leva o valor até ela', () => {
+    expect(alternarPontos(1, 3)).toBe(4)
+  })
+
+  it('tocar na última bolinha marcada desce um', () => {
+    expect(alternarPontos(3, 2)).toBe(2)
+  })
+
+  it('não desce abaixo do mínimo', () => {
+    expect(alternarPontos(1, 0, 1)).toBe(1)
   })
 })
 

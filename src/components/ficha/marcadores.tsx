@@ -1,6 +1,6 @@
 import { cn } from 'cn'
 
-import type { CaixaDano } from '#/domain/trilhas'
+import { alternarPontos, type CaixaDano } from '#/domain/trilhas'
 
 /** Glifos da ficha oficial: caixa vazia, "/" superficial e "X" agravado, com o mesmo traço. */
 export function GlifoDano({ estado }: { estado: CaixaDano }) {
@@ -58,5 +58,40 @@ export function Pontos({ valor, max = 5, rotulo }: { valor: number; max?: number
         <Bolinha key={i} cheia={i < valor} />
       ))}
     </span>
+  )
+}
+
+/** Linha de pontos tocável para o formulário manual: tocar leva o valor até a bolinha. */
+export function SeletorPontos({
+  valor,
+  min = 0,
+  max = 5,
+  rotulo,
+  onChange,
+  className,
+}: {
+  valor: number
+  min?: number
+  max?: number
+  rotulo: string
+  onChange: (valor: number) => void
+  /** Ex.: `grid grid-cols-5` para quebrar trilhas de 10 em duas linhas no celular. */
+  className?: string
+}) {
+  return (
+    <div role="group" aria-label={`${rotulo}: ${valor} de ${max}`} className={cn('flex', className)}>
+      {Array.from({ length: max }, (_, i) => (
+        <button
+          key={i}
+          type="button"
+          aria-label={`${rotulo} ${i + 1}`}
+          aria-pressed={i < valor}
+          onClick={() => onChange(alternarPontos(valor, i, min))}
+          className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Bolinha cheia={i < valor} grande />
+        </button>
+      ))}
+    </div>
   )
 }

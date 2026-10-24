@@ -29,10 +29,15 @@ export function alternarCaixaDano(dano: Dano, max: number, indice: number): Dano
   return { ...dano, agravado: Math.min(dano.agravado, max) - 1 }
 }
 
+/** Tocar numa bolinha leva o valor até ela; tocar na última marcada desmarca só ela. */
+export function alternarPontos(atual: number, indice: number, min = 0): number {
+  const alvo = indice + 1
+  return Math.max(min, alvo === atual ? atual - 1 : alvo)
+}
+
 /** Tocar numa bolinha leva a Fome até ela; tocar na última marcada desmarca só ela. */
 export function alternarFome(atual: number, indice: number): number {
-  const alvo = indice + 1
-  return alvo === atual ? atual - 1 : alvo
+  return alternarPontos(atual, indice)
 }
 
 export function ehMancha(trilha: TrilhaHumanidade, indice: number): boolean {

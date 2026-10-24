@@ -2,6 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
+import { Toaster } from '#/components/ui/sonner'
 import { buscarUsuario } from '#/server/sessao'
 import appCss from '../styles.css?url'
 
@@ -38,9 +39,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster position="top-center" />
         <TanStackDevtools
           config={{
-            position: 'bottom-right',
+            // No meio da borda: embaixo, o botão cobria o rodapé do wizard no celular.
+            position: 'middle-right',
           }}
           plugins={[
             {

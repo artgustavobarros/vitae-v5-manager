@@ -112,6 +112,13 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
+  /* O Tailwind 4 tirou o cursor de mão dos botões; volta em tudo que é clicável e está habilitado. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='menuitem']:not([data-disabled]),
+  [role='option']:not([data-disabled]) {
+    cursor: pointer;
+  }
   ::selection {
     background: color-mix(in oklab, var(--vinho) 45%, transparent);
     color: var(--foreground);

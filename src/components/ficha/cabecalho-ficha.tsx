@@ -11,10 +11,13 @@ export function CabecalhoFicha({
   descricao,
   fome,
   horizonte,
+  selo,
   children,
 }: {
   nome: string
   descricao: string
+  /** Aviso curto sob a descrição, como o status de Rascunho. */
+  selo?: ReactNode
   fome: number
   barra: ReactNode
   horizonte: ReactNode
@@ -30,6 +33,7 @@ export function CabecalhoFicha({
           <div className="px-4 pt-2 pb-4">
             <h1 className="font-serif text-display text-balance">{nome}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{descricao}</p>
+            {selo && <div className="mt-2">{selo}</div>}
           </div>
         </div>
       </section>

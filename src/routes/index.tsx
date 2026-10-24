@@ -2,59 +2,64 @@ import { Link, createFileRoute, redirect, useRouter } from '@tanstack/react-rout
 import { ChevronRight } from 'lucide-react'
 
 import { BarraApp } from '#/components/barra-app'
-import { Button } from '#/components/ui/button'
-import { authClient } from '#/lib/auth-client'
+import { BotaoNovoPersonagem } from '#/components/botao-novo-personagem'
+import { ListaPersonagens } from '#/components/lista-personagens'
+import { PersonagensAtribuidos } from '#/components/personagens-atribuidos'
+import { listarAtribuidosAMim, listarMeusPersonagens } from '#/server/personagens'
 
 export const Route = createFileRoute('/')({
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
     return { usuario: context.usuario }
   },
+  loader: async ({ context }) => {
+    if (context.usuario.papel !== 'jogador') return { personagens: [], atribuidos: [] }
+    const [personagens, atribuidos] = await Promise.all([listarMeusPersonagens(), listarAtribuidosAMim()])
+    return { personagens, atribuidos }
+  },
   component: Inicio,
 })
 
 function Inicio() {
   const { usuario } = Route.useRouteContext()
+  const { personagens, atribuidos } = Route.useLoaderData()
   const router = useRouter()
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl">
-      <BarraApp
-        direita={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-mr-3"
-            onClick={async () => {
-              await authClient.signOut()
-              await router.invalidate()
-            }}
-          >
-            Sair
-          </Button>
-        }
-      />
+      <BarraApp />
       <div className="px-4 pt-2">
         <h1 className="font-serif text-display text-balance">Olá, {usuario.nome}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Você entrou como {usuario.papel === 'narrador' ? 'Narrador' : 'Jogador'}.
-        </p>
         {usuario.papel === 'jogador' && (
-          <section className="mt-8 border-y py-4">
-            <h2 className="font-serif text-2xl">Nenhum Personagem ainda</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Seus Personagens aparecem aqui. A criação de Personagem chega na próxima etapa do Umbra; até lá,
-              combine com o Narrador.
-            </p>
-            {import.meta.env.DEV && (
-              <Button asChild variant="secondary" className="mt-4">
-                <Link to="/demo/ficha">Ver Ficha de demonstração</Link>
-              </Button>
+          <div className="mt-8 flex flex-col gap-8 pb-12">
+          <PersonagensAtribuidos itens={atribuidos} onRespondido={() => router.invalidate()} />
+          <section className="flex flex-col gap-4">
+            <h2 className="font-serif text-2xl">Meus Personagens</h2>
+            {personagens.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum Personagem ainda. Crie o primeiro: ele começa como Rascunho, com os valores do Neófito.
+              </p>
+            ) : (
+              <ListaPersonagens
+                itens={personagens.map((p) => ({ ...p, meuRascunho: p.status === 'rascunho' }))}
+                onApagado={() => router.invalidate()}
+              />
             )}
+            <div>
+              <BotaoNovoPersonagem rotulo="Novo Personagem" />
+            </div>
           </section>
+          </div>
         )}
         {usuario.papel === 'narrador' && (
-          <nav className="mt-8 border-y">
+          <nav className="mt-8 divide-y border-y">
+            <Link
+              to="/narrador/personagens"
+              className="flex h-12 items-center justify-between text-base outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Personagens
+              <ChevronRight aria-hidden className="size-4 text-muted-foreground" />
+            </Link>
             <Link
               to="/narrador/convites"
               className="flex h-12 items-center justify-between text-base outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"

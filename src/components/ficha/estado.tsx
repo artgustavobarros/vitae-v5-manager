@@ -44,7 +44,7 @@ export function TrilhaDano({
             disabled={!onChange}
             aria-label={`${rotulo}, caixa ${i + 1}: ${NOMES_DANO[estado]}`}
             onClick={() => onChange?.(alternarCaixaDano(dano, max, i))}
-            className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
+            className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <GlifoDano estado={estado} />
           </button>
@@ -71,7 +71,7 @@ export function TrilhaFome({ fome, onChange }: { fome: number; onChange?: (fome:
               aria-label={`Fome ${i + 1}`}
               aria-pressed={i < fome}
               onClick={() => onChange?.(alternarFome(fome, i))}
-              className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
+              className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Bolinha cheia={i < fome} cor="vinho" grande />
             </button>
@@ -105,7 +105,7 @@ export function HorizonteHumanidade({
               disabled={!onChange || humano}
               aria-label={humano ? `Humanidade ${i + 1}` : mancha ? 'Remover Mancha' : 'Marcar Mancha'}
               onClick={() => onChange?.(alternarMancha(trilha, i))}
-              className="relative flex h-12 flex-1 items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
+              className="relative flex h-12 flex-1 items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span
                 className={cn(

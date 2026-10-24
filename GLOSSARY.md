@@ -13,7 +13,7 @@ Pessoa que participa da Crônica e controla as Fichas dos próprios Personagens.
 _Avoid_: Player, usuário
 
 **Convite para a Crônica**:
-Autorização do Narrador para que uma pessoa entre no site como Jogador.
+Link de uso único que o Narrador gera para uma pessoa criar conta e entrar no site como Jogador.
 _Avoid_: Convite (sozinho), cadastro, acesso
 
 ## Mundo
@@ -29,6 +29,10 @@ _Avoid_: Char, PC
 **PdN**:
 Personagem sem Jogador, controlado pelo Narrador; um Personagem de Jogador pode virar PdN, nunca o contrário.
 _Avoid_: NPC, figurante
+
+**Personagem atribuído**:
+Rascunho que o Narrador criou e atribuiu a um Jogador, à espera de que ele aceite; ao aceitar, o Rascunho passa a ser do Jogador. Um Rascunho do Narrador ainda não é PdN.
+_Avoid_: Oferta de Personagem, Convite de Personagem
 
 **Arquivado**:
 Estado de um Personagem que deixou de existir na história (morte, saída definitiva); ele sai de todas as Coteries. Virar PdN não é arquivar.

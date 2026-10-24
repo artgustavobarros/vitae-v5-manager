@@ -8,6 +8,41 @@
       "when": 1792631486250,
       "tag": "0000_inicial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792800115840,
+      "tag": "0001_personagem",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792802875093,
+      "tag": "0002_contas_por_usuario",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792802883342,
+      "tag": "0003_convite_por_link",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792803759596,
+      "tag": "0004_seita_lista",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792803930368,
+      "tag": "0005_personagem_atribuido",
+      "breakpoints": true
     }
   ]
 }

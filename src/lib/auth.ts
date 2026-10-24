@@ -1,18 +1,29 @@
+import { randomUUID } from 'node:crypto'
+
 import { betterAuth } from 'better-auth'
 import { APIError } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { username } from 'better-auth/plugins'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 
 import { db } from '#/db'
 import * as schema from '#/db/schema'
 import { decidirPapel, normalizarEmail } from '#/domain/acesso'
+import {
+  COOKIE_CONVITE,
+  DOMINIO_EMAIL_SINTETICO,
+  estadoConvite,
+  validarNomeUsuario,
+} from '#/domain/convite'
+
+const DEV = import.meta.env?.DEV ?? false
 
 export const auth = betterAuth({
   appName: 'Umbra',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
-  // Login de desenvolvimento: e-mail e senha só existem em `pnpm dev`.
-  emailAndPassword: { enabled: import.meta.env?.DEV ?? false },
+  // Jogadores entram por nome de usuário e senha; quem cria a conta é o hook abaixo, com convite.
+  emailAndPassword: { enabled: true },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
@@ -28,24 +39,42 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Só o Narrador e quem tem Convite para a Crônica conseguem criar conta.
-        before: async (user) => {
-          const email = normalizarEmail(user.email)
-          const convite = await db.query.conviteCronica.findFirst({
-            where: eq(schema.conviteCronica.email, email),
-          })
+        // Só o Narrador e quem chega por um Convite para a Crônica válido conseguem criar conta.
+        before: async (user, ctx) => {
+          const token = ctx?.getCookie(COOKIE_CONVITE) ?? null
+          const convite = token
+            ? await db.query.conviteCronica.findFirst({ where: eq(schema.conviteCronica.token, token) })
+            : undefined
+          const porSenha = ctx?.path === '/sign-up/email'
+          const sintetico = user.email.endsWith(`@${DOMINIO_EMAIL_SINTETICO}`)
+          const email = sintetico ? `${randomUUID()}@${DOMINIO_EMAIL_SINTETICO}` : normalizarEmail(user.email)
           const papel = decidirPapel({
             email,
             narradorEmail: process.env.NARRADOR_EMAIL ?? '',
-            temConvite: convite !== undefined,
+            temConvite: estadoConvite(convite) === 'valido',
+            metodo: porSenha ? 'senha' : 'google',
+            dev: DEV,
           })
           if (!papel) {
             throw new APIError('FORBIDDEN', { message: 'sem_convite' })
           }
           return { data: { ...user, email, papel } }
         },
+        // O convite vale para um único cadastro.
+        after: async (user, ctx) => {
+          const token = ctx?.getCookie(COOKIE_CONVITE)
+          if (!token || user.papel !== 'jogador') return
+          await db
+            .update(schema.conviteCronica)
+            .set({ usadoEm: new Date(), usadoPor: user.id })
+            .where(and(eq(schema.conviteCronica.token, token), isNull(schema.conviteCronica.usadoEm)))
+          ctx?.setCookie(COOKIE_CONVITE, '', { path: '/', maxAge: 0 })
+        },
       },
     },
   },
-  plugins: [tanstackStartCookies()],
+  plugins: [
+    username({ usernameValidator: (nome) => validarNomeUsuario(nome) === null }),
+    tanstackStartCookies(),
+  ],
 })

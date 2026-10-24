@@ -6,13 +6,25 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 - Uma única Crônica, jogada presencialmente, com uso principal no celular.
 - Interface somente em PT-BR. Sem modo offline.
-- Um único Narrador. Jogadores entram com login Google, via Convite para a Crônica.
+- Um único Narrador, que entra com Google.
+- Jogadores entram por Convite para a Crônica:
+  - o Narrador gera um link por pessoa e envia como quiser; não precisa de e-mail;
+  - o link vale para um único cadastro;
+  - pelo link, a pessoa cria conta com nome de usuário e senha, ou entra com Google, e então o nome dela é o nome do Google;
+  - sem link, ninguém cria conta. A tela de entrar só serve a quem já tem conta.
+- Uma página de configurações deixa a pessoa trocar o nome de usuário e a senha. Não há recuperação de senha por e-mail: o Narrador gera uma senha nova para o Jogador.
 - Stack: ver `docs/adr/0001-monolito-tanstack-start-postgres-vps.md`. Tempo real via SSE.
 
 ## Personagens e Fichas
 
 - Ciclo: Rascunho → Ativo → Arquivado. Não há aprovação do Narrador: o Personagem vira Ativo quando a criação é concluída, e a Ficha fica bloqueada.
-- O Jogador cria seus próprios Personagens quando quiser, quantos quiser, e só apaga Rascunhos. O Narrador não cria Personagem para um Jogador. Só o Narrador arquiva e reativa.
+- O Jogador cria seus próprios Personagens quando quiser, quantos quiser, e só apaga Rascunhos. Só o Narrador arquiva e reativa.
+- Personagem atribuído:
+  - o Narrador pode criar um Rascunho e atribuí-lo a um Jogador, um por vez;
+  - o Jogador vê o Rascunho em Meus Personagens, pode abrir a Ficha para leitura e aceita ou recusa;
+  - se aceitar, o Rascunho passa a ser dele; se recusar, volta a ser só do Narrador;
+  - enquanto espera, o Narrador continua editando e pode cancelar a atribuição;
+  - um Rascunho atribuído não pode ser concluído.
 - A criação guiada aplica as regras do V5 e bloqueia escolhas inválidas para o Jogador. O Narrador cria PdNs pela mesma criação guiada.
 - Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois de concluída, a Ficha mostra só o valor final.
 - Até a criação guiada existir (fatia 5), Jogador e Narrador criam Personagens por um formulário manual provisório, sem validação do V5.
@@ -74,6 +86,11 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - Tela do Jogador: lista única com os membros das Coteries dele. A Condição não compartilhada aparece como "oculto".
 - A barra de filtro por Coterie aparece quando a pessoa enxerga 3 ou mais Coteries.
 
+## Notificações
+
+- Só dentro do site, com o site aberto: toast na hora e um sino com a lista. Chegam pelo mesmo tempo real (SSE) dos Painéis.
+- Os eventos que geram notificação ainda estão por definir.
+
 ## Combate
 
 - O Bestiário é privado do Narrador e guarda Modelos com a ficha simplificada de antagonista do V5: paradas Físico, Social e Mental, paradas especiais, Vitalidade, Força de Vontade, Disciplinas e notas.
@@ -107,5 +124,6 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - XP.
 - Rolagem de parada de dados para Jogadores.
 - Modo offline.
+- Notificação push no celular com o site fechado.
 - Retrato do Personagem.
 - Resumo dos Personagens dos outros Jogadores fora das Coteries.

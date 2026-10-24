@@ -29,6 +29,21 @@ describe('decidirPapel', () => {
     ).toBeNull()
   })
 
+  it('fora do dev, o Narrador não cria conta por senha, só pelo Google', () => {
+    expect(
+      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail, temConvite: false, metodo: 'senha', dev: false }),
+    ).toBeNull()
+    expect(
+      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail, temConvite: false, metodo: 'senha', dev: true }),
+    ).toBe('narrador')
+  })
+
+  it('com convite, a conta por senha vira Jogador mesmo fora do dev', () => {
+    expect(
+      decidirPapel({ email: 'x@jogador.umbra.invalid', narradorEmail, temConvite: true, metodo: 'senha', dev: false }),
+    ).toBe('jogador')
+  })
+
   it('recusa todo mundo sem convite quando o Narrador não está configurado', () => {
     expect(
       decidirPapel({ email: 'narrador@exemplo.com', narradorEmail: '', temConvite: false }),

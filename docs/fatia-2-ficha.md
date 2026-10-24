@@ -52,6 +52,10 @@ Os demais itens da Ficha entram em fatias seguintes da v1: poderes de Disciplina
 ## Telas
 
 - Jogador: "Meus Personagens" (lista com status, botão "Novo Personagem" e "Apagar" nos Rascunhos) e a tela da Ficha.
+- Criação do Rascunho em wizard, sem regras do V5:
+  - etapas: Identidade, Atributos, Habilidades, Disciplinas, Sangue (Potência do Sangue, Humanidade, Ambição e Desejo) e Revisão;
+  - cada "Próximo" salva o Rascunho; "Concluir" fica na Revisão.
+- O Narrador edita uma Ficha Ativa pelo formulário inteiro, numa página só.
 - Tela da Ficha, segundo o layout de `src/routes/demo/ficha.tsx`:
   - topo: nome e a linha "Clã · Geração · Potência do Sangue";
   - preso no topo: Humanidade com Manchas, Vitalidade, Força de Vontade e Fome;
