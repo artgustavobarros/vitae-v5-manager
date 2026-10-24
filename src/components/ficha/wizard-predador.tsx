@@ -75,6 +75,44 @@ export function CamposTipoPredadorCriacao({
     })
   }
 
+  if (!ficha.cla) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/80 bg-muted/10 p-8 text-center sm:p-12">
+        <div className="flex max-w-md flex-col gap-1.5">
+          <h3 className="font-serif text-lg font-semibold text-foreground">
+            Clã Não Selecionado
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Volte para a etapa <strong className="text-foreground">Identidade</strong> e selecione o Clã do personagem antes de configurar o Tipo de Predador.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (ficha.cla === 'sangue-ralo') {
+    return (
+      <div className="flex flex-col gap-4 rounded-xl border bg-muted/20 p-6">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs uppercase tracking-wider">
+            Sangue-Ralo (Thin-Blood)
+          </Badge>
+        </div>
+        <div className="flex flex-col gap-2">
+          <h3 className="font-serif text-lg font-semibold text-foreground">
+            Sem Tipo de Predador na Criação
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Vampiros Sangue-Ralo não selecionam Tipo de Predador na criação de personagem (conforme o Livro Básico de V5, p. 140). A caça deles é instintiva e improvisada entre os mortais.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Você pode avançar diretamente para a etapa de <strong>Vantagens e Defeitos</strong>.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">

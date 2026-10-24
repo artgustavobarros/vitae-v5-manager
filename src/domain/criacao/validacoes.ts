@@ -221,10 +221,18 @@ export function validarHabilidadesCriacao(
  * Cada ponto exige exatamente 1 poder do Catálogo com nível <= disciplina e amálgamas atendidos.
  */
 export function validarDisciplinasCriacao(
-  cla: Cla,
+  cla: Cla | null,
   disciplinas: DisciplinaCriacao[],
 ): ResultadoValidacaoDisciplinas {
   const erros: string[] = []
+
+  if (!cla) {
+    return {
+      valido: false,
+      erros: ['Selecione um Clã na etapa Identidade para definir e validar as Disciplinas.'],
+    }
+  }
+
   const alocadas = disciplinas.filter((d) => d.nivel > 0)
 
   if (cla === 'sangue-ralo') {
@@ -310,11 +318,20 @@ export function validarDisciplinasCriacao(
  * Sangue-Ralo: de 1 a 3 Méritos de Sangue-Ralo e a mesma quantidade de Defeitos de Sangue-Ralo.
  */
 export function validarVantagensDefeitosCriacao(
-  cla: Cla,
+  cla: Cla | null,
   vantagens: EscolhaVantagemCriacao[],
   predador: TipoPredador | null,
 ): ResultadoValidacaoVantagens {
   const erros: string[] = []
+
+  if (!cla) {
+    return {
+      valido: false,
+      erros: ['Selecione um Clã na etapa Identidade para definir as Vantagens e Defeitos.'],
+      pontosVantagens: 0,
+      pontosDefeitos: 0,
+    }
+  }
 
   // Exclui traços marcados com origem predador
   let pessoais = vantagens.filter((v) => v.origem !== 'predador')

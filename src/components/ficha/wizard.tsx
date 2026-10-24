@@ -115,6 +115,7 @@ export function WizardCriacao({
         return validarHabilidadesCriacao(perfilHabilidade, valoresHab, especializacoes).valido
       }
       case 4: {
+        if (!ficha.cla) return false
         const disciplinasCriacao: DisciplinaCriacao[] = ficha.disciplinas.map((d) => ({
           id: d.disciplina,
           nivel: d.nivel,
@@ -123,14 +124,16 @@ export function WizardCriacao({
             return p?.tipo === 'poder' && p.disciplina === d.disciplina
           }),
         }))
-        return validarDisciplinasCriacao(ficha.cla ?? 'caitiff', disciplinasCriacao).valido
+        return validarDisciplinasCriacao(ficha.cla, disciplinasCriacao).valido
       }
       case 5:
+        if (ficha.cla === 'sangue-ralo') return true
         return ficha.tipoPredador !== null && escolhasPredador !== null
       case 6: {
+        if (!ficha.cla) return false
         const pred = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
         const vantagensFormatadas = ficha.vantagens.map((v) => ({ id: v.id, nivel: v.nivel }))
-        return validarVantagensDefeitosCriacao(ficha.cla ?? 'caitiff', vantagensFormatadas, pred).valido
+        return validarVantagensDefeitosCriacao(ficha.cla, vantagensFormatadas, pred).valido
       }
       case 7:
         return validarConviccoes(ficha.conviccoes).valido
@@ -196,6 +199,7 @@ export function WizardCriacao({
             ficha={edicao.ficha}
             mudar={edicao.mudar}
             regrasCriacao={regrasCriacao}
+            onIrParaEtapa={irPara}
           />
         )}
         {etapa === 5 && (
@@ -338,11 +342,21 @@ function Revisao({
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Disciplinas" etapa={4} onAlterar={onAlterar}>
-        <ListaDisciplinas ficha={ficha} />
+        {ficha.cla === 'sangue-ralo' ? (
+          <p className="text-sm text-muted-foreground pt-1">
+            Sangue-Ralo não possui Disciplinas de Clã na criação.
+          </p>
+        ) : (
+          <ListaDisciplinas ficha={ficha} />
+        )}
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Tipo de Predador" etapa={5} onAlterar={onAlterar}>
-        {predador ? (
+        {ficha.cla === 'sangue-ralo' ? (
+          <p className="text-sm text-muted-foreground pt-1">
+            Não aplicável a Sangue-Ralo (V5 Livro Básico p. 140).
+          </p>
+        ) : predador ? (
           <div className="flex flex-col gap-2 pt-2">
             <div className="flex items-center justify-between">
               <span className="font-medium text-foreground">{predador.nome}</span>

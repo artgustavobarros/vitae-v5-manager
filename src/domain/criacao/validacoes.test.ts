@@ -295,6 +295,12 @@ describe('validarDisciplinasCriacao', () => {
     expect(res.erros.some((e) => e.includes('Sangue-Ralo'))).toBe(true)
   })
 
+  it('rejeita se clã for nulo ou não selecionado', () => {
+    const res = validarDisciplinasCriacao(null, [])
+    expect(res.valido).toBe(false)
+    expect(res.erros.some((e) => e.includes('Selecione um Clã'))).toBe(true)
+  })
+
   it('aprova Sangue-Ralo sem disciplinas normais', () => {
     const res = validarDisciplinasCriacao('sangue-ralo', [])
     expect(res.valido).toBe(true)
@@ -408,6 +414,12 @@ describe('validarDisciplinasCriacao', () => {
 })
 
 describe('validarVantagensDefeitosCriacao', () => {
+  it('rejeita se clã for nulo ou não selecionado', () => {
+    const res = validarVantagensDefeitosCriacao(null, [], null)
+    expect(res.valido).toBe(false)
+    expect(res.erros.some((e) => e.includes('Selecione um Clã'))).toBe(true)
+  })
+
   it('aprova exatamente 7 de vantagens e 2 de defeitos para clã padrão', () => {
     const lista = [
       { id: 'vantagem-recursos', nivel: 4, origem: 'pessoal' as const },
