@@ -110,7 +110,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   - mudança feita pelo Jogador com a Ficha Liberada, uma por salvamento;
   - Convite de Coterie aceito ou recusado;
   - Personagem saiu de uma Coterie;
-  - Condição crítica de um Personagem (ex.: Fome 5, Vitalidade toda com dano agravado).
+  - Mudança de Condição marcada por Jogador: Fome chega a 4 ou a 5; Vitalidade ou Força de Vontade fica toda preenchida (qualquer dano) ou toda curada.
 - Cada marca de dano ou Fome não vira notificação: o Painel já mostra isso em tempo real.
 
 ## Combate

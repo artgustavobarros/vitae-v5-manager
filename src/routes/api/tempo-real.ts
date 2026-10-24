@@ -21,13 +21,26 @@ export const Route = createFileRoute('/api/tempo-real')({
 
         const stream = new ReadableStream({
           start(controller) {
+            const encerrar = () => {
+              if (intervalPing) clearInterval(intervalPing)
+              if (desinscrever) desinscrever()
+              try {
+                controller.close()
+              } catch {
+                // já fechado
+              }
+            }
+
             controller.enqueue(encoder.encode(': conectado\n\n'))
 
-            intervalPing = setInterval(() => {
+            // A cada ping confere a sessão: Jogador removido ou que saiu em outro aparelho para de receber eventos.
+            intervalPing = setInterval(async () => {
               try {
+                const ainda = await auth.api.getSession({ headers: request.headers })
+                if (ainda?.user.id !== usuarioId) return encerrar()
                 controller.enqueue(encoder.encode(': ping\n\n'))
               } catch {
-                if (intervalPing) clearInterval(intervalPing)
+                encerrar()
               }
             }, 20_000)
 
@@ -48,15 +61,7 @@ export const Route = createFileRoute('/api/tempo-real')({
               }
             })
 
-            request.signal.addEventListener('abort', () => {
-              if (intervalPing) clearInterval(intervalPing)
-              if (desinscrever) desinscrever()
-              try {
-                controller.close()
-              } catch {
-                // já fechado
-              }
-            })
+            request.signal.addEventListener('abort', encerrar)
           },
           cancel() {
             if (intervalPing) clearInterval(intervalPing)

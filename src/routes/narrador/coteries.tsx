@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
+import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -73,14 +74,14 @@ function CoteriesNarrador() {
           <Dialog open={aberto} onOpenChange={setAberto}>
             <DialogTrigger asChild>
               <Button size="sm">
-                <Plus className="mr-1.5 size-4" />
+                <Plus className="size-4" />
                 Nova Coterie
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <form onSubmit={handleCriar} className="flex flex-col gap-4">
                 <DialogHeader>
-                  <DialogTitle className="font-serif text-2xl">Nova Coterie</DialogTitle>
+                  <DialogTitle>Nova Coterie</DialogTitle>
                   <DialogDescription>
                     Crie um novo grupo para a Crônica. Membros e convites podem ser adicionados em seguida.
                   </DialogDescription>
@@ -135,9 +136,9 @@ function CoteriesNarrador() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-foreground">{c.nome}</span>
                     {c.ehPadrao && (
-                      <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-muted-foreground">
                         Padrão
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground">

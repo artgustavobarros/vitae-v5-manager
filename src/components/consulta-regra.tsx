@@ -1,6 +1,7 @@
 import { cn } from 'cn'
 import { useState, type ReactNode } from 'react'
 
+import { Button } from '#/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -23,11 +24,14 @@ export function TermoRegra({
   id,
   children,
   className,
+  icone = false,
 }: {
   tipo: 'atributo' | 'habilidade' | 'cla' | 'disciplina' | 'dominio'
   id: string
   children: ReactNode
   className?: string
+  /** Gatilho só com ícone (ⓘ), num alvo de 36px; sem isso, o termo fica no fluxo do texto. */
+  icone?: boolean
 }) {
   const [aberto, setAberto] = useState(false)
   const computador = useMediaQuery('(min-width: 768px)')
@@ -99,23 +103,27 @@ export function TermoRegra({
 
   return (
     <>
-      <button
+      {/* variant link sem sublinhado: o termo parece texto e só esquenta em vinho no hover. */}
+      <Button
         type="button"
+        variant="link"
+        size={icone ? 'icon' : 'default'}
         onClick={() => setAberto(true)}
         className={cn(
-          'inline cursor-pointer rounded-xs text-left outline-none transition-colors hover:text-vinho focus-visible:ring-2 focus-visible:ring-ring',
+          'cursor-pointer font-normal text-inherit hover:text-vinho hover:no-underline',
+          !icone && 'inline h-auto rounded-xs p-0 text-left text-base whitespace-normal',
           className,
         )}
         aria-label={`Ver detalhes de ${item.titulo}`}
       >
         {children}
-      </button>
+      </Button>
 
       {computador ? (
         <Dialog open={aberto} onOpenChange={setAberto}>
-          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-h-4/5 max-w-md overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">{item.titulo}</DialogTitle>
+              <DialogTitle>{item.titulo}</DialogTitle>
               {item.subtitulo && (
                 <DialogDescription className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {item.subtitulo}
@@ -127,9 +135,9 @@ export function TermoRegra({
         </Dialog>
       ) : (
         <Sheet open={aberto} onOpenChange={setAberto}>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-xl px-4 pb-8">
+          <SheetContent side="bottom" className="max-h-4/5 overflow-y-auto rounded-t-xl px-4 pb-8">
             <SheetHeader className="border-b pb-3 text-left">
-              <SheetTitle className="font-serif text-2xl">{item.titulo}</SheetTitle>
+              <SheetTitle>{item.titulo}</SheetTitle>
               {item.subtitulo && (
                 <SheetDescription className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {item.subtitulo}

@@ -20,7 +20,7 @@ Decisões confirmadas no grill de 2026-10-23. Os termos seguem o `GLOSSARY.md`, 
 - **Notificações**: tabela `notificacao` no banco, histórico no sino (até 50) e toast ao vivo via SSE.
   - Eventos cobertos agora:
     - Jogador: Personagem atribuído, Convite de Coterie recebido, Removido de Coterie, Coterie apagada, Narrador editou a Ficha.
-    - Narrador: Jogador entrou na Crônica (novo cadastro), Personagem concluído, Atribuição respondida, Convite de Coterie respondido, Personagem saiu de Coterie, Condição crítica.
+    - Narrador: Jogador entrou na Crônica (novo cadastro), Personagem concluído, Atribuição respondida, Convite de Coterie respondido, Personagem saiu de Coterie, Mudança de Condição.
 - **Consulta rápida de termos de regras**: toque em Atributos, Habilidades, Clãs, Disciplinas e Domínio abre Sheet no celular / Dialog no computador com descrições e escalas.
 
 ## Armazenamento
@@ -34,7 +34,7 @@ Decisões confirmadas no grill de 2026-10-23. Os termos seguem o `GLOSSARY.md`, 
 ## Regras e Comportamento
 
 - **SSE**: envia apenas tipo de evento + ids alterados; cliente invalida rotas pelo TanStack Router.
-- **Condição crítica**: dispara notificação para o Narrador apenas na transição para o estado crítico provocada por ação de Jogador.
+- **Mudança de Condição**: notifica o Narrador quando um Jogador marca uma destas transições: Fome chega a 4 ou a 5 (de 3 direto para 5 avisa só a 5); Vitalidade ou Força de Vontade fica toda preenchida, com qualquer dano; ou fica toda curada, sem nada gasto. Estado que já estava não repete aviso.
 - **Filtro de Coteries**: ativado a partir de 3 Coteries visíveis.
 - **Termos de regras**: texto descritivo e escala de 1 a 5 (ou resumo de clã com disciplinas, perdição e compulsão) em folha/diálogo.
 

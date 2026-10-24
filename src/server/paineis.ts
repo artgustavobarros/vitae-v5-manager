@@ -4,9 +4,8 @@ import { and, asc, eq, inArray } from 'drizzle-orm'
 import { db } from '#/db'
 import { coterie, membroCoterie, personagem, user } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
-import { vitalidadeMax, vontadeMax } from '#/domain/ficha'
-import { ehPdN } from '#/domain/permissoes-ficha'
-import type { Dano } from '#/domain/trilhas'
+import { condicaoDe, podeVerCondicao, type Condicao } from '#/domain/condicao'
+import { ehPdN, nomeJogador } from '#/domain/permissoes-ficha'
 import { exigirNarrador, exigirUsuario } from './sessao'
 
 export const carregarPainelNarrador = createServerFn({ method: 'GET' })
@@ -71,14 +70,10 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
       return {
         id: p.id,
         nome: p.nome,
-        jogador: p.papelDono === 'narrador' ? null : p.nomeDono,
+        jogador: nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.nomeDono }),
         coteries: cots.map((c) => c.nome),
         coterieIds: cots.map((c) => c.id),
-        vitalidadeMax: vitalidadeMax(p.ficha),
-        vontadeMax: vontadeMax(p.ficha),
-        danoVitalidade: p.ficha.danoVitalidade,
-        danoVontade: p.ficha.danoVontade,
-        fome: p.ficha.fome,
+        condicao: condicaoDe(p.ficha),
         humanidade: p.ficha.humanidade,
         manchas: p.ficha.manchas,
       }
@@ -150,13 +145,7 @@ export const carregarTelaCoteries = createServerFn({ method: 'GET' })
         compartilhaCondicao: boolean
         coteriesEmComum: string[]
         coterieIds: string[]
-        condicao: {
-          danoVitalidade: Dano
-          danoVontade: Dano
-          fome: number
-          maxVit: number
-          maxVont: number
-        } | null
+        condicao: Condicao | null
       }
     >()
 
@@ -168,29 +157,18 @@ export const carregarTelaCoteries = createServerFn({ method: 'GET' })
           existente.coteriesEmComum.push(l.nomeCoterie)
         }
       } else {
-        const ehMeu = l.donoId === usuario.id
-        const pdn = ehPdN({ papelDono: l.papelDono as Papel, status: l.status })
-        const podeVerCondicao = ehMeu || l.compartilhaCondicao
-
+        const papelDono = l.papelDono as Papel
         mapaPersonagens.set(l.id, {
           id: l.id,
           nome: l.nome,
           donoId: l.donoId,
-          jogador: pdn ? null : l.nomeDono,
-          pdn,
-          ehMeu,
+          jogador: nomeJogador({ papelDono, nomeDono: l.nomeDono }),
+          pdn: ehPdN({ papelDono, status: l.status }),
+          ehMeu: l.donoId === usuario.id,
           compartilhaCondicao: l.compartilhaCondicao,
           coteriesEmComum: [l.nomeCoterie],
           coterieIds: [l.coterieId],
-          condicao: podeVerCondicao
-            ? {
-                danoVitalidade: l.ficha.danoVitalidade,
-                danoVontade: l.ficha.danoVontade,
-                fome: l.ficha.fome,
-                maxVit: vitalidadeMax(l.ficha),
-                maxVont: vontadeMax(l.ficha),
-              }
-            : null,
+          condicao: podeVerCondicao(usuario, l) ? condicaoDe(l.ficha) : null,
         })
       }
     }

@@ -20,7 +20,9 @@ const DEV = import.meta.env?.DEV ?? false
 export const auth = betterAuth({
   appName: 'Umbra',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
-  trustedOrigins: ['http://localhost:3005', 'http://127.0.0.1:3005'],
+  // A origem de BETTER_AUTH_URL já é confiável; outras (ex.: http://127.0.0.1:3005) vêm de
+  // BETTER_AUTH_TRUSTED_ORIGINS, separadas por vírgula, que o better-auth lê do ambiente.
+  baseURL: process.env.BETTER_AUTH_URL,
   // Jogadores entram por nome de usuário e senha; quem cria a conta é o hook abaixo, com Convite para a Crônica.
   emailAndPassword: { enabled: true },
   socialProviders: {

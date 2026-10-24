@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -38,6 +39,7 @@ function CartaoConviteCoterie({
   convite: ItemConviteCoterie
   onRespondido: () => void
 }) {
+  const navigate = useNavigate()
   const [respondendo, setRespondendo] = useState(false)
 
   async function responder(aceitar: boolean) {
@@ -49,7 +51,9 @@ function CartaoConviteCoterie({
           ? `${convite.nomePersonagem} agora faz parte de ${convite.nomeCoterie}.`
           : `Você recusou o convite para ${convite.nomeCoterie}.`,
       )
-      onRespondido()
+      // Quem aceita já vai conhecer a Coterie; quem recusa continua na home.
+      if (aceitar) await navigate({ to: '/coteries/$id', params: { id: convite.coterieId } })
+      else onRespondido()
     } catch (erro) {
       toast.error(erro instanceof Error ? erro.message : 'Não deu para responder. Tente de novo.')
       setRespondendo(false)

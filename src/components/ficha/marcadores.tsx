@@ -4,13 +4,20 @@ import { Button } from '#/components/ui/button'
 import { alternarPontos, type CaixaDano } from '#/domain/trilhas'
 
 /** Glifos da ficha oficial: caixa vazia, "/" superficial e "X" agravado, com o mesmo traço. */
-export function GlifoDano({ estado }: { estado: CaixaDano }) {
+export function GlifoDano({
+  estado,
+  pequeno = false,
+}: {
+  estado: CaixaDano
+  /** Caixa menor, só para leitura, como nos cards do Painel. */
+  pequeno?: boolean
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
       aria-hidden
       className={cn(
-        'size-6 rounded-sm border-2',
+        pequeno ? 'size-4 rounded-xs border' : 'size-6 rounded-sm border-2',
         estado === 'vazio' && 'border-marcador',
         estado === 'superficial' && 'border-foreground text-foreground',
         estado === 'agravado' && 'border-vinho text-vinho',

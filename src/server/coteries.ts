@@ -13,6 +13,7 @@ import {
 import type { Papel } from '#/domain/acesso'
 import {
   coterieSchema,
+  podeAdicionarPdn,
   podeApagarCoterie,
   podeConvidarParaCoterie,
   podeEditarCoterie,
@@ -21,9 +22,9 @@ import {
   podeSairDaCoterie,
   podeVerCoterie,
 } from '#/domain/coterie'
-import { vitalidadeMax, vontadeMax } from '#/domain/ficha'
+import { condicaoDe, podeVerCondicao } from '#/domain/condicao'
 import { notificacoesEventos } from '#/domain/notificacoes'
-import { ehPdN } from '#/domain/permissoes-ficha'
+import { ehPdN, nomeJogador } from '#/domain/permissoes-ficha'
 import { barramento } from './eventos'
 import { enviarNotificacao, notificarNarradores } from './enviar-notificacao'
 import { exigirNarrador, exigirUsuario } from './sessao'
@@ -34,63 +35,28 @@ export const listarMinhasCoteries = createServerFn({ method: 'GET' })
   .middleware([exigirUsuario])
   .handler(async ({ context }) => {
     const { usuario } = context
+    const ehNarrador = usuario.papel === 'narrador'
 
-    if (usuario.papel === 'narrador') {
-      const coteries = await db
-        .select({
-          id: coterie.id,
-          nome: coterie.nome,
-          conceito: coterie.conceito,
-          ehPadrao: coterie.ehPadrao,
-          caca: coterie.caca,
-          abrigo: coterie.abrigo,
-          porte: coterie.porte,
-        })
-        .from(coterie)
-        .orderBy(asc(coterie.nome))
-
-      const membrosContagem = await db
-        .select({
-          coterieId: membroCoterie.coterieId,
-          total: count(membroCoterie.personagemId),
-        })
-        .from(membroCoterie)
-        .groupBy(membroCoterie.coterieId)
-
-      const convitesContagem = await db
-        .select({
-          coterieId: conviteCoterie.coterieId,
-          total: count(conviteCoterie.id),
-        })
-        .from(conviteCoterie)
-        .groupBy(conviteCoterie.coterieId)
-
-      const mapaMembros = new Map(membrosContagem.map((m) => [m.coterieId, m.total]))
-      const mapaConvites = new Map(convitesContagem.map((c) => [c.coterieId, c.total]))
-
-      return coteries.map((c) => ({
-        ...c,
-        totalMembros: mapaMembros.get(c.id) ?? 0,
-        totalConvites: mapaConvites.get(c.id) ?? 0,
-      }))
+    const colunas = {
+      id: coterie.id,
+      nome: coterie.nome,
+      conceito: coterie.conceito,
+      ehPadrao: coterie.ehPadrao,
+      caca: coterie.caca,
+      abrigo: coterie.abrigo,
+      porte: coterie.porte,
     }
 
-    // Para jogador: coteries que têm ao menos um personagem dele
-    const coteriesDoJogador = await db
-      .selectDistinct({
-        id: coterie.id,
-        nome: coterie.nome,
-        conceito: coterie.conceito,
-        ehPadrao: coterie.ehPadrao,
-        caca: coterie.caca,
-        abrigo: coterie.abrigo,
-        porte: coterie.porte,
-      })
-      .from(coterie)
-      .innerJoin(membroCoterie, eq(coterie.id, membroCoterie.coterieId))
-      .innerJoin(personagem, eq(membroCoterie.personagemId, personagem.id))
-      .where(eq(personagem.donoId, usuario.id))
-      .orderBy(asc(coterie.nome))
+    // Narrador vê todas; Jogador, só as Coteries em que tem ao menos um Personagem.
+    const coteries = ehNarrador
+      ? await db.select(colunas).from(coterie).orderBy(asc(coterie.nome))
+      : await db
+          .selectDistinct(colunas)
+          .from(coterie)
+          .innerJoin(membroCoterie, eq(coterie.id, membroCoterie.coterieId))
+          .innerJoin(personagem, eq(membroCoterie.personagemId, personagem.id))
+          .where(eq(personagem.donoId, usuario.id))
+          .orderBy(asc(coterie.nome))
 
     const membrosContagem = await db
       .select({
@@ -100,12 +66,24 @@ export const listarMinhasCoteries = createServerFn({ method: 'GET' })
       .from(membroCoterie)
       .groupBy(membroCoterie.coterieId)
 
-    const mapaMembros = new Map(membrosContagem.map((m) => [m.coterieId, m.total]))
+    // Convites pendentes só interessam ao Narrador.
+    const convitesContagem = ehNarrador
+      ? await db
+          .select({
+            coterieId: conviteCoterie.coterieId,
+            total: count(conviteCoterie.id),
+          })
+          .from(conviteCoterie)
+          .groupBy(conviteCoterie.coterieId)
+      : []
 
-    return coteriesDoJogador.map((c) => ({
+    const mapaMembros = new Map(membrosContagem.map((m) => [m.coterieId, m.total]))
+    const mapaConvites = new Map(convitesContagem.map((c) => [c.coterieId, c.total]))
+
+    return coteries.map((c) => ({
       ...c,
       totalMembros: mapaMembros.get(c.id) ?? 0,
-      totalConvites: 0,
+      totalConvites: mapaConvites.get(c.id) ?? 0,
     }))
   })
 
@@ -157,29 +135,16 @@ export const buscarCoterie = createServerFn({ method: 'GET' })
       .orderBy(asc(personagem.nome))
 
     const membros = membrosDetalhados.map((m) => {
-      const ehDono = m.donoId === usuario.id
-      const pdn = ehPdN({ papelDono: m.papelDono as Papel, status: m.status })
-      const podeVerCondicao = usuario.papel === 'narrador' || ehDono || m.compartilhaCondicao
-
-      const condicao = podeVerCondicao
-        ? {
-            danoVitalidade: m.ficha.danoVitalidade,
-            danoVontade: m.ficha.danoVontade,
-            fome: m.ficha.fome,
-            maxVit: vitalidadeMax(m.ficha),
-            maxVont: vontadeMax(m.ficha),
-          }
-        : null
-
+      const papelDono = m.papelDono as Papel
       return {
         id: m.id,
         nome: m.nome,
         donoId: m.donoId,
-        jogador: pdn ? null : m.nomeDono,
-        pdn,
-        ehMeu: ehDono,
+        jogador: nomeJogador({ papelDono, nomeDono: m.nomeDono }),
+        pdn: ehPdN({ papelDono, status: m.status }),
+        ehMeu: m.donoId === usuario.id,
         compartilhaCondicao: m.compartilhaCondicao,
-        condicao,
+        condicao: podeVerCondicao(usuario, m) ? condicaoDe(m.ficha) : null,
       }
     })
 
@@ -222,10 +187,11 @@ export const buscarCoterie = createServerFn({ method: 'GET' })
 
       for (const p of todosPersonagens) {
         if (idsMembros.has(p.id)) continue
-        if (p.papelDono === 'narrador') {
+        const jogador = nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.nomeDono })
+        if (jogador === null) {
           pdnsDisponiveis.push({ id: p.id, nome: p.nome })
         } else if (!idsConvidados.has(p.id)) {
-          candidatosConvite.push({ id: p.id, nome: p.nome, jogador: p.nomeDono })
+          candidatosConvite.push({ id: p.id, nome: p.nome, jogador })
         }
       }
     }
@@ -455,7 +421,32 @@ export const responderConviteCoterie = createServerFn({ method: 'POST' })
 export const adicionarPdnCoterie = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
   .validator(z.object({ coterieId: z.string().uuid(), personagemId: z.string().uuid() }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const [cot] = await db.select({ id: coterie.id }).from(coterie).where(eq(coterie.id, data.coterieId))
+    if (!cot) throw new Error('Coterie não encontrada')
+
+    const [p] = await db
+      .select({ status: personagem.status, papelDono: user.papel })
+      .from(personagem)
+      .innerJoin(user, eq(personagem.donoId, user.id))
+      .where(eq(personagem.id, data.personagemId))
+    if (!p) throw new Error('Personagem não encontrado')
+
+    const [ehMembro] = await db
+      .select()
+      .from(membroCoterie)
+      .where(and(eq(membroCoterie.coterieId, data.coterieId), eq(membroCoterie.personagemId, data.personagemId)))
+
+    if (
+      !podeAdicionarPdn(context.usuario, {
+        ehPdN: ehPdN({ papelDono: p.papelDono as Papel, status: p.status }),
+        ativo: p.status === 'ativo',
+        ehMembro: !!ehMembro,
+      })
+    ) {
+      throw new Error('Só PdNs Ativos entram direto na Coterie; Personagem de Jogador entra por Convite de Coterie')
+    }
+
     await db
       .insert(membroCoterie)
       .values({
@@ -487,11 +478,16 @@ export const expulsarMembro = createServerFn({ method: 'POST' })
       .innerJoin(user, eq(personagem.donoId, user.id))
       .where(eq(personagem.id, data.personagemId))
 
-    await db
+    if (!p || !cot) throw new Error('Não encontrado')
+
+    const [removido] = await db
       .delete(membroCoterie)
       .where(and(eq(membroCoterie.coterieId, data.coterieId), eq(membroCoterie.personagemId, data.personagemId)))
+      .returning()
+    if (!removido) throw new Error('Este Personagem não é membro da Coterie')
 
-    if (p && cot && p.papelDono === 'jogador') {
+    // Só o Jogador dono é avisado; ao tirar um PdN, ninguém recebe aviso da própria ação.
+    if (p.papelDono === 'jogador') {
       const notif = notificacoesEventos.removidoCoterie(p.nome, cot.nome, p.id)
       await enviarNotificacao({
         usuarioId: p.donoId,
@@ -518,12 +514,15 @@ export const sairDaCoterie = createServerFn({ method: 'POST' })
       throw new Error('Acesso negado')
     }
 
-    await db
+    const [removido] = await db
       .delete(membroCoterie)
       .where(and(eq(membroCoterie.coterieId, data.coterieId), eq(membroCoterie.personagemId, data.personagemId)))
+      .returning()
+    if (!removido) throw new Error('Este Personagem não é membro da Coterie')
 
+    // O Narrador que tira um PdN dele não recebe aviso da própria ação.
     const notif = notificacoesEventos.personagemSaiuCoterie(p.nome, cot.nome, cot.id)
-    await notificarNarradores({ texto: notif.texto, destino: notif.destino })
+    await notificarNarradores({ texto: notif.texto, destino: notif.destino, exceto: context.usuario.id })
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'coterie', id: data.coterieId })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })

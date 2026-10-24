@@ -45,14 +45,16 @@ export async function enviarNotificacao({
 }
 
 /**
- * Envia notificação a todos os Narradores da Crônica.
+ * Envia notificação a todos os Narradores da Crônica, menos `exceto` (quem fez a ação).
  */
 export async function notificarNarradores({
   texto,
   destino,
+  exceto,
 }: {
   texto: string
   destino?: DestinoNotificacao
+  exceto?: string
 }) {
   const narradores = await db
     .select({ id: user.id })
@@ -60,6 +62,7 @@ export async function notificarNarradores({
     .where(eq(user.papel, 'narrador'))
 
   for (const n of narradores) {
+    if (n.id === exceto) continue
     await enviarNotificacao({
       usuarioId: n.id,
       texto,

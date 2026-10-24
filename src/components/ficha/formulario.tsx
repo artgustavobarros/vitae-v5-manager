@@ -422,7 +422,7 @@ function Campo({
 /** Ícone ao lado de um Select que abre a consulta de regra da opção escolhida. */
 function InfoRegra({ tipo, id }: { tipo: 'cla' | 'disciplina'; id: string }) {
   return (
-    <TermoRegra tipo={tipo} id={id} className="flex size-9 shrink-0 items-center justify-center text-muted-foreground">
+    <TermoRegra tipo={tipo} id={id} icone className="shrink-0 text-muted-foreground">
       <Info className="size-4" />
     </TermoRegra>
   )

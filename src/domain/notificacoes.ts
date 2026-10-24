@@ -2,50 +2,46 @@ import type { DestinoNotificacao } from '#/db/schema'
 
 import { vitalidadeMax, vontadeMax, type Ficha } from './ficha'
 
-export type TipoCondicaoCritica =
+export type MudancaCondicao =
+  | 'fome_4'
   | 'fome_5'
   | 'vitalidade_cheia'
-  | 'vitalidade_agravada'
+  | 'vitalidade_curada'
   | 'vontade_cheia'
+  | 'vontade_curada'
 
 /**
- * Detecta se houve transição para uma condição crítica.
- * Retorna o tipo de condição se houve transição que ainda não estava presente no estado anterior.
+ * Mudanças de Condição que o Narrador acompanha: a Fome chegando a 4 e a 5, e Vitalidade ou Força de Vontade
+ * ficando toda preenchida (qualquer dano) ou toda curada. Só conta a transição, não o estado que já estava.
  */
-export function detectarTransicaoCondicaoCritica(
-  antes: Ficha,
-  depois: Ficha,
-): TipoCondicaoCritica | null {
-  // 1. Fome 5
-  if (depois.fome === 5 && antes.fome < 5) {
-    return 'fome_5'
+export function detectarMudancasCondicao(antes: Ficha, depois: Ficha): MudancaCondicao[] {
+  const mudancas: MudancaCondicao[] = []
+
+  // De 3 direto para 5 avisa só a Fome 5.
+  if (depois.fome >= 5 && antes.fome < 5) mudancas.push('fome_5')
+  else if (depois.fome >= 4 && antes.fome < 4) mudancas.push('fome_4')
+
+  const trilhas = [
+    { nome: 'vitalidade', max: vitalidadeMax(depois), antes: antes.danoVitalidade, depois: depois.danoVitalidade },
+    { nome: 'vontade', max: vontadeMax(depois), antes: antes.danoVontade, depois: depois.danoVontade },
+  ] as const
+  for (const t of trilhas) {
+    const totalAntes = t.antes.superficial + t.antes.agravado
+    const totalDepois = t.depois.superficial + t.depois.agravado
+    if (totalDepois >= t.max && totalAntes < t.max) mudancas.push(`${t.nome}_cheia`)
+    else if (totalDepois === 0 && totalAntes > 0) mudancas.push(`${t.nome}_curada`)
   }
 
-  const maxVit = vitalidadeMax(depois)
-  const maxVont = vontadeMax(depois)
+  return mudancas
+}
 
-  // 2. Vitalidade toda em dano agravado
-  const agravadoDepois = depois.danoVitalidade.agravado
-  const agravadoAntes = antes.danoVitalidade.agravado
-  if (agravadoDepois >= maxVit && agravadoAntes < maxVit) {
-    return 'vitalidade_agravada'
-  }
-
-  // 3. Vitalidade toda preenchida (superficial + agravado)
-  const totalVitDepois = depois.danoVitalidade.superficial + depois.danoVitalidade.agravado
-  const totalVitAntes = antes.danoVitalidade.superficial + antes.danoVitalidade.agravado
-  if (totalVitDepois >= maxVit && totalVitAntes < maxVit) {
-    return 'vitalidade_cheia'
-  }
-
-  // 4. Força de Vontade toda preenchida
-  const totalVontDepois = depois.danoVontade.superficial + depois.danoVontade.agravado
-  const totalVontAntes = antes.danoVontade.superficial + antes.danoVontade.agravado
-  if (totalVontDepois >= maxVont && totalVontAntes < maxVont) {
-    return 'vontade_cheia'
-  }
-
-  return null
+const DETALHE_MUDANCA: Record<MudancaCondicao, string> = {
+  fome_4: 'chegou a Fome 4',
+  fome_5: 'chegou a Fome 5',
+  vitalidade_cheia: 'preencheu toda a Vitalidade',
+  vitalidade_curada: 'curou toda a Vitalidade',
+  vontade_cheia: 'preencheu toda a Força de Vontade',
+  vontade_curada: 'recuperou toda a Força de Vontade',
 }
 
 export const notificacoesEventos = {
@@ -149,29 +145,13 @@ export const notificacoesEventos = {
     destino: { to: '/coteries/$id', params: { id: coterieId } },
   }),
 
-  condicaoCritica: (
-    tipo: TipoCondicaoCritica,
+  mudancaCondicao: (
+    mudanca: MudancaCondicao,
     nomePersonagem: string,
     personagemId: string,
-  ): { texto: string; destino: DestinoNotificacao } => {
-    let detalhe = ''
-    switch (tipo) {
-      case 'fome_5':
-        detalhe = 'chegou a Fome 5'
-        break
-      case 'vitalidade_agravada':
-        detalhe = 'está com a Vitalidade toda em dano agravado'
-        break
-      case 'vitalidade_cheia':
-        detalhe = 'preencheu toda a Vitalidade'
-        break
-      case 'vontade_cheia':
-        detalhe = 'preencheu toda a Força de Vontade'
-        break
-    }
-    return {
-      texto: `${nomePersonagem} ${detalhe}`,
-      destino: { to: '/personagens/$id', params: { id: personagemId } },
-    }
-  },
+  ): { texto: string; destino: DestinoNotificacao } => ({
+    texto: `${nomePersonagem} ${DETALHE_MUDANCA[mudanca]}`,
+    destino: { to: '/personagens/$id', params: { id: personagemId } },
+  }),
+
 }

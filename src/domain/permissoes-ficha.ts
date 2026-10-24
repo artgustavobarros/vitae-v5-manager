@@ -32,6 +32,11 @@ export function ehPdN({ papelDono, status }: { papelDono: Papel; status: StatusP
   return papelDono === 'narrador' && status !== 'rascunho'
 }
 
+/** Nome do Jogador dono para mostrar; null quando o dono é o Narrador (PdN ou Rascunho dele). */
+export function nomeJogador({ papelDono, nomeDono }: { papelDono: Papel; nomeDono: string }): string | null {
+  return papelDono === 'jogador' ? nomeDono : null
+}
+
 /** Na criação, o Jogador segue as regras (Clã e Geração); as edições do Narrador ignoram a validação. */
 export function exigeRegrasCriacao(usuario: Usuario, personagem: Personagem): boolean {
   return usuario.papel === 'jogador' && personagem.status === 'rascunho'

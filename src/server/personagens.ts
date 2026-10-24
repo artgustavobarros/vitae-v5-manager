@@ -6,13 +6,15 @@ import { z } from 'zod'
 import { db } from '#/db'
 import { coterie, membroCoterie, personagem, user } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
+import { podeAlternarCompartilharCondicao } from '#/domain/condicao'
 import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasDe, marcasSchema, normalizarFicha } from '#/domain/ficha'
-import { detectarTransicaoCondicaoCritica, notificacoesEventos } from '#/domain/notificacoes'
+import { detectarMudancasCondicao, notificacoesEventos } from '#/domain/notificacoes'
 import {
   aplicarRespostaAtribuicao,
   ehPdN,
   exigeRegrasCriacao,
   motivoNaoConcluir,
+  nomeJogador,
   permissoesPersonagem,
   podeApagar,
   podeAtribuir,
@@ -20,7 +22,7 @@ import {
   podeResponderAtribuicao,
   type MotivoNaoConcluir,
 } from '#/domain/permissoes-ficha'
-import { carregar } from '#/server/carregar-personagem'
+import { carregar, ehPdNNoBanco } from '#/server/carregar-personagem'
 import { barramento } from '#/server/eventos'
 import { enviarNotificacao, notificarNarradores } from '#/server/enviar-notificacao'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
@@ -91,7 +93,7 @@ export const listarTodosPersonagens = createServerFn({ method: 'GET' })
         nome: p.nome,
         status: p.status,
         /** Jogador dono; null quando o dono é o Narrador. */
-        jogador: p.papelDono === 'narrador' ? null : p.dono,
+        jogador: nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.dono }),
         pdn: ehPdN({ papelDono: p.papelDono as Papel, status: p.status }),
         atribuidoA: p.nomeAtribuido,
         abreNoWizard,
@@ -108,6 +110,7 @@ export const buscarFicha = createServerFn({ method: 'GET' })
     const [jogador] = p.atribuidoA
       ? await db.select({ id: user.id, nome: user.name }).from(user).where(eq(user.id, p.atribuidoA))
       : []
+    const pdn = await ehPdNNoBanco(p)
 
     const coteriesDoPersonagem = await db
       .select({
@@ -126,6 +129,10 @@ export const buscarFicha = createServerFn({ method: 'GET' })
       ficha: p.ficha,
       compartilhaCondicao: p.compartilhaCondicao,
       fixado: p.fixado,
+      pdn,
+      /** Quem decide se a Condição aparece para a Coterie: o Jogador dono, ou o Narrador num PdN. */
+      podeCompartilharCondicao:
+        p.acesso !== 'ler' && podeAlternarCompartilharCondicao(context.usuario, { donoId: p.donoId, pdn }),
       coteries: coteriesDoPersonagem,
       /** Jogador que ainda vai aceitar ou recusar este Rascunho. */
       atribuidoA: jogador ?? null,
@@ -150,16 +157,19 @@ export const salvarFicha = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
   .validator(z.object({ id: z.string().uuid(), nome: z.string().trim().max(120), ficha: fichaSchema }))
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['editar'])
-    if (exigeRegrasCriacao(context.usuario, p) && !claGeracaoCombinam(data.ficha)) {
-      throw new Error('Sangue-Ralo é da 14ª à 16ª Geração; os demais clãs, até a 13ª.')
-    }
-    await db
-      .update(personagem)
-      .set({ nome: data.nome, ficha: normalizarFicha(data.ficha) })
-      .where(eq(personagem.id, data.id))
+    const p = await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['editar'], tx)
+      if (exigeRegrasCriacao(context.usuario, p) && !claGeracaoCombinam(data.ficha)) {
+        throw new Error('Sangue-Ralo é da 14ª à 16ª Geração; os demais clãs, até a 13ª.')
+      }
+      await tx
+        .update(personagem)
+        .set({ nome: data.nome, ficha: normalizarFicha(data.ficha) })
+        .where(eq(personagem.id, data.id))
+      return p
+    })
 
-    // Se o Narrador editou a Ficha de um Jogador ativo
+    // Depois do commit. Se o Narrador editou a Ficha de um Jogador ativo
     if (context.usuario.papel === 'narrador' && p.donoId !== context.usuario.id && p.status === 'ativo') {
       const notif = notificacoesEventos.narradorEditouFicha(data.nome, p.id)
       await enviarNotificacao({ usuarioId: p.donoId, texto: notif.texto, destino: notif.destino })
@@ -169,20 +179,23 @@ export const salvarFicha = createServerFn({ method: 'POST' })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })
   })
 
-/** Salva uma marca no toque e devolve as marcas como ficaram depois do corte. */
+/** Salva uma marca no toque e devolve as marcas como ficaram depois do corte. Trilhas omitidas ficam como estão. */
 export const marcar = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
-  .validator(z.object({ id: z.string().uuid(), marcas: marcasSchema }))
+  .validator(z.object({ id: z.string().uuid(), marcas: marcasSchema.partial() }))
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['editar', 'marcar'])
-    const ficha = normalizarFicha({ ...p.ficha, ...data.marcas })
-    await db.update(personagem).set({ ficha }).where(eq(personagem.id, data.id))
+    // A Ficha de antes vem da leitura sob lock, para a comparação da Condição não usar dado velho.
+    const { p, ficha } = await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['editar', 'marcar'], tx)
+      const ficha = normalizarFicha({ ...p.ficha, ...data.marcas })
+      await tx.update(personagem).set({ ficha }).where(eq(personagem.id, data.id))
+      return { p, ficha }
+    })
 
-    // Disparar notificação de condição crítica se foi um Jogador alterando
+    // Depois do commit: o Narrador fica sabendo das mudanças de Condição que um Jogador marcou.
     if (context.usuario.papel === 'jogador') {
-      const transicao = detectarTransicaoCondicaoCritica(p.ficha, ficha)
-      if (transicao) {
-        const notif = notificacoesEventos.condicaoCritica(transicao, p.nome, p.id)
+      for (const mudanca of detectarMudancasCondicao(p.ficha, ficha)) {
+        const notif = notificacoesEventos.mudancaCondicao(mudanca, p.nome, p.id)
         await notificarNarradores({ texto: notif.texto, destino: notif.destino })
       }
     }
@@ -196,10 +209,13 @@ export const concluir = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
   .validator(comId)
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['editar'])
-    const motivo = motivoNaoConcluir(context.usuario, p)
-    if (motivo) throw new Error(MENSAGENS_NAO_CONCLUIR[motivo])
-    await db.update(personagem).set({ status: 'ativo' }).where(eq(personagem.id, data.id))
+    const p = await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['editar'], tx)
+      const motivo = motivoNaoConcluir(context.usuario, p)
+      if (motivo) throw new Error(MENSAGENS_NAO_CONCLUIR[motivo])
+      await tx.update(personagem).set({ status: 'ativo' }).where(eq(personagem.id, data.id))
+      return p
+    })
 
     // Notificar Narrador se um Jogador concluiu Personagem
     if (context.usuario.papel === 'jogador') {
@@ -215,9 +231,11 @@ export const apagarRascunho = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
   .validator(comId)
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['editar'])
-    if (!podeApagar(context.usuario, p)) throw new Error('Só Rascunhos podem ser apagados')
-    await db.delete(personagem).where(eq(personagem.id, data.id))
+    await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['editar'], tx)
+      if (!podeApagar(context.usuario, p)) throw new Error('Só Rascunhos podem ser apagados')
+      await tx.delete(personagem).where(eq(personagem.id, data.id))
+    })
     barramento.emitir({ tipo: 'mudanca', escopo: 'personagem', id: data.id })
   })
 
@@ -225,13 +243,16 @@ export const atribuir = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
   .validator(z.object({ id: z.string().uuid(), jogadorId: z.string().min(1) }))
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['editar'])
-    if (!podeAtribuir(context.usuario, p)) throw new Error('Só um Rascunho seu, ainda sem atribuição, pode ser atribuído')
-    const [alvo] = await db.select({ papel: user.papel }).from(user).where(eq(user.id, data.jogadorId))
-    if (!alvo || !podeAtribuir(context.usuario, p, { papel: alvo.papel as Papel })) {
-      throw new Error('Escolha um Jogador da Crônica')
-    }
-    await db.update(personagem).set({ atribuidoA: data.jogadorId }).where(eq(personagem.id, data.id))
+    const p = await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['editar'], tx)
+      if (!podeAtribuir(context.usuario, p)) throw new Error('Só um Rascunho seu, ainda sem atribuição, pode ser atribuído')
+      const [alvo] = await tx.select({ papel: user.papel }).from(user).where(eq(user.id, data.jogadorId))
+      if (!alvo || !podeAtribuir(context.usuario, p, { papel: alvo.papel as Papel })) {
+        throw new Error('Escolha um Jogador da Crônica')
+      }
+      await tx.update(personagem).set({ atribuidoA: data.jogadorId }).where(eq(personagem.id, data.id))
+      return p
+    })
 
     const notif = notificacoesEventos.atribuicao(p.nome)
     await enviarNotificacao({ usuarioId: data.jogadorId, texto: notif.texto, destino: notif.destino })
@@ -243,9 +264,11 @@ export const cancelarAtribuicao = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
   .validator(comId)
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['editar'])
-    if (!podeCancelarAtribuicao(context.usuario, p)) throw new Error('Este Rascunho não está atribuído')
-    await db.update(personagem).set({ atribuidoA: null }).where(eq(personagem.id, data.id))
+    await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['editar'], tx)
+      if (!podeCancelarAtribuicao(context.usuario, p)) throw new Error('Este Rascunho não está atribuído')
+      await tx.update(personagem).set({ atribuidoA: null }).where(eq(personagem.id, data.id))
+    })
     barramento.emitir({ tipo: 'mudanca', escopo: 'personagem', id: data.id })
   })
 
@@ -254,12 +277,15 @@ export const responderAtribuicao = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
   .validator(z.object({ id: z.string().uuid(), aceitar: z.boolean() }))
   .handler(async ({ data, context }) => {
-    const p = await carregar(context.usuario, data.id, ['ler'])
-    if (!podeResponderAtribuicao(context.usuario, p)) throw new Error('Este Personagem não está atribuído a você')
-    await db
-      .update(personagem)
-      .set(aplicarRespostaAtribuicao(context.usuario, data.aceitar))
-      .where(eq(personagem.id, data.id))
+    const p = await db.transaction(async (tx) => {
+      const p = await carregar(context.usuario, data.id, ['ler'], tx)
+      if (!podeResponderAtribuicao(context.usuario, p)) throw new Error('Este Personagem não está atribuído a você')
+      await tx
+        .update(personagem)
+        .set(aplicarRespostaAtribuicao(context.usuario, data.aceitar))
+        .where(eq(personagem.id, data.id))
+      return p
+    })
 
     if (data.aceitar) {
       const notif = notificacoesEventos.atribuicaoAceita(context.usuario.nome, p.nome, p.id)
@@ -277,11 +303,10 @@ export const alternarCompartilharCondicao = createServerFn({ method: 'POST' })
   .validator(z.object({ id: z.string().uuid(), compartilhar: z.boolean() }))
   .handler(async ({ data, context }) => {
     const p = await carregar(context.usuario, data.id, ['editar', 'marcar'])
-    const podeAlterar =
-      p.donoId === context.usuario.id ||
-      (context.usuario.papel === 'narrador' && p.status !== 'rascunho')
-
-    if (!podeAlterar) throw new Error('Acesso negado')
+    const pdn = await ehPdNNoBanco(p)
+    if (!podeAlternarCompartilharCondicao(context.usuario, { donoId: p.donoId, pdn })) {
+      throw new Error('Só o Jogador decide se compartilha a Condição do próprio Personagem')
+    }
 
     await db
       .update(personagem)

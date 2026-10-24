@@ -6,6 +6,7 @@ import {
   ehPdN,
   exigeRegrasCriacao,
   motivoNaoConcluir,
+  nomeJogador,
   permissoesPersonagem,
   podeApagar,
   podeAtribuir,
@@ -222,5 +223,15 @@ describe('permissoesPersonagem', () => {
       podeAtribuir: false,
       podeCancelarAtribuicao: true,
     })
+  })
+})
+
+describe('nomeJogador', () => {
+  it('mostra o nome quando o dono é Jogador', () => {
+    expect(nomeJogador({ papelDono: 'jogador', nomeDono: 'Ana' })).toBe('Ana')
+  })
+
+  it('fica vazio quando o dono é o Narrador', () => {
+    expect(nomeJogador({ papelDono: 'narrador', nomeDono: 'Arthur' })).toBeNull()
   })
 })

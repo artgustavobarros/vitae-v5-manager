@@ -73,10 +73,11 @@ describe('permissões de coterie', () => {
   })
 
   it('adicionar PdN exige narrador e que seja PdN e ainda não membro', () => {
-    expect(podeAdicionarPdn(NARRADOR, { ehPdN: true, ehMembro: false })).toBe(true)
-    expect(podeAdicionarPdn(NARRADOR, { ehPdN: false, ehMembro: false })).toBe(false)
-    expect(podeAdicionarPdn(NARRADOR, { ehPdN: true, ehMembro: true })).toBe(false)
-    expect(podeAdicionarPdn(JOGADOR_1, { ehPdN: true, ehMembro: false })).toBe(false)
+    expect(podeAdicionarPdn(NARRADOR, { ehPdN: true, ativo: true, ehMembro: false })).toBe(true)
+    expect(podeAdicionarPdn(NARRADOR, { ehPdN: false, ativo: true, ehMembro: false })).toBe(false)
+    expect(podeAdicionarPdn(NARRADOR, { ehPdN: true, ativo: false, ehMembro: false })).toBe(false)
+    expect(podeAdicionarPdn(NARRADOR, { ehPdN: true, ativo: true, ehMembro: true })).toBe(false)
+    expect(podeAdicionarPdn(JOGADOR_1, { ehPdN: true, ativo: true, ehMembro: false })).toBe(false)
   })
 
   it('apenas narrador pode expulsar membro', () => {

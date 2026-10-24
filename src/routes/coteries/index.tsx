@@ -74,6 +74,7 @@ function TelaCoteriesJogador() {
                   compartilhaCondicao: m.compartilhaCondicao,
                   condicao: m.condicao,
                 }}
+                editavel={m.ehMeu}
               />
             ))}
           </div>

@@ -16,6 +16,8 @@ import {
 } from '#/components/ui/alert-dialog'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { Label } from '#/components/ui/label'
+import { Switch } from '#/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import type { Papel } from '#/domain/acesso'
 import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/domain/ficha'
@@ -36,7 +38,7 @@ function LinhaDescricao({ ficha }: { ficha: Ficha }) {
   return (
     <span className="flex flex-wrap items-center gap-1">
       {ficha.cla ? (
-        <TermoRegra tipo="cla" id={ficha.cla} className="font-medium text-foreground">
+        <TermoRegra tipo="cla" id={ficha.cla} className="text-sm font-medium text-foreground">
           {cla}
         </TermoRegra>
       ) : (
@@ -66,7 +68,7 @@ export function FichaPersonagem({
   acesso,
   compartilhaCondicao = false,
   coteries = [],
-  ehPdn = false,
+  podeCompartilharCondicao = false,
   papelUsuario,
   barra,
 }: {
@@ -77,7 +79,8 @@ export function FichaPersonagem({
   acesso: AcessoFicha
   compartilhaCondicao?: boolean
   coteries?: { id: string; nome: string }[]
-  ehPdn?: boolean
+  /** Regra de `podeAlternarCompartilharCondicao`, calculada no servidor. */
+  podeCompartilharCondicao?: boolean
   papelUsuario?: Papel
   barra: ReactNode
 }) {
@@ -142,10 +145,6 @@ export function FichaPersonagem({
     { rotulo: 'Ambição', valor: ficha.ambicao },
     { rotulo: 'Desejo', valor: ficha.desejo },
   ]
-
-  // Controle de quem pode mexer no switch de compartilhar Condição
-  const podeMexerCompartilhar =
-    papelUsuario === 'narrador' ? ehPdn : acesso === 'marcar' || acesso === 'editar'
 
   return (
     <main className="min-h-dvh pb-12">
@@ -212,23 +211,23 @@ export function FichaPersonagem({
             <section className="mt-8 flex flex-col gap-4 border-t pt-4">
               <h2 className="font-serif text-2xl">Coteries</h2>
 
-              {/* Compartilhar Condição */}
-              <div className="flex items-center justify-between gap-4 rounded-md border p-4">
+              {/* Compartilhar Condição: linha de ajuste, sem cartão (DESIGN.md: linhas finas no lugar de cartões). */}
+              <div className="flex min-h-12 items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-base font-semibold">Compartilhar Condição</span>
+                  <Label htmlFor="compartilhar-condicao" className="text-base font-semibold">
+                    Compartilhar Condição
+                  </Label>
                   <span className="text-xs text-muted-foreground leading-relaxed">
                     Vitalidade, Força de Vontade e Fome ficam visíveis para quem divide uma Coterie com este Personagem.
+                    {papelUsuario === 'narrador' && !podeCompartilharCondicao && ' Quem decide é o Jogador.'}
                   </span>
                 </div>
-                <Button
-                  variant={compartilhando ? 'default' : 'outline'}
-                  size="sm"
-                  disabled={!podeMexerCompartilhar || salvandoCondicao}
-                  onClick={toggleCompartilhar}
-                  className="shrink-0"
-                >
-                  {compartilhando ? 'Ativado' : 'Desativado'}
-                </Button>
+                <Switch
+                  id="compartilhar-condicao"
+                  checked={compartilhando}
+                  disabled={!podeCompartilharCondicao || salvandoCondicao}
+                  onCheckedChange={toggleCompartilhar}
+                />
               </div>
 
               {/* Lista de Coteries com botão Sair */}
@@ -261,7 +260,7 @@ export function FichaPersonagem({
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle className="font-serif text-2xl">
+                              <AlertDialogTitle>
                                 Sair de {c.nome}?
                               </AlertDialogTitle>
                               <AlertDialogDescription>

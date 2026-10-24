@@ -27,7 +27,7 @@ function TelaFicha() {
   const personagem = Route.useLoaderData()
   const router = useRouter()
 
-  const ehPdnAtivo = usuario.papel === 'narrador' && personagem.status === 'ativo'
+  const ehPdnAtivo = usuario.papel === 'narrador' && personagem.pdn && personagem.status === 'ativo'
 
   async function alternarFixacao() {
     try {
@@ -54,7 +54,6 @@ function TelaFicha() {
       // Recarregar a Ficha (outro Personagem ou dados novos) recomeça as marcas locais.
       key={`${personagem.id}:${JSON.stringify(personagem.ficha)}`}
       {...personagem}
-      ehPdn={ehPdnAtivo}
       papelUsuario={usuario.papel}
       barra={
         <div className="flex flex-col">

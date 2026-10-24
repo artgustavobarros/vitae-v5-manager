@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
+import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -234,9 +235,9 @@ function DetalheCoterie() {
               <div className="flex items-center gap-2">
                 <h1 className="font-serif text-display text-balance">{coterie.nome}</h1>
                 {coterie.ehPadrao && (
-                  <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  <Badge variant="outline" className="text-muted-foreground">
                     Coterie Padrão
-                  </span>
+                  </Badge>
                 )}
               </div>
               {coterie.conceito && (
@@ -258,7 +259,7 @@ function DetalheCoterie() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle className="font-serif text-2xl">
+                        <AlertDialogTitle>
                           Apagar Coterie {coterie.nome}?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
@@ -282,9 +283,9 @@ function DetalheCoterie() {
           </div>
         </div>
 
-        {/* Domínio da Coterie */}
-        <section className="flex flex-col gap-3 rounded-lg border bg-card p-4">
-          <h2 className="font-serif text-xl font-semibold">Domínio</h2>
+        {/* Domínio da Coterie: seção entre linhas finas, como as demais (DESIGN.md), sem cartão. */}
+        <section className="flex flex-col gap-3 border-t pt-4">
+          <h2 className="font-serif text-2xl">Domínio</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Caça */}
             <div className="flex flex-col gap-1">
@@ -340,7 +341,7 @@ function DetalheCoterie() {
         </section>
 
         {/* Membros */}
-        <section className="flex flex-col gap-4">
+        <section className="flex flex-col gap-4 border-t pt-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h2 className="font-serif text-2xl">Membros</h2>
             {ehNarrador && (
@@ -351,7 +352,7 @@ function DetalheCoterie() {
                   disabled={candidatosConvite.length === 0}
                   onClick={() => setModalConvidar(true)}
                 >
-                  <UserPlus className="mr-1.5 size-4" />
+                  <UserPlus className="size-4" />
                   Convidar Personagem
                 </Button>
                 <Button
@@ -360,7 +361,7 @@ function DetalheCoterie() {
                   disabled={pdnsDisponiveis.length === 0}
                   onClick={() => setModalAdicionarPdn(true)}
                 >
-                  <Plus className="mr-1.5 size-4" />
+                  <Plus className="size-4" />
                   Adicionar PdN
                 </Button>
               </div>
@@ -452,7 +453,7 @@ function DetalheCoterie() {
         <DialogContent className="max-w-md">
           <form onSubmit={handleSalvarEdicao} className="flex flex-col gap-4">
             <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">Editar Coterie</DialogTitle>
+              <DialogTitle>Editar Coterie</DialogTitle>
               <DialogDescription>Altere as informações gerais da Coterie.</DialogDescription>
             </DialogHeader>
 
@@ -492,7 +493,7 @@ function DetalheCoterie() {
         <DialogContent className="max-w-md">
           <form onSubmit={handleConvidar} className="flex flex-col gap-4">
             <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">Convidar Personagem</DialogTitle>
+              <DialogTitle>Convidar Personagem</DialogTitle>
               <DialogDescription>
                 Envie uma proposta de entrada para um Personagem Ativo de um Jogador.
               </DialogDescription>
@@ -531,7 +532,7 @@ function DetalheCoterie() {
         <DialogContent className="max-w-md">
           <form onSubmit={handleAdicionarPdn} className="flex flex-col gap-4">
             <DialogHeader>
-              <DialogTitle className="font-serif text-2xl">Adicionar PdN</DialogTitle>
+              <DialogTitle>Adicionar PdN</DialogTitle>
               <DialogDescription>
                 Adicione um PdN diretamente à Coterie sem necessidade de convite.
               </DialogDescription>
@@ -572,7 +573,7 @@ function DetalheCoterie() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif text-2xl">
+            <AlertDialogTitle>
               Expulsar {membroParaExpulsar?.nome}?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -598,7 +599,7 @@ function DetalheCoterie() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif text-2xl">
+            <AlertDialogTitle>
               Sair de {coterie.nome}?
             </AlertDialogTitle>
             <AlertDialogDescription>

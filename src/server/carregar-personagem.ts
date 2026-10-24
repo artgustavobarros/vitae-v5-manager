@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm'
 
 import { db } from '#/db'
-import { personagem } from '#/db/schema'
-import { acessoFicha, type AcessoFicha } from '#/domain/permissoes-ficha'
+import { personagem, user } from '#/db/schema'
+import type { Papel } from '#/domain/acesso'
+import { acessoFicha, ehPdN, type AcessoFicha, type StatusPersonagem } from '#/domain/permissoes-ficha'
 import type { Usuario } from '#/server/sessao'
 
 // Fica fora de personagens.ts: só os handlers das server functions somem do bundle do cliente,
@@ -22,4 +23,10 @@ export async function carregar(
   const acesso = p ? acessoFicha(usuario, p) : null
   if (!p || !acesso || !aceitos.includes(acesso)) throw new Error('Acesso negado')
   return { ...p, acesso }
+}
+
+/** PdN depende do papel do dono, que fica na tabela de usuários. */
+export async function ehPdNNoBanco(p: { donoId: string; status: StatusPersonagem }) {
+  const [dono] = await db.select({ papel: user.papel }).from(user).where(eq(user.id, p.donoId))
+  return !!dono && ehPdN({ papelDono: dono.papel as Papel, status: p.status })
 }

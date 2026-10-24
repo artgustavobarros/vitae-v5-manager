@@ -48,7 +48,7 @@ _Avoid_: Grupo principal, coterie geral
 
 **Convite de Coterie**:
 Proposta do Narrador para um Personagem entrar numa Coterie; o Jogador aceita ou recusa.
-_Avoid_: Convite (sozinho), solicitação, pedido de entrada
+_Avoid_: Convite (sozinho), solicitação, pedido de entrada. Exceção: numa tela que já é da Coterie (ex.: "Convites pendentes" na página da Coterie), "Convite" sozinho pode ficar, porque o contexto já diz qual é.
 
 **Condição**:
 O conjunto Vitalidade, Força de Vontade e Fome de um Personagem; o Jogador compartilha tudo ou nada com a Coterie.

@@ -34,11 +34,12 @@ export function TrilhaDano({
   const restante = caixas.filter((c) => c === 'vazio').length
 
   return (
-    <div className="flex h-12 items-center justify-between gap-2">
+    // Quebra de linha só quando as caixas não cabem ao lado do rótulo (Vitalidade alta, card estreito).
+    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-2">
       <span className="text-sm text-muted-foreground tabular-nums">
         {rotulo} {restante}/{max}
       </span>
-      <div role="group" aria-label={rotulo} className="flex">
+      <div role="group" aria-label={rotulo} className="flex flex-wrap">
         {caixas.map((estado, i) => (
           <Button
             key={i}

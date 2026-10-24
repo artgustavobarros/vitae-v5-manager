@@ -49,15 +49,16 @@ export function podeConvidarParaCoterie(
   )
 }
 
-/** Narrador adiciona PdN diretamente à Coterie sem convite. */
+/** Narrador adiciona PdN Ativo diretamente à Coterie sem convite. */
 export function podeAdicionarPdn(
   usuario: Usuario,
   candidato: {
     ehPdN: boolean
+    ativo: boolean
     ehMembro: boolean
   },
 ): boolean {
-  return usuario.papel === 'narrador' && candidato.ehPdN && !candidato.ehMembro
+  return usuario.papel === 'narrador' && candidato.ehPdN && candidato.ativo && !candidato.ehMembro
 }
 
 /** Narrador pode expulsar qualquer membro de uma Coterie. */

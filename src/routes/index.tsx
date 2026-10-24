@@ -92,16 +92,11 @@ function Inicio() {
                       nome: p.nome,
                       jogador: p.jogador,
                       coteries: p.coteries,
-                      condicao: {
-                        danoVitalidade: p.danoVitalidade,
-                        danoVontade: p.danoVontade,
-                        fome: p.fome,
-                        maxVit: p.vitalidadeMax,
-                        maxVont: p.vontadeMax,
-                      },
+                      condicao: p.condicao,
                       humanidade: p.humanidade,
                       manchas: p.manchas,
                     }}
+                    editavel
                   />
                 ))}
               </div>
@@ -120,16 +115,11 @@ function Inicio() {
                       nome: p.nome,
                       jogador: 'PdN',
                       coteries: p.coteries,
-                      condicao: {
-                        danoVitalidade: p.danoVitalidade,
-                        danoVontade: p.danoVontade,
-                        fome: p.fome,
-                        maxVit: p.vitalidadeMax,
-                        maxVont: p.vontadeMax,
-                      },
+                      condicao: p.condicao,
                       humanidade: p.humanidade,
                       manchas: p.manchas,
                     }}
+                    editavel
                   />
                 ))}
               </div>
