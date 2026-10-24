@@ -1971,8 +1971,10 @@ export function buscarConsultaRegra(tipo: TipoConsulta | 'catalogo', id: string)
       return CONSULTA_HABILIDADES[id] ?? null
     case 'cla':
       return CONSULTA_CLAS[id] ?? null
-    case 'disciplina':
-      return CONSULTA_DISCIPLINAS[id] ?? null
+    case 'disciplina': {
+      const chave = id === 'auspex' ? 'auspicios' : id
+      return CONSULTA_DISCIPLINAS[chave] ?? null
+    }
     case 'dominio':
       return CONSULTA_DOMINIO[id] ?? null
     case 'termo':

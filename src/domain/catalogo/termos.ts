@@ -114,4 +114,24 @@ export const CONSULTA_TERMOS: Record<string, ItemConsultaRegra> = {
     fonte: { livro: 'Corebook', pagina: 158 },
     confianca: 'certo',
   },
+  perdicao: {
+    id: 'perdicao',
+    titulo: 'Perdição do Clã',
+    subtitulo: 'Maldição Ancestral do Sangue',
+    descricao:
+      'A maldição mística que corre no Sangue de cada membro do Clã desde as Noites Antigas. A intensidade ou penalidade da Perdição muitas vezes é multiplicada pela Gravidade da Perdição (Bane Severity), que escala conforme a Potência do Sangue do vampiro.',
+    nomeOriginal: 'Clan Bane',
+    fonte: { livro: 'Corebook', pagina: 207 },
+    confianca: 'certo',
+  },
+  compulsao: {
+    id: 'compulsao',
+    titulo: 'Compulsão',
+    subtitulo: 'Manifestação da Besta',
+    descricao:
+      'Surto comportamental irresistível imposto pela Besta após uma Falha Bestial ou quando o Sangue se agita. Além das quatro Compulsões Gerais (Fome, Dominância, Dano e Paranoia), cada Clã possui uma Compulsão própria que reflete seus impulsos ancestrais. Enquanto ativa, o vampiro sofre penalidade de 2 dados em quaisquer ações que não estejam diretamente voltadas a saciar a obsessão.',
+    nomeOriginal: 'Compulsion',
+    fonte: { livro: 'Corebook', pagina: 208 },
+    confianca: 'certo',
+  },
 }

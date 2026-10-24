@@ -10,6 +10,14 @@ describe('CardPerdicaoCompulsaoCla', () => {
     expect(html).toContain('Ventrue')
     expect(html).toContain('Paladar restrito')
     expect(html).toContain('Comando Régio')
+    expect(html).toContain('Dominação')
+    expect(html).toContain('Fortitude')
+    expect(html).toContain('Presença')
+    // Botões interativos de consulta rápida
+    expect(html).toContain('Ver detalhes de Ventrue')
+    expect(html).toContain('Ver detalhes de Dominação')
+    expect(html).toContain('Ver detalhes de Perdição do Clã')
+    expect(html).toContain('Ver detalhes de Compulsão')
   })
 
   it('não renderiza nada se cla for null', () => {
