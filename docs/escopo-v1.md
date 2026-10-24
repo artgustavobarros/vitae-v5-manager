@@ -92,7 +92,24 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 ## Notificações
 
 - Só dentro do site, com o site aberto: toast na hora e um sino com a lista. Chegam pelo mesmo tempo real (SSE) dos Painéis.
-- Os eventos que geram notificação ainda estão por definir.
+- Eventos que geram notificação para o Jogador:
+  - Personagem atribuído a ele;
+  - Convite de Coterie recebido;
+  - Ficha Liberada e liberação fechada;
+  - Combate iniciado com um Personagem dele na ordem de turnos;
+  - Ressonância Atual ou Compulsão Ativa aplicada a um Personagem dele;
+  - Personagem dele arquivado ou convertido em PdN;
+  - Personagem dele removido de uma Coterie, inclusive quando a Coterie é apagada;
+  - o Narrador editou a Ficha de um Personagem dele.
+- Eventos que geram notificação para o Narrador:
+  - conta nova criada pelo Convite para a Crônica;
+  - Personagem concluído (Rascunho virou Ativo);
+  - Personagem atribuído aceito ou recusado;
+  - mudança feita pelo Jogador com a Ficha Liberada, uma por salvamento;
+  - Convite de Coterie aceito ou recusado;
+  - Personagem saiu de uma Coterie;
+  - Condição crítica de um Personagem (ex.: Fome 5, Vitalidade toda com dano agravado).
+- Cada marca de dano ou Fome não vira notificação: o Painel já mostra isso em tempo real.
 
 ## Combate
 

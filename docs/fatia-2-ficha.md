@@ -6,7 +6,7 @@ Decisões confirmadas no grill de 2026-10-23. Os termos seguem o `GLOSSARY.md`, 
 
 - Identidade: nome, Clã, Geração, Seita, Senhor, Ambição e Desejo.
 - 9 Atributos e 27 Habilidades. Cada Habilidade aceita Especializações em texto livre.
-- Disciplinas com nome e nível, sem poderes.
+- Disciplinas com nome e nível, sem poderes. Os poderes esperam a fatia do Catálogo e entram já escolhidos de lá, sem texto livre provisório.
 - Potência do Sangue e Humanidade.
 - Vitalidade, Força de Vontade, Fome e Manchas.
 
