@@ -7,13 +7,13 @@ import { user } from './auth-schema.ts'
 
 export * from './auth-schema.ts'
 
-/** Convite para a Crônica: link de uso único; `usadoEm` e `usadoPor` marcam o cadastro que o consumiu. */
+/** Convite para a Crônica: o link que o Narrador compartilha com a mesa; só o mais novo vale. */
 export const conviteCronica = pgTable('convite_cronica', {
   id: uuid().primaryKey().defaultRandom(),
   token: text().notNull().unique(),
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
-  usadoEm: timestamp('usado_em', { withTimezone: true }),
-  usadoPor: text('usado_por').references(() => user.id, { onDelete: 'set null' }),
+  /** Preenchido quando o Narrador gera um link novo; o anterior para de valer. */
+  substituidoEm: timestamp('substituido_em', { withTimezone: true }),
 })
 
 export const statusPersonagem = pgEnum('status_personagem', STATUS_PERSONAGEM)

@@ -1,13 +1,20 @@
+import type { Papel } from './acesso'
+
 /**
- * Convite para a Crônica: link de uso único que o Narrador gera para uma pessoa criar conta.
- * Cancelar apaga o Convite para a Crônica; usar marca quando e por quem.
+ * Convite para a Crônica: um link só, que o Narrador compartilha com a mesa.
+ * Quem tem o link cria conta como Jogador. Gerar um link novo substitui o anterior.
  */
 
-export type EstadoConvite = 'valido' | 'usado' | 'inexistente'
+export type EstadoConvite = 'valido' | 'substituido' | 'inexistente'
 
-export function estadoConvite(convite: { usadoEm: Date | null } | undefined): EstadoConvite {
+export function estadoConvite(convite: { substituidoEm: Date | null } | undefined): EstadoConvite {
   if (!convite) return 'inexistente'
-  return convite.usadoEm ? 'usado' : 'valido'
+  return convite.substituidoEm ? 'substituido' : 'valido'
+}
+
+/** Remover um Jogador da Crônica: os Personagens dele passam para o Narrador. */
+export function podeRemoverJogador(usuario: { papel: Papel }, alvo: { papel: Papel }): boolean {
+  return usuario.papel === 'narrador' && alvo.papel === 'jogador'
 }
 
 export const REGRA_NOME_USUARIO = 'Use de 3 a 30 letras sem acento, números, ponto ou sublinhado.'

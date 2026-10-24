@@ -50,9 +50,9 @@ function Convite() {
           <>
             <Alert>
               <AlertDescription>
-                {estado === 'usado'
-                  ? 'Este Convite para a Crônica já foi usado. Cada um vale para um só cadastro: se a conta é sua, entre normalmente; se não, peça um novo ao Narrador.'
-                  : 'Este Convite para a Crônica não existe ou foi cancelado. Peça um novo ao Narrador.'}
+                {estado === 'substituido'
+                  ? 'Este link da Crônica foi trocado por um novo. Se você já tem conta, entre normalmente; se não, peça o link novo ao Narrador.'
+                  : 'Este link da Crônica não existe. Confira o endereço ou peça o link ao Narrador.'}
               </AlertDescription>
             </Alert>
             <Button asChild variant="secondary" size="lg">

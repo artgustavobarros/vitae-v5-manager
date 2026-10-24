@@ -13,7 +13,7 @@ Pessoa que participa da Crônica e controla as Fichas dos próprios Personagens.
 _Avoid_: Player, usuário
 
 **Convite para a Crônica**:
-Link de uso único que o Narrador gera para uma pessoa criar conta e entrar no site como Jogador.
+Link da Crônica que o Narrador compartilha com a mesa; quem tem o link cria conta como Jogador. Gerar um link novo faz o anterior parar de valer.
 _Avoid_: Convite (sozinho), cadastro, acesso
 
 ## Mundo

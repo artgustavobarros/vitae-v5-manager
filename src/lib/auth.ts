@@ -5,7 +5,7 @@ import { APIError } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { username } from 'better-auth/plugins'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
-import { and, eq, isNull } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 import { db } from '#/db'
 import * as schema from '#/db/schema'
@@ -35,7 +35,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Só o Narrador e quem chega por um Convite para a Crônica válido conseguem criar conta.
+        // Só o Narrador e quem chega pelo link atual da Crônica conseguem criar conta.
         before: async (user, ctx) => {
           const token = ctx?.getCookie(COOKIE_CONVITE) ?? null
           const convite = token
@@ -54,29 +54,13 @@ export const auth = betterAuth({
           if (!papel) {
             throw new APIError('FORBIDDEN', { message: 'sem_convite' })
           }
-          // O Convite para a Crônica vale para um único cadastro. Consumir com UPDATE condicional
-          // garante isso mesmo com dois cadastros ao mesmo tempo: só um encontra `usado_em` vazio.
-          if (papel === 'jogador' && token) {
-            const consumido = await db
-              .update(schema.conviteCronica)
-              .set({ usadoEm: new Date() })
-              .where(and(eq(schema.conviteCronica.token, token), isNull(schema.conviteCronica.usadoEm)))
-              .returning({ id: schema.conviteCronica.id })
-            if (consumido.length === 0) throw new APIError('FORBIDDEN', { message: 'sem_convite' })
-          }
           // Com Google, o nome na Crônica começa com os dois primeiros nomes; a pessoa troca em /conta.
           const name = porSenha ? user.name : nomeCurto(user.name)
           return { data: { ...user, email, papel, name } }
         },
-        // Registra quem usou o Convite para a Crônica consumido no `before`.
-        after: async (user, ctx) => {
-          const token = ctx?.getCookie(COOKIE_CONVITE)
-          if (!token || user.papel !== 'jogador') return
-          await db
-            .update(schema.conviteCronica)
-            .set({ usadoPor: user.id })
-            .where(and(eq(schema.conviteCronica.token, token), isNull(schema.conviteCronica.usadoPor)))
-          ctx?.setCookie(COOKIE_CONVITE, '', { path: '/', maxAge: 0 })
+        // O link da mesa continua valendo para os próximos; só limpa o cookie de quem acabou de entrar.
+        after: async (_user, ctx) => {
+          if (ctx?.getCookie(COOKIE_CONVITE)) ctx.setCookie(COOKIE_CONVITE, '', { path: '/', maxAge: 0 })
         },
       },
     },

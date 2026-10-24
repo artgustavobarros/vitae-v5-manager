@@ -5,7 +5,8 @@ import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
-import { account, session, user } from '#/db/schema'
+import { account, personagem, session, user } from '#/db/schema'
+import { podeRemoverJogador } from '#/domain/convite'
 import { auth } from '#/lib/auth'
 import { buscarCredencial, idsComSenha } from '#/server/credencial'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
@@ -58,3 +59,19 @@ export const gerarSenhaNova = createServerFn({ method: 'POST' })
     await db.delete(session).where(eq(session.userId, data.userId))
     return { senha }
   })
+
+/** Remove o Jogador da Crônica: os Personagens dele passam para o Narrador e a conta é apagada. */
+export const removerJogador = createServerFn({ method: 'POST' })
+  .middleware([exigirNarrador])
+  .validator(z.object({ userId: z.string().min(1) }))
+  .handler(({ data, context }) =>
+    db.transaction(async (tx) => {
+      const [alvo] = await tx.select({ papel: user.papel }).from(user).where(eq(user.id, data.userId))
+      if (!alvo || !podeRemoverJogador(context.usuario, { papel: alvo.papel as 'jogador' | 'narrador' })) {
+        throw new Error('Só Jogadores podem ser removidos da Crônica')
+      }
+      await tx.update(personagem).set({ donoId: context.usuario.id }).where(eq(personagem.donoId, data.userId))
+      // Atribuições pendentes para ele caem junto (FK com set null), e sessões e credenciais, em cascata.
+      await tx.delete(user).where(eq(user.id, data.userId))
+    }),
+  )

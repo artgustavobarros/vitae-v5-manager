@@ -1,18 +1,26 @@
 import { describe, expect, it } from 'vitest'
 
-import { estadoConvite, validarNomeUsuario } from './convite'
+import { estadoConvite, podeRemoverJogador, validarNomeUsuario } from './convite'
 
 describe('estadoConvite', () => {
-  it('convite que não existe (ou foi cancelado) é inexistente', () => {
+  it('link que não existe é inexistente', () => {
     expect(estadoConvite(undefined)).toBe('inexistente')
   })
 
-  it('convite sem uso é válido', () => {
-    expect(estadoConvite({ usadoEm: null })).toBe('valido')
+  it('o link atual da Crônica vale para quantas pessoas o Narrador quiser', () => {
+    expect(estadoConvite({ substituidoEm: null })).toBe('valido')
   })
 
-  it('convite já usado num cadastro não vale de novo', () => {
-    expect(estadoConvite({ usadoEm: new Date('2026-10-23T21:00:00') })).toBe('usado')
+  it('gerar um link novo faz o anterior parar de valer', () => {
+    expect(estadoConvite({ substituidoEm: new Date('2026-10-24T21:00:00') })).toBe('substituido')
+  })
+})
+
+describe('podeRemoverJogador', () => {
+  it('só o Narrador remove, e só Jogadores', () => {
+    expect(podeRemoverJogador({ papel: 'narrador' }, { papel: 'jogador' })).toBe(true)
+    expect(podeRemoverJogador({ papel: 'narrador' }, { papel: 'narrador' })).toBe(false)
+    expect(podeRemoverJogador({ papel: 'jogador' }, { papel: 'jogador' })).toBe(false)
   })
 })
 

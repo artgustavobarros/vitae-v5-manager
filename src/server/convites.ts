@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 
 import { createServerFn } from '@tanstack/react-start'
 import { setCookie } from '@tanstack/react-start/server'
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { desc, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
@@ -11,38 +11,39 @@ import { estadoConvite } from '#/domain/convite'
 import { COOKIE_CONVITE } from '#/lib/cadastro'
 import { exigirNarrador } from '#/server/sessao'
 
-export const listarConvites = createServerFn({ method: 'GET' })
-  .middleware([exigirNarrador])
-  .handler(() =>
-    db
-      .select({ id: conviteCronica.id, token: conviteCronica.token, criadoEm: conviteCronica.criadoEm })
-      .from(conviteCronica)
-      .where(isNull(conviteCronica.usadoEm))
-      .orderBy(asc(conviteCronica.criadoEm)),
-  )
-
-export const gerarConvite = createServerFn({ method: 'POST' })
+/** O link atual da Crônica, ou null se o Narrador ainda não gerou nenhum. */
+export const buscarLinkDaCronica = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
   .handler(async () => {
-    const [convite] = await db
-      .insert(conviteCronica)
-      .values({ token: randomBytes(24).toString('base64url') })
-      .returning({ token: conviteCronica.token })
-    return convite
+    const [atual] = await db
+      .select({ token: conviteCronica.token, criadoEm: conviteCronica.criadoEm })
+      .from(conviteCronica)
+      .where(isNull(conviteCronica.substituidoEm))
+      .orderBy(desc(conviteCronica.criadoEm))
+      .limit(1)
+    return atual ?? null
   })
 
-export const cancelarConvite = createServerFn({ method: 'POST' })
+/** Gera o link novo da Crônica; o anterior para de valer na hora. */
+export const gerarNovoLink = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data }) => {
-    await db
-      .delete(conviteCronica)
-      .where(and(eq(conviteCronica.id, data.id), isNull(conviteCronica.usadoEm)))
-  })
+  .handler(() =>
+    db.transaction(async (tx) => {
+      await tx
+        .update(conviteCronica)
+        .set({ substituidoEm: new Date() })
+        .where(isNull(conviteCronica.substituidoEm))
+      const [novo] = await tx
+        .insert(conviteCronica)
+        .values({ token: randomBytes(24).toString('base64url') })
+        .returning({ token: conviteCronica.token, criadoEm: conviteCronica.criadoEm })
+      return novo
+    }),
+  )
 
 const comToken = z.object({ token: z.string().min(1).max(100) })
 
-/** Público: a página do link mostra se o Convite para a Crônica ainda vale. */
+/** Público: a página do link mostra se ele ainda é o link atual da Crônica. */
 export const verConvite = createServerFn({ method: 'GET' })
   .validator(comToken)
   .handler(async ({ data }) => {
@@ -55,7 +56,7 @@ export const prepararCadastro = createServerFn({ method: 'POST' })
   .validator(comToken)
   .handler(async ({ data }) => {
     const convite = await db.query.conviteCronica.findFirst({ where: eq(conviteCronica.token, data.token) })
-    if (estadoConvite(convite) !== 'valido') throw new Error('Este Convite para a Crônica não vale mais. Peça um novo ao Narrador.')
+    if (estadoConvite(convite) !== 'valido') throw new Error('Este link da Crônica não vale mais. Peça o link novo ao Narrador.')
     setCookie(COOKIE_CONVITE, data.token, {
       httpOnly: true,
       sameSite: 'lax',

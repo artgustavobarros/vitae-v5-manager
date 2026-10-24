@@ -64,7 +64,7 @@ function Inicio() {
               to="/narrador/convites"
               className="flex h-12 items-center justify-between text-base outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Convites para a Crônica
+              Jogadores e Convite para a Crônica
               <ChevronRight aria-hidden className="size-4 text-muted-foreground" />
             </Link>
           </nav>
