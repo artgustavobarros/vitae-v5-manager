@@ -78,6 +78,13 @@
       "when": 1792867356182,
       "tag": "0010_aprovacao_catalogo",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792869358526,
+      "tag": "0011_opcoes_cronica",
+      "breakpoints": true
     }
   ]
 }

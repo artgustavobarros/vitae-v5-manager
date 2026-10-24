@@ -1,11 +1,27 @@
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
+import { OPCOES_CRIACAO_CRONICA_PADRAO, type OpcoesCriacaoCronica } from '#/domain/cronica'
 import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
 
 import { user } from './auth-schema.ts'
 
 export * from './auth-schema.ts'
+export type { OpcoesCriacaoCronica } from '#/domain/cronica'
+
+/** Configurações da Crônica gerenciadas pelo Narrador (ex.: regras de criação da mesa). */
+export const cronica = pgTable('cronica', {
+  id: uuid().primaryKey().defaultRandom(),
+  nome: text().notNull().default('Crônica'),
+  opcoesCriacao: jsonb('opcoes_criacao')
+    .$type<OpcoesCriacaoCronica>()
+    .notNull()
+    .default(OPCOES_CRIACAO_CRONICA_PADRAO),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+})
 
 /** Convite para a Crônica: o link que o Narrador compartilha com a mesa; só o mais novo vale. */
 export const conviteCronica = pgTable('convite_cronica', {

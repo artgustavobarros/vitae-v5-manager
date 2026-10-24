@@ -25,6 +25,7 @@ import {
   type Seita,
 } from '#/domain/ficha'
 
+import { CardPerdicaoCompulsaoCla } from './card-cla'
 import { CamposPoderes, CamposRituais, CamposVantagensPersonagem, ListaSoltos } from './catalogo'
 import { SeletorPontos } from './marcadores'
 import { atributosDoGrupo, habilidadesDoGrupo, nomeDisciplina, rotuloGeracao } from './tracos'
@@ -190,6 +191,7 @@ export function CamposIdentidade({ edicao, regrasCriacao = false }: { edicao: Ed
           <Input id="senhor" value={ficha.senhor} onChange={(e) => mudar({ senhor: e.target.value })} />
         </Campo>
       </div>
+      {ficha.cla && <CardPerdicaoCompulsaoCla cla={ficha.cla} />}
     </>
   )
 }
