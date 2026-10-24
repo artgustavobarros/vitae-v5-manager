@@ -16,8 +16,10 @@ import { casaBusca } from '#/domain/catalogo/busca'
 export type OpcaoCombobox = {
   valor: string
   rotulo: string
-  /** Nome em inglês: aparece entre parênteses e também casa na busca. */
+  /** Nome em inglês: usado para filtro na busca. Só exibido visualmente se exibirOriginal for true. */
   original?: string
+  /** Se true, exibe o nome original entre parênteses ao lado do rótulo. Padrão: false */
+  exibirOriginal?: boolean
   /** Descrição curta, mostrada no próprio seletor. */
   descricao?: string
   /** Regra quebrada (aviso para o Narrador) ou motivo do bloqueio (Jogador). */
@@ -177,7 +179,7 @@ export function Combobox({
                       <div className="flex flex-col gap-1">
                         <span>
                           {opcao.rotulo}
-                          {opcao.original && opcao.original !== opcao.rotulo && (
+                          {opcao.exibirOriginal && opcao.original && opcao.original !== opcao.rotulo && (
                             <span className="text-muted-foreground"> ({opcao.original})</span>
                           )}
                         </span>
