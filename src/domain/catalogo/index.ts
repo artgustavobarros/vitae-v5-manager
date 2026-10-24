@@ -74,9 +74,20 @@ export const CATALOGO: readonly ItemCatalogo[] = [
 
 const PORID = new Map<string, ItemCatalogo>(CATALOGO.map((item) => [item.id, item]))
 
+const ALIASES_CATALOGO: Record<string, string> = {
+  'tipo-predador-gato-de-beco': 'tipo-predador-vira-lata',
+  'tipo-predador-ladrao-de-bolsas': 'tipo-predador-sacoleiro',
+  'tipo-predador-cacador-de-fazenda': 'tipo-predador-fazendeiro',
+  'tipo-predador-cutelo': 'tipo-predador-trinchador',
+  'tipo-predador-sombra': 'tipo-predador-sandman',
+  'tipo-predador-alpinista-social': 'tipo-predador-scene-queen',
+  'tipo-predador-sirene': 'tipo-predador-sereia',
+}
+
 /** null quando o id saiu do Catálogo: a Ficha mostra "Item removido do Catálogo". */
 export function itemCatalogo(id: string): ItemCatalogo | null {
-  return PORID.get(id) ?? null
+  const idReal = ALIASES_CATALOGO[id] ?? id
+  return PORID.get(idReal) ?? null
 }
 
 export function poder(id: string): Poder | null {

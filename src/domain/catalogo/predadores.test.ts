@@ -49,4 +49,42 @@ describe('Tipos de Predador', () => {
       }
     }
   })
+
+  it('segue as traduções oficiais da edição brasileira (Galápagos Jogos)', () => {
+    const viraLata = tipoPredador('tipo-predador-vira-lata')
+    expect(viraLata?.nome).toBe('Vira-lata')
+    expect(viraLata?.nomeOriginal).toBe('Alleycat')
+
+    const sacoleiro = tipoPredador('tipo-predador-sacoleiro')
+    expect(sacoleiro?.nome).toBe('Sacoleiro')
+    expect(sacoleiro?.nomeOriginal).toBe('Bagger')
+
+    const fazendeiro = tipoPredador('tipo-predador-fazendeiro')
+    expect(fazendeiro?.nome).toBe('Fazendeiro')
+    expect(fazendeiro?.nomeOriginal).toBe('Farmer')
+
+    const trinchador = tipoPredador('tipo-predador-trinchador')
+    expect(trinchador?.nome).toBe('Trinchador')
+    expect(trinchador?.nomeOriginal).toBe('Cleaver')
+
+    const sereia = tipoPredador('tipo-predador-sereia')
+    expect(sereia?.nome).toBe('Sereia')
+    expect(sereia?.nomeOriginal).toBe('Siren')
+
+    const sandman = tipoPredador('tipo-predador-sandman')
+    expect(sandman?.nome).toBe('Sandman')
+
+    const sceneQueen = tipoPredador('tipo-predador-scene-queen')
+    expect(sceneQueen?.nome).toBe('Scene Queen')
+  })
+
+  it('mantém compatibilidade com ids legados através de aliases', () => {
+    expect(tipoPredador('tipo-predador-gato-de-beco')?.nome).toBe('Vira-lata')
+    expect(tipoPredador('tipo-predador-ladrao-de-bolsas')?.nome).toBe('Sacoleiro')
+    expect(tipoPredador('tipo-predador-cacador-de-fazenda')?.nome).toBe('Fazendeiro')
+    expect(tipoPredador('tipo-predador-cutelo')?.nome).toBe('Trinchador')
+    expect(tipoPredador('tipo-predador-sombra')?.nome).toBe('Sandman')
+    expect(tipoPredador('tipo-predador-alpinista-social')?.nome).toBe('Scene Queen')
+    expect(tipoPredador('tipo-predador-sirene')?.nome).toBe('Sereia')
+  })
 })

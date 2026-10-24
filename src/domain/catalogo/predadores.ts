@@ -25,9 +25,9 @@ function LSRR(pagina: number): Fonte {
 
 export const TIPOS_PREDADOR: readonly TipoPredador[] = [
   {
-    id: 'tipo-predador-gato-de-beco',
+    id: 'tipo-predador-vira-lata',
     tipo: 'tipo-predador',
-    nome: 'Gato de Beco',
+    nome: 'Vira-lata',
     nomeOriginal: 'Alleycat',
     descricao: 'Caça por assalto físico violento ou emboscada súbita em becos escuros.',
     confianca: 'certo',
@@ -46,9 +46,9 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
     ],
   },
   {
-    id: 'tipo-predador-ladrao-de-bolsas',
+    id: 'tipo-predador-sacoleiro',
     tipo: 'tipo-predador',
-    nome: 'Ladrão de Bolsas',
+    nome: 'Sacoleiro',
     nomeOriginal: 'Bagger',
     descricao: 'Evita caçar humanos vivos diretamente, adquirindo sangue frio armazenado em hospitais ou no mercado negro.',
     confianca: 'certo',
@@ -92,9 +92,9 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
     ],
   },
   {
-    id: 'tipo-predador-cutelo',
+    id: 'tipo-predador-trinchador',
     tipo: 'tipo-predador',
-    nome: 'Cutelo',
+    nome: 'Trinchador',
     nomeOriginal: 'Cleaver',
     descricao: 'Alimenta-se secretamente da própria família, amigos íntimos ou círculo doméstico mortal.',
     confianca: 'certo',
@@ -108,7 +108,7 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
       { id: 'vantagem-rebanho', nome: 'Rebanho', nivel: 2, nota: 'Família mortal' },
     ],
     defeitos: [
-      { id: 'defeito-segredo-sombrio', nome: 'Segredo Sombrio', nivel: 1, nota: 'Cutelo (Cleaver)' },
+      { id: 'defeito-segredo-sombrio', nome: 'Segredo Sombrio', nivel: 1, nota: 'Trinchador (Cleaver)' },
     ],
   },
   {
@@ -132,9 +132,9 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
     ],
   },
   {
-    id: 'tipo-predador-cacador-de-fazenda',
+    id: 'tipo-predador-fazendeiro',
     tipo: 'tipo-predador',
-    nome: 'Caçador de Fazenda',
+    nome: 'Fazendeiro',
     nomeOriginal: 'Farmer',
     descricao: 'Alimenta-se apenas do sangue de animais, recusando-se a caçar humanos.',
     confianca: 'certo',
@@ -178,9 +178,9 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
     ],
   },
   {
-    id: 'tipo-predador-sombra',
+    id: 'tipo-predador-sandman',
     tipo: 'tipo-predador',
-    nome: 'Sombra',
+    nome: 'Sandman',
     nomeOriginal: 'Sandman',
     descricao: 'Invade residências nas sombras para se alimentar de vítimas adormecidas sem ser percebido.',
     confianca: 'certo',
@@ -196,9 +196,9 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
     defeitos: [],
   },
   {
-    id: 'tipo-predador-alpinista-social',
+    id: 'tipo-predador-scene-queen',
     tipo: 'tipo-predador',
-    nome: 'Alpinista Social',
+    nome: 'Scene Queen',
     nomeOriginal: 'Scene Queen',
     descricao: 'Caça nos círculos exclusivos de subculturas urbanas, clubes noturnos e cenas artísticas.',
     confianca: 'certo',
@@ -229,9 +229,9 @@ export const TIPOS_PREDADOR: readonly TipoPredador[] = [
     ],
   },
   {
-    id: 'tipo-predador-sirene',
+    id: 'tipo-predador-sereia',
     tipo: 'tipo-predador',
-    nome: 'Sirene',
+    nome: 'Sereia',
     nomeOriginal: 'Siren',
     descricao: 'Usa charme, beleza física e sedução irresistível para atrair presas e se alimentar durante o êxtase.',
     confianca: 'certo',

@@ -85,9 +85,9 @@ function habilidadesValidas(perfil: PerfilHabilidade): Record<Habilidade, number
   return base
 }
 
-const gatoDeBeco = TIPOS_PREDADOR.find((p) => p.id === 'tipo-predador-gato-de-beco')!
+const viraLata = TIPOS_PREDADOR.find((p) => p.id === 'tipo-predador-vira-lata')!
 const sanguessuga = TIPOS_PREDADOR.find((p) => p.id === 'tipo-predador-sanguessuga')!
-const ladraoDeBolsas = TIPOS_PREDADOR.find((p) => p.id === 'tipo-predador-ladrao-de-bolsas')!
+const sacoleiro = TIPOS_PREDADOR.find((p) => p.id === 'tipo-predador-sacoleiro')!
 
 describe('validarAtributosCriacao', () => {
   it('aprova distribuição padrão V5 (1x4, 3x3, 4x2, 1x1)', () => {
@@ -441,7 +441,7 @@ describe('validarVantagensDefeitosCriacao', () => {
       { id: 'vantagem-contatos', nivel: 3, origem: 'predador' as const },
       { id: 'defeito-inimigos', nivel: 1, origem: 'predador' as const },
     ]
-    const res = validarVantagensDefeitosCriacao('brujah', lista, gatoDeBeco)
+    const res = validarVantagensDefeitosCriacao('brujah', lista, viraLata)
     expect(res.valido).toBe(true)
     expect(res.pontosVantagens).toBe(7)
     expect(res.pontosDefeitos).toBe(2)
@@ -609,7 +609,7 @@ describe('aplicarPredador', () => {
       defeitos: [] as any[],
     }
 
-    const resultado = aplicarPredador(dadosIniciais, gatoDeBeco, {
+    const resultado = aplicarPredador(dadosIniciais, viraLata, {
       disciplina: 'potencia',
       especializacao: { habilidade: 'briga', especializacao: 'Imobilização' },
     })
@@ -671,7 +671,7 @@ describe('aplicarPredador', () => {
       defeitos: [] as any[],
     }
 
-    const resultado = aplicarPredador(dadosIniciais, ladraoDeBolsas, {
+    const resultado = aplicarPredador(dadosIniciais, sacoleiro, {
       disciplina: 'ofuscacao',
       especializacao: { habilidade: 'ladroagem', especializacao: 'Arrombamento' },
       tracoEscolhido: { id: 'vantagem-recursos', nivel: 1, tipo: 'vantagem', nota: 'Equipamento' },
