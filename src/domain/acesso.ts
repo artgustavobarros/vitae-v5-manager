@@ -17,6 +17,15 @@ export function nomeCurto(nome: string): string {
   return partes.join(' ')
 }
 
+/** Iniciais do nome para fallback do Avatar: "Arthur Gustavo" vira "AG", "Helena" vira "H". */
+export function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean)
+  if (partes.length === 0) return ''
+  const primeira = partes[0][0] ?? ''
+  const ultima = partes.length > 1 ? (partes[partes.length - 1][0] ?? '') : ''
+  return (primeira + ultima).toUpperCase()
+}
+
 /**
  * Decide com qual papel uma pessoa cria conta no site.
  * Retorna null quando ela não pode: não é o Narrador e não tem Convite para a Crônica válido.
@@ -34,4 +43,9 @@ export function decidirPapel(params: {
   if (ehNarrador && (params.metodo !== 'senha' || params.dev)) return 'narrador'
   if (params.temConvite) return 'jogador'
   return null
+}
+
+/** Só desconecta o Google quem ainda entra por senha; senão a pessoa ficaria sem como entrar. */
+export function podeDesconectarGoogle(conta: { temSenha: boolean; temGoogle: boolean }): boolean {
+  return conta.temSenha && conta.temGoogle
 }

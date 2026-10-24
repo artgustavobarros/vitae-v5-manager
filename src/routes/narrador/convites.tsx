@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
+import { AvatarUsuario } from '#/components/avatar-usuario'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,13 +127,16 @@ function Jogadores() {
         ) : (
           <ul className="divide-y border-y">
             {jogadores.map((j) => (
-              <li key={j.id} className="flex min-h-14 items-center justify-between gap-2 py-2">
-                <span className="min-w-0">
-                  <span className="block truncate text-base">{j.nome}</span>
-                  <span className="block truncate text-sm text-muted-foreground">
-                    {!j.temSenha ? 'Entra com Google' : j.nomeUsuario ? `@${j.nomeUsuario}` : 'Sem nome de usuário'}
+              <li key={j.id} className="flex min-h-14 items-center justify-between gap-4 py-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <AvatarUsuario nome={j.nome} imagem={j.imagem} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-base">{j.nome}</span>
+                    <span className="block truncate text-sm text-muted-foreground">
+                      {!j.temSenha ? 'Entra com Google' : j.nomeUsuario ? `@${j.nomeUsuario}` : 'Sem nome de usuário'}
+                    </span>
                   </span>
-                </span>
+                </div>
                 <div className="flex shrink-0 items-center gap-1">
                 {j.temSenha && (
                   <Button

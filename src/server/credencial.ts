@@ -8,11 +8,19 @@ import { account } from '#/db/schema'
 
 /** Provedor do better-auth para conta com senha; conta só Google não tem essa linha. */
 const PROVEDOR_SENHA = 'credential'
+const PROVEDOR_GOOGLE = 'google'
 
 /** A conta com senha da pessoa, ou undefined se ela entra só pelo Google. */
 export function buscarCredencial(userId: string) {
   return db.query.account.findFirst({
     where: and(eq(account.userId, userId), eq(account.providerId, PROVEDOR_SENHA)),
+  })
+}
+
+/** A conta Google conectada da pessoa, ou undefined se ela não conectou. */
+export function buscarContaGoogle(userId: string) {
+  return db.query.account.findFirst({
+    where: and(eq(account.userId, userId), eq(account.providerId, PROVEDOR_GOOGLE)),
   })
 }
 

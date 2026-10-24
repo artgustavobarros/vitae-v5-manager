@@ -1,6 +1,7 @@
-import { Trash2 } from 'lucide-react'
+import { Info, Trash2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
+import { TermoRegra } from '#/components/consulta-regra'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
@@ -144,11 +145,12 @@ export function CamposIdentidade({ edicao, regrasCriacao = false }: { edicao: Ed
       </Campo>
       <div className="grid grid-cols-2 gap-4">
         <Campo id="cla" rotulo="Clã">
+          <div className="flex items-center gap-2">
           <Select
             value={ficha.cla ?? NENHUM}
             onValueChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
           >
-            <SelectTrigger id="cla" className="w-full">
+            <SelectTrigger id="cla" className="w-full flex-1">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -160,6 +162,8 @@ export function CamposIdentidade({ edicao, regrasCriacao = false }: { edicao: Ed
               ))}
             </SelectContent>
           </Select>
+          {ficha.cla && <InfoRegra tipo="cla" id={ficha.cla} />}
+          </div>
         </Campo>
         <Campo id="geracao" rotulo="Geração">
           <Select
@@ -226,7 +230,14 @@ export function CamposAtributos({ edicao }: { edicao: EdicaoFicha }) {
   return GRUPOS.map((g) => (
     <Grupo key={g.id} titulo={g.atributos}>
       {atributosDoGrupo(g.id).map((a) => (
-        <LinhaPontos key={a.id} nome={a.nome}>
+        <LinhaPontos
+          key={a.id}
+          nome={
+            <TermoRegra tipo="atributo" id={a.id}>
+              {a.nome}
+            </TermoRegra>
+          }
+        >
           <SeletorPontos
             rotulo={a.nome}
             valor={ficha.atributos[a.id]}
@@ -249,7 +260,9 @@ export function CamposHabilidades({ edicao }: { edicao: EdicaoFicha }) {
         return (
           <li key={h.id} className="border-b">
             <div className="flex min-h-12 items-center justify-between gap-2 text-base">
-              <span>{h.nome}</span>
+              <TermoRegra tipo="habilidade" id={h.id}>
+                {h.nome}
+              </TermoRegra>
               <SeletorPontos
                 rotulo={h.nome}
                 valor={habilidade.valor}
@@ -306,6 +319,7 @@ export function CamposDisciplinas({ edicao }: { edicao: EdicaoFicha }) {
                     ))}
                   </SelectContent>
                 </Select>
+                <InfoRegra tipo="disciplina" id={d.disciplina} />
                 <Button
                   type="button"
                   variant="ghost"
@@ -405,7 +419,16 @@ function Campo({
   )
 }
 
-function LinhaPontos({ nome, children }: { nome: string; children: ReactNode }) {
+/** Ícone ao lado de um Select que abre a consulta de regra da opção escolhida. */
+function InfoRegra({ tipo, id }: { tipo: 'cla' | 'disciplina'; id: string }) {
+  return (
+    <TermoRegra tipo={tipo} id={id} className="flex size-9 shrink-0 items-center justify-center text-muted-foreground">
+      <Info className="size-4" />
+    </TermoRegra>
+  )
+}
+
+function LinhaPontos({ nome, children }: { nome: ReactNode; children: ReactNode }) {
   return (
     <li className="flex min-h-12 items-center justify-between gap-2 border-b text-base">
       <span>{nome}</span>
@@ -414,7 +437,7 @@ function LinhaPontos({ nome, children }: { nome: string; children: ReactNode }) 
   )
 }
 
-/** Trilha de 0 a 10 em duas linhas de 5, para caber no celular. */
+/** Trilha de 0 a 10 numa linha só, como na ficha oficial; o rótulo fica em cima para caber no celular. */
 function TrilhaDez(props: {
   rotulo: string
   valor: number
@@ -423,11 +446,11 @@ function TrilhaDez(props: {
   onChange: (valor: number) => void
 }) {
   return (
-    <div className="flex items-start justify-between gap-2">
+    <div className="flex flex-col">
       <span className="flex h-12 items-center text-base">
         {props.rotulo} <span className="ml-2 text-muted-foreground tabular-nums">{props.valor}</span>
       </span>
-      <SeletorPontos {...props} className="grid grid-cols-5" />
+      <SeletorPontos {...props} compacto />
     </div>
   )
 }

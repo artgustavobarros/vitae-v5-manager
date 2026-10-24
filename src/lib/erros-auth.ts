@@ -18,6 +18,9 @@ const MENSAGENS: Record<string, string> = {
   password_too_short: 'A senha precisa de pelo menos 8 caracteres.',
   password_too_long: 'A senha é longa demais.',
   invalid_password: 'A senha atual está errada.',
+  account_already_linked_to_different_user: 'Essa conta Google já está ligada a outra conta da Crônica.',
+  unable_to_link_account: 'Não deu para conectar ao Google. Tente de novo.',
+  access_denied: 'A conexão com o Google foi cancelada.',
 }
 
 /** Erro do better-auth (código ou mensagem) em PT-BR. */

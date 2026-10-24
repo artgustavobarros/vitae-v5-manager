@@ -12,18 +12,30 @@ import * as schema from '#/db/schema'
 import { decidirPapel, nomeCurto, normalizarEmail } from '#/domain/acesso'
 import { estadoConvite, validarNomeUsuario } from '#/domain/convite'
 import { COOKIE_CONVITE, DOMINIO_EMAIL_SINTETICO } from '#/lib/cadastro'
+import { notificacoesEventos } from '#/domain/notificacoes'
+import { notificarNarradores } from '#/server/enviar-notificacao'
 
 const DEV = import.meta.env?.DEV ?? false
 
 export const auth = betterAuth({
   appName: 'Umbra',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
+  trustedOrigins: ['http://localhost:3005', 'http://127.0.0.1:3005'],
   // Jogadores entram por nome de usuário e senha; quem cria a conta é o hook abaixo, com Convite para a Crônica.
   emailAndPassword: { enabled: true },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    },
+  },
+  account: {
+    accountLinking: {
+      // Quem entra por nome de usuário conecta o Google em /conta. O e-mail dessas contas é sintético
+      // e nunca bate com o do Google, por isso aceita e-mails diferentes. Nome e foto não mudam ao conectar.
+      enabled: true,
+      trustedProviders: ['google'],
+      allowDifferentEmails: true,
     },
   },
   user: {
@@ -59,8 +71,12 @@ export const auth = betterAuth({
           return { data: { ...user, email, papel, name } }
         },
         // O link da mesa continua valendo para os próximos; só limpa o cookie de quem acabou de entrar.
-        after: async (_user, ctx) => {
+        after: async (user, ctx) => {
           if (ctx?.getCookie(COOKIE_CONVITE)) ctx.setCookie(COOKIE_CONVITE, '', { path: '/', maxAge: 0 })
+          if (user.papel === 'jogador') {
+            const notif = notificacoesEventos.novoJogador(user.name)
+            await notificarNarradores({ texto: notif.texto, destino: notif.destino })
+          }
         },
       },
     },

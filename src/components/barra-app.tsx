@@ -2,7 +2,7 @@ import { Link, useRouteContext } from '@tanstack/react-router'
 
 import { MenuUsuario } from './menu-usuario'
 import { NavegacaoInline, NavegacaoMenu, type AcaoTela } from './navegacao'
-import { SinoDemo } from './notificacoes/sino-demo'
+import { SinoConectado } from './notificacoes/sino-conectado'
 import { Button } from './ui/button'
 
 /**
@@ -26,7 +26,7 @@ export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
             <Link {...acao.link}>{acao.rotulo}</Link>
           </Button>
         ))}
-        {import.meta.env.DEV && usuario && <SinoDemo papel={usuario.papel} />}
+        {usuario && <SinoConectado />}
         {usuario && <MenuUsuario usuario={usuario} />}
         {usuario && <NavegacaoMenu papel={usuario.papel} acoes={acoes} />}
       </div>

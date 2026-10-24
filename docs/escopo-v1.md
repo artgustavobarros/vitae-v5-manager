@@ -67,6 +67,8 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 ## Coteries
 
 - O Narrador cria, edita e apaga Coteries. Um Personagem pode estar em várias.
+- A Coterie tem Nome, Conceito/Descrição, Domínio (Caça, Abrigo e Porte de 0 a 5 cada) e lista de membros. O Tipo de Coterie e Vantagens e Defeitos compartilhados vêm do Catálogo.
+- A página da Coterie é acessível pelo Narrador e pelos Jogadores que têm Personagem nela.
 - A Coterie Padrão nasce com a Crônica e não pode ser apagada. O Narrador escolhe quais Personagens entram nela; nenhum entra automaticamente.
 - Convite de Coterie:
   - o convite é feito para um Personagem;
@@ -138,6 +140,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - Conteúdo só disponível em inglês é traduzido livremente, com o nome original entre parênteses.
 - Toda tradução passa por uma página de revisão durante o desenvolvimento. A página mostra o original e a tradução proposta, e tem um campo para o Narrador sugerir uma tradução melhor.
 - O Catálogo não é editável dentro do site.
+- **Consulta rápida de regras**: tocar no nome de termos de regras (Atributos, Habilidades, Clãs, Disciplinas, Domínio da Coterie, poderes, etc.) abre uma folha no celular ou diálogo no desktop com descrições curtas e escala explicativa.
 
 ## Fora da v1
 

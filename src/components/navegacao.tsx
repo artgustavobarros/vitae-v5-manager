@@ -13,10 +13,15 @@ export type AcaoTela = { rotulo: string; link: LinkOptions }
 
 const ITENS: Record<Papel, ItemNavegacao[]> = {
   narrador: [
+    { rotulo: 'Painel', to: '/' },
     { rotulo: 'Personagens', to: '/narrador/personagens' },
+    { rotulo: 'Coteries', to: '/narrador/coteries' },
     { rotulo: 'Jogadores', to: '/narrador/convites' },
   ],
-  jogador: [{ rotulo: 'Meus Personagens', to: '/' }],
+  jogador: [
+    { rotulo: 'Meus Personagens', to: '/' },
+    { rotulo: 'Coteries', to: '/coteries' },
+  ],
 }
 
 /** Links principais inline no header, de `lg` para cima. */
@@ -56,14 +61,14 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
           <SheetTitle className="font-serif text-2xl">Umbra</SheetTitle>
           <SheetDescription className="sr-only">Navegação principal</SheetDescription>
         </SheetHeader>
-        <nav aria-label="Principal" className="flex flex-col px-2 py-2">
+        <nav aria-label="Principal" className="flex flex-col gap-2 px-2 py-4">
           {ITENS[papel].map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeOptions={{ exact: true }}
               onClick={() => setAberto(false)}
-              className="flex h-12 items-center rounded-md px-2 text-base outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-12 items-center rounded-md px-3 text-base outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
               activeProps={{ className: 'bg-accent font-semibold', 'aria-current': 'page' }}
             >
               {item.rotulo}
@@ -71,20 +76,22 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
           ))}
         </nav>
         {acoes.length > 0 && (
-          <section aria-labelledby="acoes-tela" className="border-t px-2 py-2">
-            <h2 id="acoes-tela" className="px-2 py-2 text-xs text-muted-foreground">
+          <section aria-labelledby="acoes-tela" className="flex flex-col gap-2 border-t px-2 py-4">
+            <h2 id="acoes-tela" className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Nesta tela
             </h2>
-            {acoes.map((acao) => (
-              <Link
-                key={acao.rotulo}
-                {...acao.link}
-                onClick={() => setAberto(false)}
-                className="flex h-12 items-center rounded-md px-2 text-base outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {acao.rotulo}
-              </Link>
-            ))}
+            <div className="flex flex-col gap-2">
+              {acoes.map((acao) => (
+                <Link
+                  key={acao.rotulo}
+                  {...acao.link}
+                  onClick={() => setAberto(false)}
+                  className="flex h-12 items-center rounded-md px-3 text-base outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {acao.rotulo}
+                </Link>
+              ))}
+            </div>
           </section>
         )}
       </SheetContent>

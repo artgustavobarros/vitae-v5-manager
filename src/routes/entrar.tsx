@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { InputSenha } from '#/components/ui/input-senha'
 import { Label } from '#/components/ui/label'
 import { Separator } from '#/components/ui/separator'
 import { authClient } from '#/lib/auth-client'
@@ -66,9 +67,8 @@ function Entrar() {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="senha">Senha</Label>
-            <Input
+            <InputSenha
               id="senha"
-              type="password"
               autoComplete="current-password"
               required
               value={senha}
@@ -154,9 +154,8 @@ function LoginNarradorDev() {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="senha-dev">Senha</Label>
-          <Input
+          <InputSenha
             id="senha-dev"
-            type="password"
             required
             minLength={8}
             value={senha}

@@ -1,21 +1,57 @@
+import { Link, useRouter } from '@tanstack/react-router'
 import { useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
+import { TermoRegra } from '#/components/consulta-regra'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import type { Papel } from '#/domain/acesso'
 import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/domain/ficha'
 import type { AcessoFicha, StatusPersonagem } from '#/domain/permissoes-ficha'
-import { marcar } from '#/server/personagens'
+import { sairDaCoterie } from '#/server/coteries'
+import { alternarCompartilharCondicao, marcar } from '#/server/personagens'
 
 import { ListaTracos } from './atributos'
 import { CabecalhoFicha } from './cabecalho-ficha'
 import { HorizonteHumanidade, TrilhaDano, TrilhaFome } from './estado'
 import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
 
-/** Linha do topo: "Clã · 12ª Geração · Potência do Sangue N", sem as partes vazias. */
-function descricao(ficha: Ficha): string {
+/** Linha do topo: "Clã · 12ª Geração · Potência do Sangue N", com termos clicáveis. */
+function LinhaDescricao({ ficha }: { ficha: Ficha }) {
+  const cla = nomeCla(ficha)
   const geracao = ficha.geracao === null ? '' : rotuloGeracao(ficha.geracao)
-  return [nomeCla(ficha), geracao, `Potência do Sangue ${ficha.potenciaSangue}`].filter(Boolean).join(' · ')
+
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      {ficha.cla ? (
+        <TermoRegra tipo="cla" id={ficha.cla} className="font-medium text-foreground">
+          {cla}
+        </TermoRegra>
+      ) : (
+        <span>{cla}</span>
+      )}
+      {geracao && (
+        <>
+          <span className="text-muted-foreground">·</span>
+          <span>{geracao}</span>
+        </>
+      )}
+      <span className="text-muted-foreground">·</span>
+      <span>Potência do Sangue {ficha.potenciaSangue}</span>
+    </span>
+  )
 }
 
 /**
@@ -28,6 +64,10 @@ export function FichaPersonagem({
   status,
   ficha,
   acesso,
+  compartilhaCondicao = false,
+  coteries = [],
+  ehPdn = false,
+  papelUsuario,
   barra,
 }: {
   id: string
@@ -35,9 +75,18 @@ export function FichaPersonagem({
   status: StatusPersonagem
   ficha: Ficha
   acesso: AcessoFicha
+  compartilhaCondicao?: boolean
+  coteries?: { id: string; nome: string }[]
+  ehPdn?: boolean
+  papelUsuario?: Papel
   barra: ReactNode
 }) {
+  const router = useRouter()
   const [marcas, setMarcas] = useState(() => marcasDe(ficha))
+  const [compartilhando, setCompartilhando] = useState(compartilhaCondicao)
+  const [salvandoCondicao, setSalvandoCondicao] = useState(false)
+  const [coterieSaindo, setCoterieSaindo] = useState<{ id: string; nome: string } | null>(null)
+
   // Só a resposta do toque mais recente vale; as anteriores chegam desatualizadas.
   const ultimoToque = useRef(0)
   const podeMarcar = acesso === 'marcar' || acesso === 'editar'
@@ -55,6 +104,34 @@ export function FichaPersonagem({
     }
   }
 
+  async function toggleCompartilhar() {
+    if (salvandoCondicao) return
+    const novoValor = !compartilhando
+    setCompartilhando(novoValor)
+    setSalvandoCondicao(true)
+    try {
+      await alternarCompartilharCondicao({ data: { id, compartilhar: novoValor } })
+      router.invalidate()
+    } catch {
+      setCompartilhando(!novoValor)
+      toast.error('Não foi possível alterar o compartilhamento.')
+    } finally {
+      setSalvandoCondicao(false)
+    }
+  }
+
+  async function confirmarSaidaCoterie() {
+    if (!coterieSaindo) return
+    try {
+      await sairDaCoterie({ data: { coterieId: coterieSaindo.id, personagemId: id } })
+      toast.success(`Saiu de ${coterieSaindo.nome}`)
+      setCoterieSaindo(null)
+      router.invalidate()
+    } catch {
+      toast.error('Não foi possível sair da Coterie.')
+    }
+  }
+
   const aoMarcar = <T,>(aplicar: (valor: T) => Marcas) =>
     podeMarcar ? (valor: T) => salvar(aplicar(valor)) : undefined
 
@@ -66,12 +143,16 @@ export function FichaPersonagem({
     { rotulo: 'Desejo', valor: ficha.desejo },
   ]
 
+  // Controle de quem pode mexer no switch de compartilhar Condição
+  const podeMexerCompartilhar =
+    papelUsuario === 'narrador' ? ehPdn : acesso === 'marcar' || acesso === 'editar'
+
   return (
     <main className="min-h-dvh pb-12">
       <CabecalhoFicha
         barra={barra}
         nome={nome || 'Sem nome'}
-        descricao={descricao(ficha)}
+        descricao={<LinhaDescricao ficha={ficha} />}
         fome={marcas.fome}
         selo={
           status === 'rascunho' && (
@@ -102,7 +183,7 @@ export function FichaPersonagem({
 
       <div className="mx-auto max-w-3xl px-4">
         <Tabs defaultValue="atributos" className="mt-4">
-          <TabsList variant="line" className="w-full justify-start gap-4 rounded-none border-b p-0">
+          <TabsList variant="line" className="w-full justify-between gap-2 sm:justify-start sm:gap-6 rounded-none border-b p-0">
             <TabsTrigger value="atributos" className="flex-none px-0 after:bg-vinho">Atributos</TabsTrigger>
             <TabsTrigger value="habilidades" className="flex-none px-0 after:bg-vinho">Habilidades</TabsTrigger>
             <TabsTrigger value="disciplinas" className="flex-none px-0 after:bg-vinho">Disciplinas</TabsTrigger>
@@ -126,6 +207,86 @@ export function FichaPersonagem({
                 </div>
               ))}
             </dl>
+
+            {/* Bloco Coteries na aba Personagem */}
+            <section className="mt-8 flex flex-col gap-4 border-t pt-4">
+              <h2 className="font-serif text-2xl">Coteries</h2>
+
+              {/* Compartilhar Condição */}
+              <div className="flex items-center justify-between gap-4 rounded-md border p-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-base font-semibold">Compartilhar Condição</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">
+                    Vitalidade, Força de Vontade e Fome ficam visíveis para quem divide uma Coterie com este Personagem.
+                  </span>
+                </div>
+                <Button
+                  variant={compartilhando ? 'default' : 'outline'}
+                  size="sm"
+                  disabled={!podeMexerCompartilhar || salvandoCondicao}
+                  onClick={toggleCompartilhar}
+                  className="shrink-0"
+                >
+                  {compartilhando ? 'Ativado' : 'Desativado'}
+                </Button>
+              </div>
+
+              {/* Lista de Coteries com botão Sair */}
+              <div className="flex flex-col divide-y border-y">
+                {coteries.length === 0 ? (
+                  <p className="py-4 text-sm text-muted-foreground">
+                    Este Personagem não faz parte de nenhuma Coterie.
+                  </p>
+                ) : (
+                  coteries.map((c) => (
+                    <div key={c.id} className="flex h-12 items-center justify-between">
+                      <Link
+                        to="/coteries/$id"
+                        params={{ id: c.id }}
+                        className="text-base font-medium outline-none hover:text-vinho focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {c.nome}
+                      </Link>
+                      {papelUsuario === 'jogador' && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={() => setCoterieSaindo(c)}
+                            >
+                              Sair
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="font-serif text-2xl">
+                                Sair de {c.nome}?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {nome} deixará de fazer parte desta Coterie. Para voltar, o Narrador precisará enviar um novo convite.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setCoterieSaindo(null)}>
+                                Cancelar
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={confirmarSaidaCoterie}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Sair da Coterie
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
           </TabsContent>
         </Tabs>
       </div>

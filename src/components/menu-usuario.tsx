@@ -1,7 +1,7 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { LogOut, Settings } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar'
+import { AvatarUsuario } from '#/components/avatar-usuario'
 import { Button } from '#/components/ui/button'
 import {
   DropdownMenu,
@@ -14,11 +14,6 @@ import {
 import { authClient } from '#/lib/auth-client'
 import type { Usuario } from '#/server/sessao'
 
-function iniciais(nome: string): string {
-  const partes = nome.trim().split(/\s+/)
-  return ((partes[0]?.[0] ?? '') + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase()
-}
-
 /** Avatar e primeiro nome de quem está logado; o menu mostra o e-mail e "Sair". */
 export function MenuUsuario({ usuario }: { usuario: Usuario }) {
   const router = useRouter()
@@ -29,10 +24,7 @@ export function MenuUsuario({ usuario }: { usuario: Usuario }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="-mr-2 h-12 gap-2 px-2" aria-label={`Conta de ${usuario.nome}`}>
-          <Avatar className="size-8">
-            {usuario.imagem && <AvatarImage src={usuario.imagem} alt="" referrerPolicy="no-referrer" />}
-            <AvatarFallback className="text-xs">{iniciais(usuario.nome)}</AvatarFallback>
-          </Avatar>
+          <AvatarUsuario nome={usuario.nome} imagem={usuario.imagem} />
           <span className="max-w-24 truncate text-sm">{primeiroNome}</span>
         </Button>
       </DropdownMenuTrigger>

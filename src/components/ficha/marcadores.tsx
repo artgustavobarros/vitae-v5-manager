@@ -69,18 +69,18 @@ export function SeletorPontos({
   max = 5,
   rotulo,
   onChange,
-  className,
+  compacto = false,
 }: {
   valor: number
   min?: number
   max?: number
   rotulo: string
   onChange: (valor: number) => void
-  /** Ex.: `grid grid-cols-5` para quebrar trilhas de 10 em duas linhas no celular. */
-  className?: string
+  /** Pontos mais estreitos, para trilhas de 10 caberem numa linha no celular. */
+  compacto?: boolean
 }) {
   return (
-    <div role="group" aria-label={`${rotulo}: ${valor} de ${max}`} className={cn('flex', className)}>
+    <div role="group" aria-label={`${rotulo}: ${valor} de ${max}`} className="flex">
       {Array.from({ length: max }, (_, i) => (
         <Button
           key={i}
@@ -90,7 +90,10 @@ export function SeletorPontos({
           aria-label={`${rotulo} ${i + 1}`}
           aria-pressed={i < valor}
           onClick={() => onChange(alternarPontos(valor, i, min))}
-          className="h-12 w-10 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-transparent"
+          className={cn(
+            'h-12 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-transparent',
+            compacto ? 'w-8' : 'w-10',
+          )}
         >
           <Bolinha cheia={i < valor} grande />
         </Button>

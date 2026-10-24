@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { InputSenha } from '#/components/ui/input-senha'
 import { Label } from '#/components/ui/label'
 import { Separator } from '#/components/ui/separator'
 import { validarNomeUsuario } from '#/domain/convite'
@@ -91,7 +92,14 @@ function Cadastro({ token }: { token: string }) {
       if (error) return setErro(mensagemErroAuth(error))
       await router.navigate({ to: '/' })
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não deu para criar a conta.')
+      console.error('Erro ao criar conta:', e)
+      setErro(
+        e instanceof Error && e.message === 'Failed to fetch'
+          ? 'Erro de conexão com o servidor. Recarregue a página (F5) e tente novamente.'
+          : e instanceof Error
+            ? e.message
+            : 'Não deu para criar a conta.',
+      )
     } finally {
       setEnviando(false)
     }
@@ -107,7 +115,14 @@ function Cadastro({ token }: { token: string }) {
         errorCallbackURL: `/convite/${token}`,
       })
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não deu para entrar com Google.')
+      console.error('Erro ao entrar com Google:', e)
+      setErro(
+        e instanceof Error && e.message === 'Failed to fetch'
+          ? 'Erro de conexão com o servidor. Recarregue a página (F5) e tente novamente.'
+          : e instanceof Error
+            ? e.message
+            : 'Não deu para entrar com Google.',
+      )
     }
   }
 
@@ -134,9 +149,8 @@ function Cadastro({ token }: { token: string }) {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="senha">Senha</Label>
-          <Input
+          <InputSenha
             id="senha"
-            type="password"
             autoComplete="new-password"
             required
             minLength={8}
@@ -146,9 +160,8 @@ function Cadastro({ token }: { token: string }) {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="confirmacao">Confirme a senha</Label>
-          <Input
+          <InputSenha
             id="confirmacao"
-            type="password"
             autoComplete="new-password"
             required
             minLength={8}
@@ -173,7 +186,6 @@ function Cadastro({ token }: { token: string }) {
       <Button size="lg" variant="secondary" disabled={enviando} onClick={() => void google()}>
         Entrar com Google
       </Button>
-      <p className="text-sm text-muted-foreground">Com Google, seu nome na Crônica é o nome da conta Google.</p>
     </>
   )
 }

@@ -1,8 +1,11 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
 import { FichaPersonagem } from '#/components/ficha/ficha'
-import { buscarFicha } from '#/server/personagens'
+import type { AcaoTela } from '#/components/navegacao'
+import { Button } from '#/components/ui/button'
+import { alternarFixarPdn, buscarFicha } from '#/server/personagens'
 
 export const Route = createFileRoute('/personagens/$id/')({
   beforeLoad: ({ context }) => {
@@ -20,21 +23,54 @@ export const Route = createFileRoute('/personagens/$id/')({
 })
 
 function TelaFicha() {
+  const { usuario } = Route.useRouteContext()
   const personagem = Route.useLoaderData()
+  const router = useRouter()
+
+  const ehPdnAtivo = usuario.papel === 'narrador' && personagem.status === 'ativo'
+
+  async function alternarFixacao() {
+    try {
+      await alternarFixarPdn({
+        data: { id: personagem.id, fixado: !personagem.fixado },
+      })
+      toast.success(personagem.fixado ? 'PdN desafixado do Painel' : 'PdN fixado no Painel')
+      router.invalidate()
+    } catch {
+      toast.error('Não foi possível alterar a fixação do PdN.')
+    }
+  }
+
+  const acoes: AcaoTela[] = []
+  if (personagem.acesso === 'editar') {
+    acoes.push({
+      rotulo: 'Editar',
+      link: { to: '/personagens/$id/editar', params: { id: personagem.id } },
+    })
+  }
 
   return (
     <FichaPersonagem
       // Recarregar a Ficha (outro Personagem ou dados novos) recomeça as marcas locais.
       key={`${personagem.id}:${JSON.stringify(personagem.ficha)}`}
       {...personagem}
+      ehPdn={ehPdnAtivo}
+      papelUsuario={usuario.papel}
       barra={
-        <BarraApp
-          acoes={
-            personagem.acesso === 'editar'
-              ? [{ rotulo: 'Editar', link: { to: '/personagens/$id/editar', params: { id: personagem.id } } }]
-              : []
-          }
-        />
+        <div className="flex flex-col">
+          <BarraApp acoes={acoes} />
+          {ehPdnAtivo && (
+            <div className="flex justify-end px-4 pt-1">
+              <Button
+                variant={personagem.fixado ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={alternarFixacao}
+              >
+                {personagem.fixado ? 'Desafixar do Painel' : 'Fixar no Painel'}
+              </Button>
+            </div>
+          )}
+        </div>
       }
     />
   )

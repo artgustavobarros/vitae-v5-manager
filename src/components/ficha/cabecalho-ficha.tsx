@@ -15,7 +15,7 @@ export function CabecalhoFicha({
   children,
 }: {
   nome: string
-  descricao: string
+  descricao: ReactNode
   /** Aviso curto sob a descrição, como o status de Rascunho. */
   selo?: ReactNode
   fome: number

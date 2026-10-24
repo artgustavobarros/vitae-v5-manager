@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { decidirPapel, nomeCurto, normalizarEmail } from './acesso'
+import { decidirPapel, iniciais, nomeCurto, normalizarEmail, podeDesconectarGoogle } from './acesso'
 
 const narradorEmail = 'narrador@exemplo.com'
 
@@ -70,5 +70,37 @@ describe('nomeCurto', () => {
   it('nome único ou com espaços sobrando', () => {
     expect(nomeCurto('  Ana  ')).toBe('Ana')
     expect(nomeCurto('Rui   Barbosa  Lima')).toBe('Rui Barbosa')
+  })
+})
+
+describe('iniciais', () => {
+  it('gera iniciais do primeiro e último nome', () => {
+    expect(iniciais('Arthur Gustavo')).toBe('AG')
+    expect(iniciais('Helena Sarmento')).toBe('HS')
+    expect(iniciais('Maria da Silva Santos')).toBe('MS')
+  })
+
+  it('gera uma letra para nome único', () => {
+    expect(iniciais('Helena')).toBe('H')
+    expect(iniciais('  Rui ')).toBe('R')
+  })
+
+  it('lida com string vazia', () => {
+    expect(iniciais('')).toBe('')
+    expect(iniciais('   ')).toBe('')
+  })
+})
+
+describe('podeDesconectarGoogle', () => {
+  it('deixa desconectar quem ainda tem senha', () => {
+    expect(podeDesconectarGoogle({ temSenha: true, temGoogle: true })).toBe(true)
+  })
+
+  it('não deixa conta só Google ficar sem como entrar', () => {
+    expect(podeDesconectarGoogle({ temSenha: false, temGoogle: true })).toBe(false)
+  })
+
+  it('não há o que desconectar sem Google conectado', () => {
+    expect(podeDesconectarGoogle({ temSenha: true, temGoogle: false })).toBe(false)
   })
 })

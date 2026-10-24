@@ -1,18 +1,22 @@
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { z } from 'zod'
 
 import { BarraApp } from '#/components/barra-app'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { InputSenha } from '#/components/ui/input-senha'
 import { Label } from '#/components/ui/label'
 import { validarNomeUsuario } from '#/domain/convite'
 import { authClient } from '#/lib/auth-client'
 import { mensagemErroAuth } from '#/lib/erros-auth'
-import { buscarConta } from '#/server/conta'
+import { buscarConta, desconectarGoogle } from '#/server/conta'
 
 export const Route = createFileRoute('/conta')({
+  // Volta do Google: `google=conectado` no sucesso, `error=<código>` na falha.
+  validateSearch: z.object({ google: z.literal('conectado').optional(), error: z.string().optional() }),
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
   },
@@ -22,6 +26,14 @@ export const Route = createFileRoute('/conta')({
 
 function Conta() {
   const conta = Route.useLoaderData()
+  const { google, error } = Route.useSearch()
+  const navigate = Route.useNavigate()
+
+  // O erro já foi para o estado de ConectarGoogle; limpa a URL para não repetir no recarregar.
+  useEffect(() => {
+    if (google === 'conectado') toast.success('Google conectado. Agora você também pode entrar com ele.')
+    if (google || error) void navigate({ search: {}, replace: true })
+  }, [google, error, navigate])
 
   return (
     <main className="mx-auto min-h-dvh max-w-3xl">
@@ -32,6 +44,7 @@ function Conta() {
           <>
             <TrocarNomeUsuario atual={conta.nomeUsuario ?? ''} />
             <TrocarSenha />
+            <ConectarGoogle conectado={conta.temGoogle} erroVolta={error ?? null} />
           </>
         ) : (
           <>
@@ -55,6 +68,64 @@ function Erro({ mensagem }: { mensagem: string | null }) {
     <Alert variant="destructive">
       <AlertDescription>{mensagem}</AlertDescription>
     </Alert>
+  )
+}
+
+function ConectarGoogle({ conectado, erroVolta }: { conectado: boolean; erroVolta: string | null }) {
+  const router = useRouter()
+  const [erro, setErro] = useState<string | null>(erroVolta ? mensagemErroAuth(erroVolta) : null)
+  const [enviando, setEnviando] = useState(false)
+
+  async function conectar() {
+    setErro(null)
+    setEnviando(true)
+    // Sai do site para o Google; volta em /conta com `google=conectado` ou `error=<código>`.
+    const { error } = await authClient.linkSocial({
+      provider: 'google',
+      callbackURL: '/conta?google=conectado',
+      errorCallbackURL: '/conta',
+    })
+    if (error) {
+      setEnviando(false)
+      setErro(mensagemErroAuth(error))
+    }
+  }
+
+  async function desconectar() {
+    setErro(null)
+    setEnviando(true)
+    try {
+      await desconectarGoogle()
+      toast.success('Google desconectado. Você entra só com nome de usuário e senha.')
+      await router.invalidate()
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não deu para desconectar o Google.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="font-serif text-2xl">Google</h2>
+      <p className="text-sm text-muted-foreground">
+        {conectado
+          ? 'Sua conta Google está conectada. Você entra com ela ou com nome de usuário e senha.'
+          : 'Conecte sua conta Google para também entrar com ela, sem digitar a senha. Seu nome na Crônica não muda.'}
+      </p>
+      <Erro mensagem={erro} />
+      <div>
+        {conectado ? (
+          <Button variant="secondary" disabled={enviando} onClick={() => void desconectar()}>
+            Desconectar
+          </Button>
+        ) : (
+          <Button variant="secondary" disabled={enviando} onClick={() => void conectar()}>
+            Conectar ao Google
+          </Button>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -171,9 +242,8 @@ function TrocarSenha() {
       <h2 className="font-serif text-2xl">Senha</h2>
       <div className="grid gap-2">
         <Label htmlFor="senha-atual">Senha atual</Label>
-        <Input
+        <InputSenha
           id="senha-atual"
-          type="password"
           autoComplete="current-password"
           required
           value={atual}
@@ -182,9 +252,8 @@ function TrocarSenha() {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="senha-nova">Senha nova</Label>
-        <Input
+        <InputSenha
           id="senha-nova"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -194,9 +263,8 @@ function TrocarSenha() {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="senha-confirmacao">Confirme a senha nova</Label>
-        <Input
+        <InputSenha
           id="senha-confirmacao"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}

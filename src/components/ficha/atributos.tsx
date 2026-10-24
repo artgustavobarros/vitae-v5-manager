@@ -1,10 +1,17 @@
 import { cn } from 'cn'
 
+import { TermoRegra } from '#/components/consulta-regra'
 import { Pontos } from './marcadores'
 
 export type GrupoTracos = {
   titulo: string
-  tracos: { nome: string; valor: number; detalhe?: string }[]
+  tracos: {
+    id?: string
+    tipo?: 'atributo' | 'habilidade'
+    nome: string
+    valor: number
+    detalhe?: string
+  }[]
 }
 
 /** Grupos de traços com título em serifa: Atributos, Habilidades. */
@@ -25,7 +32,13 @@ export function ListaTracos({ grupos }: { grupos: GrupoTracos[] }) {
                 )}
               >
                 <span>
-                  {t.nome}
+                  {t.tipo && t.id ? (
+                    <TermoRegra tipo={t.tipo} id={t.id}>
+                      {t.nome}
+                    </TermoRegra>
+                  ) : (
+                    t.nome
+                  )}
                   {t.detalhe && <span className="block text-sm text-muted-foreground">{t.detalhe}</span>}
                 </span>
                 {/* h-6 é a altura da linha do nome em text-base. */}

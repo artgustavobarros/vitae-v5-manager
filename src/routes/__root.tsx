@@ -1,9 +1,11 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { useSyncExternalStore } from 'react'
 
+import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
+import { useTempoReal } from '#/lib/use-tempo-real'
 import { buscarUsuario } from '#/server/sessao'
 import appCss from '../styles.css?url'
 
@@ -30,7 +32,21 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: NaoEncontrada,
 })
+
+// Endereço que não existe (inclusive /favicon.ico e o .well-known do Chrome DevTools) cai aqui.
+function NaoEncontrada() {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-start justify-center gap-4 px-4">
+      <h1 className="font-serif text-display text-balance">Página não encontrada</h1>
+      <p className="text-sm text-muted-foreground">Esse endereço não existe no Umbra.</p>
+      <Button asChild variant="secondary" size="lg">
+        <Link to="/">Voltar para o início</Link>
+      </Button>
+    </main>
+  )
+}
 
 // O gatilho do DevTools cobre o rodapé do wizard no celular; só no desktop.
 const DESKTOP = '(min-width: 1024px)'
@@ -47,7 +63,10 @@ function useDesktop() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { usuario } = Route.useRouteContext()
   const desktop = useDesktop()
+  useTempoReal(Boolean(usuario))
+
   return (
     <html lang="pt-BR" className="dark">
       <head>

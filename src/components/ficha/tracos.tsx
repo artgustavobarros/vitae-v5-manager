@@ -1,3 +1,4 @@
+import { TermoRegra } from '#/components/consulta-regra'
 import {
   ATRIBUTOS,
   CLAS,
@@ -28,7 +29,12 @@ export const rotuloGeracao = (geracao: number) => `${geracao}ª Geração`
 export function gruposAtributos(ficha: Ficha): GrupoTracos[] {
   return GRUPOS.map((g) => ({
     titulo: g.atributos,
-    tracos: atributosDoGrupo(g.id).map((a) => ({ nome: a.nome, valor: ficha.atributos[a.id] })),
+    tracos: atributosDoGrupo(g.id).map((a) => ({
+      id: a.id,
+      tipo: 'atributo' as const,
+      nome: a.nome,
+      valor: ficha.atributos[a.id],
+    })),
   }))
 }
 
@@ -40,7 +46,13 @@ export function gruposHabilidades(ficha: Ficha, { soComPontos = false } = {}): G
       .filter((h) => !soComPontos || ficha.habilidades[h.id].valor > 0)
       .map((h) => {
         const { valor, especializacoes } = ficha.habilidades[h.id]
-        return { nome: h.nome, valor, detalhe: especializacoes.join(', ') || undefined }
+        return {
+          id: h.id,
+          tipo: 'habilidade' as const,
+          nome: h.nome,
+          valor,
+          detalhe: especializacoes.join(', ') || undefined,
+        }
       }),
   })).filter((g) => g.tracos.length > 0)
 }
@@ -56,7 +68,9 @@ export function ListaDisciplinas({ ficha, className }: { ficha: Ficha; className
         const nome = nomeDisciplina(d.disciplina)
         return (
           <li key={d.disciplina} className="flex h-11 items-center justify-between border-b text-base">
-            <span>{nome}</span>
+            <TermoRegra tipo="disciplina" id={d.disciplina}>
+              {nome}
+            </TermoRegra>
             <Pontos valor={d.nivel} rotulo={nome} />
           </li>
         )

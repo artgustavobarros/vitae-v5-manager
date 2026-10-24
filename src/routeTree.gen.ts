@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as ApiTempoRealRouteImport } from './routes/api/tempo-real'
 import { Route as ConviteTokenRouteImport } from './routes/convite/$token'
+import { Route as CoteriesIndexRouteImport } from './routes/coteries/index'
+import { Route as CoteriesIdRouteImport } from './routes/coteries/$id'
 import { Route as NarradorConvitesRouteImport } from './routes/narrador/convites'
+import { Route as NarradorCoteriesRouteImport } from './routes/narrador/coteries'
 import { Route as NarradorPersonagensRouteImport } from './routes/narrador/personagens'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as PersonagensIdIndexRouteImport } from './routes/personagens/$id/index'
@@ -34,14 +38,34 @@ const EntrarRoute = EntrarRouteImport.update({
   path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTempoRealRoute = ApiTempoRealRouteImport.update({
+  id: '/api/tempo-real',
+  path: '/api/tempo-real',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConviteTokenRoute = ConviteTokenRouteImport.update({
   id: '/convite/$token',
   path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoteriesIndexRoute = CoteriesIndexRouteImport.update({
+  id: '/coteries/',
+  path: '/coteries/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoteriesIdRoute = CoteriesIdRouteImport.update({
+  id: '/coteries/$id',
+  path: '/coteries/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NarradorConvitesRoute = NarradorConvitesRouteImport.update({
   id: '/narrador/convites',
   path: '/narrador/convites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NarradorCoteriesRoute = NarradorCoteriesRouteImport.update({
+  id: '/narrador/coteries',
+  path: '/narrador/coteries',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NarradorPersonagensRoute = NarradorPersonagensRouteImport.update({
@@ -69,9 +93,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
+  '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/convites': typeof NarradorConvitesRoute
+  '/narrador/coteries': typeof NarradorCoteriesRoute
   '/narrador/personagens': typeof NarradorPersonagensRoute
+  '/coteries/': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/personagens/$id/editar': typeof PersonagensIdEditarRoute
   '/personagens/$id/': typeof PersonagensIdIndexRoute
@@ -80,9 +108,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
+  '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/convites': typeof NarradorConvitesRoute
+  '/narrador/coteries': typeof NarradorCoteriesRoute
   '/narrador/personagens': typeof NarradorPersonagensRoute
+  '/coteries': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/personagens/$id/editar': typeof PersonagensIdEditarRoute
   '/personagens/$id': typeof PersonagensIdIndexRoute
@@ -92,9 +124,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
+  '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/convites': typeof NarradorConvitesRoute
+  '/narrador/coteries': typeof NarradorCoteriesRoute
   '/narrador/personagens': typeof NarradorPersonagensRoute
+  '/coteries/': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/personagens/$id/editar': typeof PersonagensIdEditarRoute
   '/personagens/$id/': typeof PersonagensIdIndexRoute
@@ -105,9 +141,13 @@ export interface FileRouteTypes {
     | '/'
     | '/conta'
     | '/entrar'
+    | '/api/tempo-real'
     | '/convite/$token'
+    | '/coteries/$id'
     | '/narrador/convites'
+    | '/narrador/coteries'
     | '/narrador/personagens'
+    | '/coteries/'
     | '/api/auth/$'
     | '/personagens/$id/editar'
     | '/personagens/$id/'
@@ -116,9 +156,13 @@ export interface FileRouteTypes {
     | '/'
     | '/conta'
     | '/entrar'
+    | '/api/tempo-real'
     | '/convite/$token'
+    | '/coteries/$id'
     | '/narrador/convites'
+    | '/narrador/coteries'
     | '/narrador/personagens'
+    | '/coteries'
     | '/api/auth/$'
     | '/personagens/$id/editar'
     | '/personagens/$id'
@@ -127,9 +171,13 @@ export interface FileRouteTypes {
     | '/'
     | '/conta'
     | '/entrar'
+    | '/api/tempo-real'
     | '/convite/$token'
+    | '/coteries/$id'
     | '/narrador/convites'
+    | '/narrador/coteries'
     | '/narrador/personagens'
+    | '/coteries/'
     | '/api/auth/$'
     | '/personagens/$id/editar'
     | '/personagens/$id/'
@@ -139,9 +187,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContaRoute: typeof ContaRoute
   EntrarRoute: typeof EntrarRoute
+  ApiTempoRealRoute: typeof ApiTempoRealRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
+  CoteriesIdRoute: typeof CoteriesIdRoute
   NarradorConvitesRoute: typeof NarradorConvitesRoute
+  NarradorCoteriesRoute: typeof NarradorCoteriesRoute
   NarradorPersonagensRoute: typeof NarradorPersonagensRoute
+  CoteriesIndexRoute: typeof CoteriesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   PersonagensIdEditarRoute: typeof PersonagensIdEditarRoute
   PersonagensIdIndexRoute: typeof PersonagensIdIndexRoute
@@ -170,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tempo-real': {
+      id: '/api/tempo-real'
+      path: '/api/tempo-real'
+      fullPath: '/api/tempo-real'
+      preLoaderRoute: typeof ApiTempoRealRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/convite/$token': {
       id: '/convite/$token'
       path: '/convite/$token'
@@ -177,11 +236,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coteries/': {
+      id: '/coteries/'
+      path: '/coteries'
+      fullPath: '/coteries/'
+      preLoaderRoute: typeof CoteriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coteries/$id': {
+      id: '/coteries/$id'
+      path: '/coteries/$id'
+      fullPath: '/coteries/$id'
+      preLoaderRoute: typeof CoteriesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/narrador/convites': {
       id: '/narrador/convites'
       path: '/narrador/convites'
       fullPath: '/narrador/convites'
       preLoaderRoute: typeof NarradorConvitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/narrador/coteries': {
+      id: '/narrador/coteries'
+      path: '/narrador/coteries'
+      fullPath: '/narrador/coteries'
+      preLoaderRoute: typeof NarradorCoteriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/narrador/personagens': {
@@ -219,9 +299,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContaRoute: ContaRoute,
   EntrarRoute: EntrarRoute,
+  ApiTempoRealRoute: ApiTempoRealRoute,
   ConviteTokenRoute: ConviteTokenRoute,
+  CoteriesIdRoute: CoteriesIdRoute,
   NarradorConvitesRoute: NarradorConvitesRoute,
+  NarradorCoteriesRoute: NarradorCoteriesRoute,
   NarradorPersonagensRoute: NarradorPersonagensRoute,
+  CoteriesIndexRoute: CoteriesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   PersonagensIdEditarRoute: PersonagensIdEditarRoute,
   PersonagensIdIndexRoute: PersonagensIdIndexRoute,

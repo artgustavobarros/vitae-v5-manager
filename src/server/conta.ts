@@ -6,12 +6,13 @@ import { z } from 'zod'
 
 import { db } from '#/db'
 import { account, personagem, session, user } from '#/db/schema'
+import { podeDesconectarGoogle } from '#/domain/acesso'
 import { podeRemoverJogador } from '#/domain/convite'
 import { auth } from '#/lib/auth'
-import { buscarCredencial, idsComSenha } from '#/server/credencial'
+import { buscarContaGoogle, buscarCredencial, idsComSenha } from '#/server/credencial'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
 
-/** Dados da página de configurações; `temSenha` é false para conta só Google. */
+/** Dados da página de configurações; `temSenha` é false para conta só Google, `temGoogle` diz se o Google está conectado. */
 export const buscarConta = createServerFn({ method: 'GET' })
   .middleware([exigirUsuario])
   .handler(async ({ context }) => {
@@ -19,19 +20,43 @@ export const buscarConta = createServerFn({ method: 'GET' })
       .select({ nome: user.name, nomeUsuario: user.displayUsername, usuarioNormalizado: user.username })
       .from(user)
       .where(eq(user.id, context.usuario.id))
-    const senha = await buscarCredencial(context.usuario.id)
+    const [senha, google] = await Promise.all([
+      buscarCredencial(context.usuario.id),
+      buscarContaGoogle(context.usuario.id),
+    ])
     return {
       nome: dados.nome,
       nomeUsuario: dados.nomeUsuario ?? dados.usuarioNormalizado,
       temSenha: senha !== undefined,
+      temGoogle: google !== undefined,
     }
+  })
+
+/** Desconecta o Google de quem entra por senha; a pessoa volta a entrar só com nome de usuário. */
+export const desconectarGoogle = createServerFn({ method: 'POST' })
+  .middleware([exigirUsuario])
+  .handler(async ({ context }) => {
+    const [senha, google] = await Promise.all([
+      buscarCredencial(context.usuario.id),
+      buscarContaGoogle(context.usuario.id),
+    ])
+    if (!google) throw new Error('O Google já está desconectado.')
+    if (!podeDesconectarGoogle({ temSenha: senha !== undefined, temGoogle: true })) {
+      throw new Error('Sua conta só entra pelo Google, então ele não pode ser desconectado.')
+    }
+    await db.delete(account).where(eq(account.id, google.id))
   })
 
 export const listarJogadores = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
   .handler(async () => {
     const jogadores = await db
-      .select({ id: user.id, nome: user.name, nomeUsuario: user.displayUsername })
+      .select({
+        id: user.id,
+        nome: user.name,
+        nomeUsuario: user.displayUsername,
+        imagem: user.image,
+      })
       .from(user)
       .where(eq(user.papel, 'jogador'))
       .orderBy(asc(user.name))
