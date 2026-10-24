@@ -324,11 +324,6 @@ function Revisao({
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Atributos" etapa={2} onAlterar={onAlterar}>
-        <div className="mb-2">
-          <Badge variant="outline" className="text-xs">
-            Distribuição V5: 1×(4), 3×(3), 4×(2), 1×(1)
-          </Badge>
-        </div>
         <ListaTracos grupos={gruposAtributos(ficha)} />
       </BlocoRevisao>
 
