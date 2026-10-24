@@ -1,30 +1,58 @@
 import { cn } from 'cn'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
+import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 
 import { ListaTracos } from './atributos'
 import { CamposVantagensPersonagem, ListaVantagens } from './catalogo'
 import {
-  CamposAmbicaoDesejo,
-  CamposAtributos,
-  CamposDisciplinas,
-  CamposHabilidades,
   CamposIdentidade,
-  CamposSangue,
   Secao,
   useEdicaoFicha,
   type EdicaoFicha,
   type ValoresFormulario,
 } from './formulario'
+import {
+  aplicarPredador,
+  validarAtributosCriacao,
+  validarConviccoes,
+  validarDisciplinasCriacao,
+  validarHabilidadesCriacao,
+  validarVantagensDefeitosCriacao,
+  type DisciplinaCriacao,
+  type EscolhasPredador,
+  type Especializacao,
+  type PerfilHabilidade,
+} from '#/domain/criacao'
+import { tipoPredador } from '#/domain/catalogo'
+import type { OpcoesCriacaoCronica } from '#/domain/cronica'
+import type { Ficha, Habilidade } from '#/domain/ficha'
 import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
 
-export const ETAPAS = ['Identidade', 'Atributos', 'Habilidades', 'Disciplinas', 'Sangue', 'Vantagens e Defeitos', 'Revisão'] as const
+import { CamposAtributosCriacao } from './wizard-atributos'
+import { CamposHabilidadesCriacao } from './wizard-habilidades'
+import { CamposDisciplinasCriacao } from './wizard-disciplinas'
+import { CamposTipoPredadorCriacao } from './wizard-predador'
+import { CamposConviccoesCriacao } from './wizard-conviccoes'
+
+export const ETAPAS = [
+  'Identidade',
+  'Atributos',
+  'Habilidades',
+  'Disciplinas',
+  'Tipo de Predador',
+  'Vantagens e Defeitos',
+  'Convicções e Pilares',
+  'Revisão',
+] as const
 
 /**
- * Criação do Rascunho em etapas. Para o Jogador, valem Clã e Geração e as regras de poderes, Rituais e Vantagens.
- * Cada passo para a frente ou para trás salva o Rascunho; "Concluir" fica na Revisão.
+ * Criação guiada do Rascunho em 8 etapas (V5).
+ * Para o Jogador (`regrasCriacao = true`), valida travas de Atributos, Habilidades, Disciplinas 2/1,
+ * Predador, 7/2 Vantagens e Defeitos e Convicções.
+ * Para o Narrador (`regrasCriacao = false`), exibe avisos informativos sem bloquear avanço.
  */
 export function WizardCriacao({
   inicial,
@@ -36,6 +64,7 @@ export function WizardCriacao({
   concluirBloqueado = false,
   extraRevisao,
   regrasCriacao,
+  opcoesCronica,
 }: {
   inicial: ValoresFormulario
   /** De 1 a ETAPAS.length. */
@@ -49,10 +78,14 @@ export function WizardCriacao({
   concluirBloqueado?: boolean
   /** Conteúdo a mais no fim da Revisão, como "Atribuir a um Jogador" para o Narrador. */
   extraRevisao?: ReactNode
-  /** Regra de Clã e Geração na Identidade; vale para o Jogador, não para o Narrador. */
+  /** Regras estritas do V5 na criação; vale para o Jogador, bypass para o Narrador. */
   regrasCriacao: boolean
+  opcoesCronica?: OpcoesCriacaoCronica
 }) {
   const edicao = useEdicaoFicha(inicial)
+  const [perfilHabilidade, setPerfilHabilidade] = useState<PerfilHabilidade>('equilibrado')
+  const [escolhasPredador, setEscolhasPredador] = useState<EscolhasPredador | null>(null)
+
   const titulo = ETAPAS[etapa - 1]
   const revisao = etapa === ETAPAS.length
   const semNome = edicao.nome.trim() === ''
@@ -61,8 +94,69 @@ export function WizardCriacao({
     window.scrollTo({ top: 0 })
   }, [etapa])
 
+  // Validações por etapa
+  function podeAvancarEtapa(etapaAtual: number): boolean {
+    if (!regrasCriacao) return true
+
+    const ficha = edicao.ficha
+    switch (etapaAtual) {
+      case 1:
+        return edicao.nome.trim() !== '' && ficha.cla !== null
+      case 2:
+        return validarAtributosCriacao(ficha.atributos).valido
+      case 3: {
+        const especializacoes: Especializacao[] = Object.entries(ficha.habilidades).flatMap(([id, h]) =>
+          h.especializacoes.map((esp) => ({ habilidade: id as Habilidade, especializacao: esp })),
+        )
+        const valoresHab = Object.fromEntries(
+          Object.entries(ficha.habilidades).map(([id, h]) => [id, h.valor]),
+        ) as Record<Habilidade, number>
+        return validarHabilidadesCriacao(perfilHabilidade, valoresHab, especializacoes).valido
+      }
+      case 4: {
+        const disciplinasCriacao: DisciplinaCriacao[] = ficha.disciplinas.map((d) => ({
+          id: d.disciplina,
+          nivel: d.nivel,
+          poderes: ficha.poderes,
+        }))
+        return validarDisciplinasCriacao(ficha.cla ?? 'caitiff', disciplinasCriacao).valido
+      }
+      case 5:
+        return ficha.tipoPredador !== null && escolhasPredador !== null
+      case 6: {
+        const pred = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
+        const vantagensFormatadas = ficha.vantagens.map((v) => ({ id: v.id, nivel: v.nivel }))
+        return validarVantagensDefeitosCriacao(ficha.cla ?? 'caitiff', vantagensFormatadas, pred).valido
+      }
+      case 7:
+        return validarConviccoes(ficha.conviccoes).valido
+      default:
+        return true
+    }
+  }
+
+  const bloqueadoAvanco = !podeAvancarEtapa(etapa)
+
   async function irPara(destino: number) {
     if (await onSalvar(edicao.valores())) onIrPara(destino)
+  }
+
+  function handleConcluir() {
+    const valoresAtuais = edicao.valores()
+    let fichaFinal: Ficha = valoresAtuais.ficha
+
+    // Se houver predador selecionado e escolhas resolvidas, consolida na ficha
+    if (fichaFinal.tipoPredador && escolhasPredador) {
+      const pred = tipoPredador(fichaFinal.tipoPredador)
+      if (pred) {
+        fichaFinal = aplicarPredador(fichaFinal, pred, escolhasPredador)
+      }
+    }
+
+    onConcluir({
+      nome: valoresAtuais.nome,
+      ficha: fichaFinal,
+    })
   }
 
   return (
@@ -70,20 +164,66 @@ export function WizardCriacao({
       <Progresso etapa={etapa} />
 
       <Secao titulo={titulo}>
-        {etapa === 1 && <CamposIdentidade edicao={edicao} regrasCriacao={regrasCriacao} />}
-        {etapa === 2 && <CamposAtributos edicao={edicao} />}
-        {etapa === 3 && <CamposHabilidades edicao={edicao} />}
-        {etapa === 4 && <CamposDisciplinas edicao={edicao} regrasCriacao={regrasCriacao} />}
+        {etapa === 1 && (
+          <CamposIdentidade
+            edicao={edicao}
+            regrasCriacao={regrasCriacao}
+            opcoesCronica={opcoesCronica}
+          />
+        )}
+        {etapa === 2 && (
+          <CamposAtributosCriacao
+            ficha={edicao.ficha}
+            mudar={edicao.mudar}
+            regrasCriacao={regrasCriacao}
+          />
+        )}
+        {etapa === 3 && (
+          <CamposHabilidadesCriacao
+            ficha={edicao.ficha}
+            mudar={edicao.mudar}
+            perfil={perfilHabilidade}
+            onMudarPerfil={setPerfilHabilidade}
+            regrasCriacao={regrasCriacao}
+          />
+        )}
+        {etapa === 4 && (
+          <CamposDisciplinasCriacao
+            ficha={edicao.ficha}
+            mudar={edicao.mudar}
+            regrasCriacao={regrasCriacao}
+          />
+        )}
         {etapa === 5 && (
-          <>
-            <CamposSangue edicao={edicao} />
-            <CamposAmbicaoDesejo edicao={edicao} />
-          </>
+          <CamposTipoPredadorCriacao
+            ficha={edicao.ficha}
+            escolhas={escolhasPredador}
+            onMudarPredador={(predadorId) => edicao.mudar({ tipoPredador: predadorId })}
+            onMudarEscolhas={setEscolhasPredador}
+          />
         )}
         {etapa === 6 && (
-          <CamposVantagensPersonagem ficha={edicao.ficha} regras={regrasCriacao} mudar={edicao.mudar} />
+          <CamposVantagensPersonagem
+            ficha={edicao.ficha}
+            regras={regrasCriacao}
+            mudar={edicao.mudar}
+          />
         )}
-        {revisao && <Revisao edicao={edicao} onAlterar={irPara} />}
+        {etapa === 7 && (
+          <CamposConviccoesCriacao
+            ficha={edicao.ficha}
+            mudar={edicao.mudar}
+            regrasCriacao={regrasCriacao}
+          />
+        )}
+        {revisao && (
+          <Revisao
+            edicao={edicao}
+            perfilHabilidade={perfilHabilidade}
+            escolhasPredador={escolhasPredador}
+            onAlterar={irPara}
+          />
+        )}
         {revisao && extraRevisao}
       </Secao>
 
@@ -104,11 +244,14 @@ export function WizardCriacao({
             Voltar
           </Button>
           {revisao ? (
-            <Button disabled={salvando || semNome || concluirBloqueado} onClick={() => onConcluir(edicao.valores())}>
-              Concluir
+            <Button
+              disabled={salvando || semNome || concluirBloqueado}
+              onClick={handleConcluir}
+            >
+              Concluir Criação
             </Button>
           ) : (
-            <Button disabled={salvando} onClick={() => irPara(etapa + 1)}>
+            <Button disabled={salvando || bloqueadoAvanco} onClick={() => irPara(etapa + 1)}>
               Próximo
             </Button>
           )}
@@ -118,7 +261,6 @@ export function WizardCriacao({
   )
 }
 
-/** "Etapa 2 de 6" com uma barra por etapa, no estilo do horizonte de Humanidade. */
 function Progresso({ etapa }: { etapa: number }) {
   return (
     <div>
@@ -134,10 +276,21 @@ function Progresso({ etapa }: { etapa: number }) {
   )
 }
 
-function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa: number) => void }) {
+function Revisao({
+  edicao,
+  perfilHabilidade,
+  escolhasPredador,
+  onAlterar,
+}: {
+  edicao: EdicaoFicha
+  perfilHabilidade: PerfilHabilidade
+  escolhasPredador: EscolhasPredador | null
+  onAlterar: (etapa: number) => void
+}) {
   const { valores } = edicao
   const { nome, ficha } = valores()
   const habilidades = gruposHabilidades(ficha, { soComPontos: true })
+  const predador = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
 
   return (
     <div className="flex flex-col gap-8">
@@ -151,6 +304,7 @@ function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa
 
       <BlocoRevisao titulo="Identidade" etapa={1} onAlterar={onAlterar}>
         <Dado rotulo="Nome" valor={nome} />
+        <Dado rotulo="Conceito" valor={ficha.conceito || '—'} />
         <Dado rotulo="Clã" valor={nomeCla(ficha)} />
         <Dado rotulo="Geração" valor={ficha.geracao === null ? '' : rotuloGeracao(ficha.geracao)} />
         <Dado rotulo="Seita" valor={nomeSeita(ficha)} />
@@ -158,10 +312,20 @@ function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Atributos" etapa={2} onAlterar={onAlterar}>
+        <div className="mb-2">
+          <Badge variant="outline" className="text-xs">
+            Distribuição V5: 1×(4), 3×(3), 4×(2), 1×(1)
+          </Badge>
+        </div>
         <ListaTracos grupos={gruposAtributos(ficha)} />
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Habilidades" etapa={3} onAlterar={onAlterar}>
+        <div className="mb-2">
+          <Badge variant="outline" className="text-xs capitalize">
+            Perfil: {perfilHabilidade}
+          </Badge>
+        </div>
         {habilidades.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma Habilidade com pontos.</p>
         ) : (
@@ -173,17 +337,51 @@ function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa
         <ListaDisciplinas ficha={ficha} />
       </BlocoRevisao>
 
-      <BlocoRevisao titulo="Sangue" etapa={5} onAlterar={onAlterar}>
-        <Dado rotulo="Potência do Sangue" valor={String(ficha.potenciaSangue)} />
-        <Dado rotulo="Humanidade" valor={String(ficha.humanidade)} />
-        <Dado rotulo="Ambição" valor={ficha.ambicao} />
-        <Dado rotulo="Desejo" valor={ficha.desejo} />
+      <BlocoRevisao titulo="Tipo de Predador" etapa={5} onAlterar={onAlterar}>
+        {predador ? (
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-foreground">{predador.nome}</span>
+              <Badge variant="secondary" className="text-xs">
+                {predador.fonte.livro}
+              </Badge>
+            </div>
+            {escolhasPredador && (
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <span>• +1 em Disciplina: {escolhasPredador.disciplina}</span>
+                <span>
+                  • Especialização: {escolhasPredador.especializacao.habilidade} (
+                  {escolhasPredador.especializacao.especializacao})
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Nenhum Tipo de Predador selecionado.</p>
+        )}
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Vantagens e Defeitos" etapa={6} onAlterar={onAlterar}>
         <div className="mt-2 flex flex-col gap-4">
           <ListaVantagens titulo="Vantagens" escolhidas={ficha.vantagens} />
           <ListaVantagens titulo="Defeitos" escolhidas={ficha.defeitos} />
+        </div>
+      </BlocoRevisao>
+
+      <BlocoRevisao titulo="Convicções e Pilares" etapa={7} onAlterar={onAlterar}>
+        <div className="flex flex-col gap-3 pt-2">
+          {ficha.conviccoes && ficha.conviccoes.length > 0 ? (
+            ficha.conviccoes.map((c, i) => (
+              <div key={i} className="flex flex-col border-b pb-2 text-sm">
+                <span className="font-medium text-foreground">Convicção: "{c.conviccao}"</span>
+                <span className="text-xs text-muted-foreground">Pedra de Toque: {c.pedraDeToque}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhuma Convicção definida.</p>
+          )}
+          <Dado rotulo="Ambição" valor={ficha.ambicao} />
+          <Dado rotulo="Desejo" valor={ficha.desejo} />
         </div>
       </BlocoRevisao>
     </div>

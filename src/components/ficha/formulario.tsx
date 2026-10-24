@@ -25,6 +25,7 @@ import {
   type Seita,
 } from '#/domain/ficha'
 
+import type { OpcoesCriacaoCronica } from '#/domain/cronica'
 import { CardPerdicaoCompulsaoCla } from './card-cla'
 import { CamposPoderes, CamposRituais, CamposVantagensPersonagem, ListaSoltos } from './catalogo'
 import { SeletorPontos } from './marcadores'
@@ -141,15 +142,48 @@ export function FormularioFicha({
  * Com `regrasCriacao`, Clã e Geração só oferecem o que combina: Sangue-Ralo da 14ª Geração em diante.
  * Sem ela (Narrador editando uma Ficha concluída), as listas ficam livres.
  */
-export function CamposIdentidade({ edicao, regrasCriacao = false }: { edicao: EdicaoFicha; regrasCriacao?: boolean }) {
+export function CamposIdentidade({
+  edicao,
+  regrasCriacao = false,
+  opcoesCronica,
+}: {
+  edicao: EdicaoFicha
+  regrasCriacao?: boolean
+  opcoesCronica?: OpcoesCriacaoCronica
+}) {
   const { nome, setNome, ficha, mudar } = edicao
-  const clas = regrasCriacao ? CLAS.filter((c) => clasPermitidos(ficha.geracao).includes(c.id)) : CLAS
+  const clas = regrasCriacao
+    ? CLAS.filter((c) => {
+        if (opcoesCronica) {
+          if (c.id === 'caitiff' && !opcoesCronica.caitiffPermitido) return false
+          if (c.id === 'sangue-ralo' && !opcoesCronica.sangueRaloPermitido) return false
+          if (
+            c.id !== 'caitiff' &&
+            c.id !== 'sangue-ralo' &&
+            !opcoesCronica.clasPermitidos.includes(c.id)
+          )
+            return false
+        }
+        return clasPermitidos(ficha.geracao).includes(c.id)
+      })
+    : CLAS
   const geracoes = regrasCriacao ? geracoesPermitidas(ficha.cla) : GERACOES
   return (
     <>
-      <Campo id="nome" rotulo="Nome">
-        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
-      </Campo>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Campo id="nome" rotulo="Nome">
+          <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
+        </Campo>
+        <Campo id="conceito" rotulo="Conceito" opcional>
+          <Input
+            id="conceito"
+            placeholder="Ex.: Hacker anarquista, Artista decadente..."
+            value={ficha.conceito ?? ''}
+            onChange={(e) => mudar({ conceito: e.target.value })}
+            maxLength={120}
+          />
+        </Campo>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Campo id="cla" rotulo="Clã">
           <div className="flex items-center gap-2">

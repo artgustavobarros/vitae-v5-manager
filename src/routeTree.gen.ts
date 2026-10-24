@@ -19,6 +19,7 @@ import { Route as CoteriesIndexRouteImport } from './routes/coteries/index'
 import { Route as CoteriesIdRouteImport } from './routes/coteries/$id'
 import { Route as NarradorConvitesRouteImport } from './routes/narrador/convites'
 import { Route as NarradorCoteriesRouteImport } from './routes/narrador/coteries'
+import { Route as NarradorCronicaRouteImport } from './routes/narrador/cronica'
 import { Route as NarradorPersonagensRouteImport } from './routes/narrador/personagens'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as PersonagensIdIndexRouteImport } from './routes/personagens/$id/index'
@@ -74,6 +75,11 @@ const NarradorCoteriesRoute = NarradorCoteriesRouteImport.update({
   path: '/narrador/coteries',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NarradorCronicaRoute = NarradorCronicaRouteImport.update({
+  id: '/narrador/cronica',
+  path: '/narrador/cronica',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NarradorPersonagensRoute = NarradorPersonagensRouteImport.update({
   id: '/narrador/personagens',
   path: '/narrador/personagens',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/narrador/coteries': typeof NarradorCoteriesRoute
+  '/narrador/cronica': typeof NarradorCronicaRoute
   '/narrador/personagens': typeof NarradorPersonagensRoute
   '/coteries/': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/narrador/coteries': typeof NarradorCoteriesRoute
+  '/narrador/cronica': typeof NarradorCronicaRoute
   '/narrador/personagens': typeof NarradorPersonagensRoute
   '/coteries': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/narrador/coteries': typeof NarradorCoteriesRoute
+  '/narrador/cronica': typeof NarradorCronicaRoute
   '/narrador/personagens': typeof NarradorPersonagensRoute
   '/coteries/': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/coteries/$id'
     | '/narrador/convites'
     | '/narrador/coteries'
+    | '/narrador/cronica'
     | '/narrador/personagens'
     | '/coteries/'
     | '/api/auth/$'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/coteries/$id'
     | '/narrador/convites'
     | '/narrador/coteries'
+    | '/narrador/cronica'
     | '/narrador/personagens'
     | '/coteries'
     | '/api/auth/$'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/coteries/$id'
     | '/narrador/convites'
     | '/narrador/coteries'
+    | '/narrador/cronica'
     | '/narrador/personagens'
     | '/coteries/'
     | '/api/auth/$'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   CoteriesIdRoute: typeof CoteriesIdRoute
   NarradorConvitesRoute: typeof NarradorConvitesRoute
   NarradorCoteriesRoute: typeof NarradorCoteriesRoute
+  NarradorCronicaRoute: typeof NarradorCronicaRoute
   NarradorPersonagensRoute: typeof NarradorPersonagensRoute
   CoteriesIndexRoute: typeof CoteriesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NarradorCoteriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/narrador/cronica': {
+      id: '/narrador/cronica'
+      path: '/narrador/cronica'
+      fullPath: '/narrador/cronica'
+      preLoaderRoute: typeof NarradorCronicaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/narrador/personagens': {
       id: '/narrador/personagens'
       path: '/narrador/personagens'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoteriesIdRoute: CoteriesIdRoute,
   NarradorConvitesRoute: NarradorConvitesRoute,
   NarradorCoteriesRoute: NarradorCoteriesRoute,
+  NarradorCronicaRoute: NarradorCronicaRoute,
   NarradorPersonagensRoute: NarradorPersonagensRoute,
   CoteriesIndexRoute: CoteriesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

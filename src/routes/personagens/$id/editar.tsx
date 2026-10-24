@@ -8,10 +8,10 @@ import { BarraApp } from '#/components/barra-app'
 import { FormularioFicha, type ValoresFormulario } from '#/components/ficha/formulario'
 import { ETAPAS, WizardCriacao } from '#/components/ficha/wizard'
 import { listarJogadores } from '#/server/conta'
+import { obterOpcoesCriacaoCronica } from '#/server/cronica'
 import { buscarFicha, concluir, salvarFicha } from '#/server/personagens'
 
-// Rascunho: wizard em etapas. Ficha concluída: formulário inteiro numa página.
-// Os dois são provisórios, sem regras do V5, até a criação guiada (fatia 5).
+// Rascunho: wizard guiado em 8 etapas (V5). Ficha concluída: formulário da Ficha.
 export const Route = createFileRoute('/personagens/$id/editar')({
   validateSearch: z.object({ etapa: z.int().min(1).max(ETAPAS.length).optional().catch(undefined) }),
   beforeLoad: ({ context }) => {
@@ -22,8 +22,11 @@ export const Route = createFileRoute('/personagens/$id/editar')({
     if (!personagem) throw redirect({ to: '/' })
     if (personagem.acesso !== 'editar') throw redirect({ to: '/personagens/$id', params })
     // Rascunho do Narrador: ele pode atribuí-lo a um Jogador na Revisão.
-    const jogadores = personagem.podeAtribuir ? await listarJogadores() : []
-    return { personagem, jogadores }
+    const [jogadores, opcoesCronica] = await Promise.all([
+      personagem.podeAtribuir ? listarJogadores() : [],
+      obterOpcoesCriacaoCronica(),
+    ])
+    return { personagem, jogadores, opcoesCronica }
   },
   component: EditarFicha,
 })
@@ -33,7 +36,7 @@ function erroDoServidor(erro: unknown) {
 }
 
 function EditarFicha() {
-  const { personagem, jogadores } = Route.useLoaderData()
+  const { personagem, jogadores, opcoesCronica } = Route.useLoaderData()
   const { etapa = 1 } = Route.useSearch()
   const navigate = useNavigate()
   const router = useRouter()
@@ -77,7 +80,7 @@ function EditarFicha() {
       <div className="px-4 pt-2">
         <h1 className="font-serif text-display text-balance">{personagem.nome || 'Novo Personagem'}</h1>
         <p className="mt-1 mb-8 text-sm text-muted-foreground">
-          {rascunho ? 'Rascunho' : 'Editando a Ficha'} · provisório, sem as regras de criação do V5
+          {rascunho ? 'Criação guiada de Personagem (V5)' : 'Editando a Ficha'}
         </p>
         {personagem.podeCancelarAtribuicao && personagem.atribuidoA && (
           <AvisoAtribuicao id={id} jogador={personagem.atribuidoA.nome} onCancelado={() => router.invalidate()} />
@@ -92,6 +95,7 @@ function EditarFicha() {
             onConcluir={salvarEConcluir}
             concluirBloqueado={!personagem.podeConcluir}
             regrasCriacao={personagem.regrasCriacao}
+            opcoesCronica={opcoesCronica}
             extraRevisao={
               personagem.podeAtribuir && (
                 <AtribuirPersonagem

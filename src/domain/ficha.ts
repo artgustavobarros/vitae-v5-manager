@@ -140,13 +140,25 @@ const idsCatalogo = z
   .refine((ids) => new Set(ids).size === ids.length, { message: 'Item repetido' })
   .default([])
 
+export const conviccaoSchema = z.object({
+  conviccao: z.string().default(''),
+  pedraDeToque: z.string().default(''),
+})
+
+export type Conviccao = z.infer<typeof conviccaoSchema>
+
 export const fichaSchema = z.object({
+  conceito: z.string().default(''),
   cla: z.enum(ids(CLAS)).nullable(),
   geracao: faixa(FAIXAS.geracao).nullable(),
   seita: z.enum(ids(SEITAS)).nullable(),
-  senhor: z.string(),
-  ambicao: z.string(),
-  desejo: z.string(),
+  senhor: z.string().default(''),
+  tipoPredador: z.string().nullable().default(null),
+  ambicao: z.string().default(''),
+  desejo: z.string().default(''),
+  conviccoes: z.array(conviccaoSchema).default([]),
+  aparencia: z.string().default(''),
+  historia: z.string().default(''),
   atributos: z.record(z.enum(ids(ATRIBUTOS)), faixa(FAIXAS.atributo)),
   habilidades: z.record(
     z.enum(ids(HABILIDADES)),
@@ -173,6 +185,7 @@ export const fichaSchema = z.object({
   fome: z.int().min(0).max(MAX_FOME),
   danoVitalidade: danoSchema,
   danoVontade: danoSchema,
+  criacao: z.record(z.string(), z.any()).optional(),
 })
 
 export type Ficha = z.infer<typeof fichaSchema>
@@ -231,12 +244,17 @@ export function escolherGeracao(atual: ClaGeracao, geracao: number | null): ClaG
 /** Valores com que o Rascunho nasce: os do Neófito. */
 export function fichaNeofito(): Ficha {
   return {
+    conceito: '',
     cla: null,
     geracao: null,
     seita: null,
     senhor: '',
+    tipoPredador: null,
     ambicao: '',
     desejo: '',
+    conviccoes: [],
+    aparencia: '',
+    historia: '',
     atributos: Object.fromEntries(ATRIBUTOS.map((a) => [a.id, 1])) as Ficha['atributos'],
     habilidades: Object.fromEntries(
       HABILIDADES.map((h) => [h.id, { valor: 0, especializacoes: [] as string[] }]),
