@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { isRedirect, useNavigate } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -19,7 +19,9 @@ export function BotaoNovoPersonagem({ rotulo }: { rotulo: string }) {
         try {
           const { id } = await criarRascunho()
           await navigate({ to: '/personagens/$id/editar', params: { id } })
-        } catch {
+        } catch (erro) {
+          if (isRedirect(erro)) throw erro
+          console.error('Erro ao criar rascunho de personagem:', erro)
           toast.error('Não deu para criar o Personagem. Tente de novo.')
           setCriando(false)
         }
