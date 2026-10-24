@@ -109,3 +109,20 @@ _Avoid_: Ressonância ativa, sangue atual
 **Compulsão Ativa**:
 Compulsão que o Narrador aplicou a um Personagem e que vale até ele encerrar.
 _Avoid_: Compulsão atual, frenesi
+
+**Tipo de Predador**:
+O método habitual de caça de um vampiro; aplica bônus em Disciplinas, especializações, Vantagens, Defeitos e alterações de Humanidade ou Potência do Sangue.
+_Avoid_: Estilo de caça, predador, método de caça
+
+**Perdição**:
+A fraqueza mística ancestral herdada do Clã do vampiro.
+_Avoid_: Bane, fraqueza de clã, maldição
+
+**Convicção**:
+Princípio moral humano sustentado pelo vampiro que o protege contra Manchas na Humanidade.
+_Avoid_: Conviction, crença, dogma
+
+**Pedra de Toque**:
+Pessoa mortal que ancora a humanidade do vampiro, obrigatoriamente vinculada a uma Convicção.
+_Avoid_: Touchstone, âncora, pilar moral
+
