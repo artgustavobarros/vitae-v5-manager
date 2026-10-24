@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import {
-  ATRIBUTOS,
   CLAS,
   DISCIPLINAS,
   FAIXAS,
@@ -31,6 +30,7 @@ import {
 } from '#/domain/ficha'
 
 import { SeletorPontos } from './marcadores'
+import { atributosDoGrupo, habilidadesDoGrupo, nomeDisciplina, rotuloGeracao } from './tracos'
 
 // O Select do Radix não aceita valor vazio; este marca "Sem Clã", "Sem Geração" e "Sem Seita".
 const NENHUM = 'nenhum'
@@ -173,7 +173,7 @@ export function CamposIdentidade({ edicao, regrasCriacao = false }: { edicao: Ed
               <SelectItem value={NENHUM}>Sem Geração</SelectItem>
               {geracoes.map((g) => (
                 <SelectItem key={g} value={String(g)}>
-                  {g}ª Geração
+                  {rotuloGeracao(g)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -225,7 +225,7 @@ export function CamposAtributos({ edicao }: { edicao: EdicaoFicha }) {
   const { ficha, mudar } = edicao
   return GRUPOS.map((g) => (
     <Grupo key={g.id} titulo={g.atributos}>
-      {ATRIBUTOS.filter((a) => a.grupo === g.id).map((a) => (
+      {atributosDoGrupo(g.id).map((a) => (
         <LinhaPontos key={a.id} nome={a.nome}>
           <SeletorPontos
             rotulo={a.nome}
@@ -244,7 +244,7 @@ export function CamposHabilidades({ edicao }: { edicao: EdicaoFicha }) {
   const { ficha, mudar, especializacoes, setEspecializacoes } = edicao
   return GRUPOS.map((g) => (
     <Grupo key={g.id} titulo={g.habilidades}>
-      {HABILIDADES.filter((h) => h.grupo === g.id).map((h) => {
+      {habilidadesDoGrupo(g.id).map((h) => {
         const habilidade = ficha.habilidades[h.id]
         return (
           <li key={h.id} className="border-b">
@@ -288,7 +288,7 @@ export function CamposDisciplinas({ edicao }: { edicao: EdicaoFicha }) {
       )}
       <ul className="flex flex-col gap-4">
         {ficha.disciplinas.map((d, i) => {
-          const nome = DISCIPLINAS.find((x) => x.id === d.disciplina)?.nome ?? d.disciplina
+          const nome = nomeDisciplina(d.disciplina)
           const trocar = (nova: Partial<(typeof ficha.disciplinas)[number]>) =>
             mudar({ disciplinas: ficha.disciplinas.map((x, j) => (j === i ? { ...x, ...nova } : x)) })
           return (

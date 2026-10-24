@@ -5,13 +5,19 @@ import { z } from 'zod'
 
 import { db } from '#/db'
 import { personagem, user } from '#/db/schema'
-import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasSchema, normalizarFicha } from '#/domain/ficha'
+import type { Papel } from '#/domain/acesso'
+import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasDe, marcasSchema, normalizarFicha } from '#/domain/ficha'
 import {
+  aplicarRespostaAtribuicao,
+  ehPdN,
+  exigeRegrasCriacao,
+  motivoNaoConcluir,
+  permissoesPersonagem,
   podeApagar,
   podeAtribuir,
   podeCancelarAtribuicao,
-  podeConcluir,
   podeResponderAtribuicao,
+  type MotivoNaoConcluir,
 } from '#/domain/permissoes-ficha'
 import { carregar } from '#/server/carregar-personagem'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
@@ -20,15 +26,33 @@ const comId = z.object({ id: z.uuid() })
 
 const atribuido = alias(user, 'atribuido')
 
+const MENSAGENS_NAO_CONCLUIR: Record<MotivoNaoConcluir, string> = {
+  'nao-dono': 'Só o dono do Rascunho pode concluí-lo',
+  'nao-rascunho': 'Só Rascunhos podem ser concluídos',
+  atribuido: 'Cancele a atribuição antes de concluir',
+  'sem-nome': 'Dê um nome ao Personagem antes de concluir',
+}
+
+const colunasPermissao = {
+  donoId: personagem.donoId,
+  status: personagem.status,
+  nome: personagem.nome,
+  atribuidoA: personagem.atribuidoA,
+}
+
 export const listarMeusPersonagens = createServerFn({ method: 'GET' })
   .middleware([exigirUsuario])
-  .handler(({ context }) =>
-    db
-      .select({ id: personagem.id, nome: personagem.nome, status: personagem.status })
+  .handler(async ({ context }) => {
+    const linhas = await db
+      .select({ id: personagem.id, ...colunasPermissao })
       .from(personagem)
       .where(eq(personagem.donoId, context.usuario.id))
-      .orderBy(asc(personagem.criadoEm)),
-  )
+      .orderBy(asc(personagem.criadoEm))
+    return linhas.map((p) => {
+      const { abreNoWizard, podeApagar } = permissoesPersonagem(context.usuario, p)
+      return { id: p.id, nome: p.nome, status: p.status, abreNoWizard, podeApagar }
+    })
+  })
 
 /** Rascunhos que o Narrador atribuiu ao Jogador e esperam resposta. */
 export const listarAtribuidosAMim = createServerFn({ method: 'GET' })
@@ -43,25 +67,33 @@ export const listarAtribuidosAMim = createServerFn({ method: 'GET' })
 
 export const listarTodosPersonagens = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
-  .handler(async () => {
+  .handler(async ({ context }) => {
     const linhas = await db
       .select({
         id: personagem.id,
-        nome: personagem.nome,
-        status: personagem.status,
+        ...colunasPermissao,
         dono: user.name,
         papelDono: user.papel,
-        atribuidoA: atribuido.name,
+        nomeAtribuido: atribuido.name,
       })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
       .leftJoin(atribuido, eq(personagem.atribuidoA, atribuido.id))
       .orderBy(asc(user.name), asc(personagem.criadoEm))
-    return linhas.map(({ papelDono, dono, ...p }) => ({
-      ...p,
-      // PdN: Personagem cujo dono é o Narrador.
-      jogador: papelDono === 'narrador' ? null : dono,
-    }))
+    return linhas.map((p) => {
+      const { abreNoWizard, podeApagar } = permissoesPersonagem(context.usuario, p)
+      return {
+        id: p.id,
+        nome: p.nome,
+        status: p.status,
+        /** Jogador dono; null quando o dono é o Narrador. */
+        jogador: p.papelDono === 'narrador' ? null : p.dono,
+        pdn: ehPdN({ papelDono: p.papelDono as Papel, status: p.status }),
+        atribuidoA: p.nomeAtribuido,
+        abreNoWizard,
+        podeApagar,
+      }
+    })
   })
 
 export const buscarFicha = createServerFn({ method: 'GET' })
@@ -77,9 +109,10 @@ export const buscarFicha = createServerFn({ method: 'GET' })
       nome: p.nome,
       status: p.status,
       ficha: p.ficha,
-      acesso: p.acesso,
       /** Jogador que ainda vai aceitar ou recusar este Rascunho. */
       atribuidoA: jogador ?? null,
+      ...permissoesPersonagem(context.usuario, p),
+      acesso: p.acesso,
     }
   })
 
@@ -99,8 +132,7 @@ export const salvarFicha = createServerFn({ method: 'POST' })
   .handler(({ data, context }) =>
     db.transaction(async (tx) => {
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
-      // Na criação, o Jogador segue a regra de Clã e Geração; o Narrador edita sem validação.
-      if (p.status === 'rascunho' && context.usuario.papel === 'jogador' && !claGeracaoCombinam(data.ficha)) {
+      if (exigeRegrasCriacao(context.usuario, p) && !claGeracaoCombinam(data.ficha)) {
         throw new Error('Sangue-Ralo é da 14ª à 16ª Geração; os demais clãs, até a 13ª.')
       }
       await tx
@@ -119,8 +151,7 @@ export const marcar = createServerFn({ method: 'POST' })
       const p = await carregar(context.usuario, data.id, ['editar', 'marcar'], tx)
       const ficha = normalizarFicha({ ...p.ficha, ...data.marcas })
       await tx.update(personagem).set({ ficha }).where(eq(personagem.id, data.id))
-      const { danoVitalidade, danoVontade, fome, manchas } = ficha
-      return { danoVitalidade, danoVontade, fome, manchas }
+      return marcasDe(ficha)
     }),
   )
 
@@ -130,8 +161,8 @@ export const concluir = createServerFn({ method: 'POST' })
   .handler(({ data, context }) =>
     db.transaction(async (tx) => {
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
-      if (p.atribuidoA) throw new Error('Cancele a atribuição antes de concluir')
-      if (!podeConcluir(context.usuario, p)) throw new Error('Dê um nome ao Personagem antes de concluir')
+      const motivo = motivoNaoConcluir(context.usuario, p)
+      if (motivo) throw new Error(MENSAGENS_NAO_CONCLUIR[motivo])
       await tx.update(personagem).set({ status: 'ativo' }).where(eq(personagem.id, data.id))
     }),
   )
@@ -155,7 +186,9 @@ export const atribuir = createServerFn({ method: 'POST' })
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
       if (!podeAtribuir(context.usuario, p)) throw new Error('Só um Rascunho seu, ainda sem atribuição, pode ser atribuído')
       const [alvo] = await tx.select({ papel: user.papel }).from(user).where(eq(user.id, data.jogadorId))
-      if (alvo?.papel !== 'jogador') throw new Error('Escolha um Jogador da Crônica')
+      if (!alvo || !podeAtribuir(context.usuario, p, { papel: alvo.papel as Papel })) {
+        throw new Error('Escolha um Jogador da Crônica')
+      }
       await tx.update(personagem).set({ atribuidoA: data.jogadorId }).where(eq(personagem.id, data.id))
     }),
   )
@@ -181,7 +214,7 @@ export const responderAtribuicao = createServerFn({ method: 'POST' })
       if (!podeResponderAtribuicao(context.usuario, p)) throw new Error('Este Personagem não está atribuído a você')
       await tx
         .update(personagem)
-        .set(data.aceitar ? { donoId: context.usuario.id, atribuidoA: null } : { atribuidoA: null })
+        .set(aplicarRespostaAtribuicao(context.usuario, data.aceitar))
         .where(eq(personagem.id, data.id))
     }),
   )

@@ -30,11 +30,12 @@ export type ItemPersonagem = {
   status: StatusPersonagem
   /** Linha abaixo do nome, como o Jogador dono na lista do Narrador. */
   detalhe?: string
-  /** Rascunho do próprio usuário: abre o formulário e pode ser apagado. */
-  meuRascunho: boolean
+  /** Calculados pelo domínio (`permissoesPersonagem`). */
+  abreNoWizard: boolean
+  podeApagar: boolean
 }
 
-/** Lista de Personagens com status; Rascunhos próprios abrem o formulário e têm "Apagar". */
+/** Lista de Personagens com status; Rascunhos editáveis abrem o wizard e os próprios têm "Apagar". */
 export function ListaPersonagens({
   itens,
   onApagado,
@@ -47,7 +48,7 @@ export function ListaPersonagens({
       {itens.map((p) => (
         <li key={p.id} className="flex items-center gap-2">
           <Link
-            to={p.meuRascunho ? '/personagens/$id/editar' : '/personagens/$id'}
+            to={p.abreNoWizard ? '/personagens/$id/editar' : '/personagens/$id'}
             params={{ id: p.id }}
             className="flex min-h-14 flex-1 items-center justify-between gap-2 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
@@ -60,7 +61,7 @@ export function ListaPersonagens({
               <ChevronRight aria-hidden className="size-4 text-muted-foreground" />
             </span>
           </Link>
-          {p.meuRascunho && <ApagarRascunho id={p.id} nome={p.nome} onApagado={onApagado} />}
+          {p.podeApagar && <ApagarRascunho id={p.id} nome={p.nome} onApagado={onApagado} />}
         </li>
       ))}
     </ul>

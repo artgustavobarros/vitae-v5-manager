@@ -1,6 +1,6 @@
 import { REGRA_NOME_USUARIO } from '#/domain/convite'
 
-const SEM_CONVITE = 'Não foi possível criar a conta. Para entrar na Crônica, peça um Convite ao Narrador.'
+const SEM_CONVITE = 'Não foi possível criar a conta. Para entrar na Crônica, peça ao Narrador um Convite para a Crônica.'
 
 const MENSAGENS: Record<string, string> = {
   sem_convite: SEM_CONVITE,

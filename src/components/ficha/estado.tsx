@@ -1,5 +1,6 @@
 import { cn } from 'cn'
 
+import { Button } from '#/components/ui/button'
 import {
   alternarCaixaDano,
   alternarFome,
@@ -14,6 +15,7 @@ import {
 
 import { Bolinha, GlifoDano } from './marcadores'
 
+// Os toques usam o Button do shadcn (ghost), sem fundo no hover: no celular ele ficaria preso após o toque.
 const NOMES_DANO = { vazio: 'sem dano', superficial: 'dano superficial', agravado: 'dano agravado' }
 
 /** Linha de Vitalidade ou Força de Vontade. Sem onChange, fica só para leitura. */
@@ -38,16 +40,18 @@ export function TrilhaDano({
       </span>
       <div role="group" aria-label={rotulo} className="flex">
         {caixas.map((estado, i) => (
-          <button
+          <Button
             key={i}
             type="button"
+            variant="ghost"
+            size="icon"
             disabled={!onChange}
             aria-label={`${rotulo}, caixa ${i + 1}: ${NOMES_DANO[estado]}`}
             onClick={() => onChange?.(alternarCaixaDano(dano, max, i))}
-            className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-12 w-10 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-100 dark:hover:bg-transparent"
           >
             <GlifoDano estado={estado} />
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -64,17 +68,19 @@ export function TrilhaFome({ fome, onChange }: { fome: number; onChange?: (fome:
         </span>
         <div role="group" aria-label={`Fome ${fome} de ${MAX_FOME}`} className="flex">
           {Array.from({ length: MAX_FOME }, (_, i) => (
-            <button
+            <Button
               key={i}
               type="button"
+              variant="ghost"
+              size="icon"
               disabled={!onChange}
               aria-label={`Fome ${i + 1}`}
               aria-pressed={i < fome}
               onClick={() => onChange?.(alternarFome(fome, i))}
-              className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-12 w-10 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-100 dark:hover:bg-transparent"
             >
               <Bolinha cheia={i < fome} cor="vinho" grande />
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -99,13 +105,15 @@ export function HorizonteHumanidade({
           const humano = i < trilha.humanidade
           const mancha = ehMancha(trilha, i)
           return (
-            <button
+            <Button
               key={i}
               type="button"
+              variant="ghost"
+              size="icon"
               disabled={!onChange || humano}
               aria-label={humano ? `Humanidade ${i + 1}` : mancha ? 'Remover Mancha' : 'Marcar Mancha'}
               onClick={() => onChange?.(alternarMancha(trilha, i))}
-              className="relative flex h-12 flex-1 items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="relative h-12 w-auto flex-1 justify-start rounded-sm px-0 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-100 dark:hover:bg-transparent"
             >
               <span
                 className={cn(
@@ -123,7 +131,7 @@ export function HorizonteHumanidade({
                   <line x1="1" y1="11" x2="11" y2="1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               )}
-            </button>
+            </Button>
           )
         })}
       </div>

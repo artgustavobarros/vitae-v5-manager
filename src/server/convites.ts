@@ -7,7 +7,8 @@ import { z } from 'zod'
 
 import { db } from '#/db'
 import { conviteCronica } from '#/db/schema'
-import { COOKIE_CONVITE, estadoConvite } from '#/domain/convite'
+import { estadoConvite } from '#/domain/convite'
+import { COOKIE_CONVITE } from '#/lib/cadastro'
 import { exigirNarrador } from '#/server/sessao'
 
 export const listarConvites = createServerFn({ method: 'GET' })
@@ -41,7 +42,7 @@ export const cancelarConvite = createServerFn({ method: 'POST' })
 
 const comToken = z.object({ token: z.string().min(1).max(100) })
 
-/** Público: a página do link mostra se o convite ainda vale. */
+/** Público: a página do link mostra se o Convite para a Crônica ainda vale. */
 export const verConvite = createServerFn({ method: 'GET' })
   .validator(comToken)
   .handler(async ({ data }) => {
@@ -54,7 +55,7 @@ export const prepararCadastro = createServerFn({ method: 'POST' })
   .validator(comToken)
   .handler(async ({ data }) => {
     const convite = await db.query.conviteCronica.findFirst({ where: eq(conviteCronica.token, data.token) })
-    if (estadoConvite(convite) !== 'valido') throw new Error('Este convite não vale mais. Peça um novo ao Narrador.')
+    if (estadoConvite(convite) !== 'valido') throw new Error('Este Convite para a Crônica não vale mais. Peça um novo ao Narrador.')
     setCookie(COOKIE_CONVITE, data.token, {
       httpOnly: true,
       sameSite: 'lax',

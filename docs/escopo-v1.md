@@ -21,11 +21,12 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - O Jogador cria seus próprios Personagens quando quiser, quantos quiser, e só apaga Rascunhos. Só o Narrador arquiva e reativa.
 - Personagem atribuído:
   - o Narrador pode criar um Rascunho e atribuí-lo a um Jogador, um por vez;
-  - o Jogador vê o Rascunho em Meus Personagens, pode abrir a Ficha para leitura e aceita ou recusa;
+  - o Jogador vê o Rascunho numa seção "Esperando você" no topo de Meus Personagens, pode abrir a Ficha para leitura e aceita ou recusa;
   - se aceitar, o Rascunho passa a ser dele; se recusar, volta a ser só do Narrador;
   - enquanto espera, o Narrador continua editando e pode cancelar a atribuição;
   - um Rascunho atribuído não pode ser concluído.
 - A criação guiada aplica as regras do V5 e bloqueia escolhas inválidas para o Jogador. O Narrador cria PdNs pela mesma criação guiada.
+- Já no wizard da fatia 2, a regra de Clã e Geração (Sangue-Ralo da 14ª à 16ª Geração; os demais clãs até a 13ª) vale para o Jogador. O Narrador cria sem validação.
 - Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois de concluída, a Ficha mostra só o valor final.
 - Até a criação guiada existir (fatia 5), Jogador e Narrador criam Personagens por um formulário manual provisório, sem validação do V5.
 - O Tipo de Predador aplica os bônus automaticamente. O Jogador escolhe quando o livro oferece opções.

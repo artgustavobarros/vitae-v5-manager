@@ -1,12 +1,13 @@
 import { randomInt } from 'node:crypto'
 
 import { createServerFn } from '@tanstack/react-start'
-import { and, asc, eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
 import { account, session, user } from '#/db/schema'
 import { auth } from '#/lib/auth'
+import { buscarCredencial, idsComSenha } from '#/server/credencial'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
 
 /** Dados da página de configurações; `temSenha` é false para conta só Google. */
@@ -17,9 +18,7 @@ export const buscarConta = createServerFn({ method: 'GET' })
       .select({ nome: user.name, nomeUsuario: user.displayUsername, usuarioNormalizado: user.username })
       .from(user)
       .where(eq(user.id, context.usuario.id))
-    const senha = await db.query.account.findFirst({
-      where: and(eq(account.userId, context.usuario.id), eq(account.providerId, 'credential')),
-    })
+    const senha = await buscarCredencial(context.usuario.id)
     return {
       nome: dados.nome,
       nomeUsuario: dados.nomeUsuario ?? dados.usuarioNormalizado,
@@ -35,11 +34,7 @@ export const listarJogadores = createServerFn({ method: 'GET' })
       .from(user)
       .where(eq(user.papel, 'jogador'))
       .orderBy(asc(user.name))
-    const comSenha = new Set(
-      (await db.select({ userId: account.userId }).from(account).where(eq(account.providerId, 'credential'))).map(
-        (a) => a.userId,
-      ),
-    )
+    const comSenha = await idsComSenha()
     return jogadores.map((j) => ({ ...j, temSenha: comSenha.has(j.id) }))
   })
 
@@ -52,9 +47,7 @@ export const gerarSenhaNova = createServerFn({ method: 'POST' })
   .validator(z.object({ userId: z.string().min(1) }))
   .handler(async ({ data }) => {
     const jogador = await db.query.user.findFirst({ where: eq(user.id, data.userId) })
-    const credencial = await db.query.account.findFirst({
-      where: and(eq(account.userId, data.userId), eq(account.providerId, 'credential')),
-    })
+    const credencial = await buscarCredencial(data.userId)
     if (jogador?.papel !== 'jogador' || !credencial) throw new Error('Esse Jogador entra pelo Google, sem senha.')
     const senha = Array.from({ length: 12 }, () => ALFABETO[randomInt(ALFABETO.length)]).join('')
     const contexto = await auth.$context

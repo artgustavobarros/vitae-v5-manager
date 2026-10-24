@@ -9,20 +9,16 @@ import { and, eq, isNull } from 'drizzle-orm'
 
 import { db } from '#/db'
 import * as schema from '#/db/schema'
-import { decidirPapel, normalizarEmail } from '#/domain/acesso'
-import {
-  COOKIE_CONVITE,
-  DOMINIO_EMAIL_SINTETICO,
-  estadoConvite,
-  validarNomeUsuario,
-} from '#/domain/convite'
+import { decidirPapel, nomeCurto, normalizarEmail } from '#/domain/acesso'
+import { estadoConvite, validarNomeUsuario } from '#/domain/convite'
+import { COOKIE_CONVITE, DOMINIO_EMAIL_SINTETICO } from '#/lib/cadastro'
 
 const DEV = import.meta.env?.DEV ?? false
 
 export const auth = betterAuth({
   appName: 'Umbra',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
-  // Jogadores entram por nome de usuário e senha; quem cria a conta é o hook abaixo, com convite.
+  // Jogadores entram por nome de usuário e senha; quem cria a conta é o hook abaixo, com Convite para a Crônica.
   emailAndPassword: { enabled: true },
   socialProviders: {
     google: {
@@ -58,16 +54,28 @@ export const auth = betterAuth({
           if (!papel) {
             throw new APIError('FORBIDDEN', { message: 'sem_convite' })
           }
-          return { data: { ...user, email, papel } }
+          // O Convite para a Crônica vale para um único cadastro. Consumir com UPDATE condicional
+          // garante isso mesmo com dois cadastros ao mesmo tempo: só um encontra `usado_em` vazio.
+          if (papel === 'jogador' && token) {
+            const consumido = await db
+              .update(schema.conviteCronica)
+              .set({ usadoEm: new Date() })
+              .where(and(eq(schema.conviteCronica.token, token), isNull(schema.conviteCronica.usadoEm)))
+              .returning({ id: schema.conviteCronica.id })
+            if (consumido.length === 0) throw new APIError('FORBIDDEN', { message: 'sem_convite' })
+          }
+          // Com Google, o nome na Crônica começa com os dois primeiros nomes; a pessoa troca em /conta.
+          const name = porSenha ? user.name : nomeCurto(user.name)
+          return { data: { ...user, email, papel, name } }
         },
-        // O convite vale para um único cadastro.
+        // Registra quem usou o Convite para a Crônica consumido no `before`.
         after: async (user, ctx) => {
           const token = ctx?.getCookie(COOKIE_CONVITE)
           if (!token || user.papel !== 'jogador') return
           await db
             .update(schema.conviteCronica)
-            .set({ usadoEm: new Date(), usadoPor: user.id })
-            .where(and(eq(schema.conviteCronica.token, token), isNull(schema.conviteCronica.usadoEm)))
+            .set({ usadoPor: user.id })
+            .where(and(eq(schema.conviteCronica.token, token), isNull(schema.conviteCronica.usadoPor)))
           ctx?.setCookie(COOKIE_CONVITE, '', { path: '/', maxAge: 0 })
         },
       },

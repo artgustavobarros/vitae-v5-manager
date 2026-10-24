@@ -55,7 +55,7 @@ function Convites() {
       <div className="flex flex-col gap-4 px-4 pt-2 pb-12">
         <h1 className="font-serif text-display text-balance">Convites para a Crônica</h1>
         <p className="text-sm text-muted-foreground">
-          Cada convite é um link que vale para um só cadastro. Gere um por Jogador e envie como preferir.
+          Cada Convite para a Crônica é um link que vale para um só cadastro. Gere um por Jogador e envie como preferir.
         </p>
         <div>
           <Button
@@ -65,24 +65,24 @@ function Convites() {
               try {
                 const { token } = await gerarConvite()
                 await router.invalidate()
-                await copiar(linkDoConvite(token), 'Convite gerado e link copiado.')
+                await copiar(linkDoConvite(token), 'Convite para a Crônica gerado e link copiado.')
               } finally {
                 setGerando(false)
               }
             }}
           >
-            Gerar convite
+            Gerar Convite para a Crônica
           </Button>
         </div>
 
         {convites.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum convite esperando cadastro.</p>
+          <p className="text-sm text-muted-foreground">Nenhum Convite para a Crônica esperando cadastro.</p>
         ) : (
           <ul className="divide-y border-y">
             {convites.map((c) => (
               <li key={c.id} className="flex min-h-14 items-center gap-2 py-2">
                 <div className="min-w-0 flex-1">
-                  <Input readOnly value={`/convite/${c.token}`} aria-label="Link do convite" className="text-xs" />
+                  <Input readOnly value={`/convite/${c.token}`} aria-label="Link do Convite para a Crônica" className="text-xs" />
                   <p className="mt-1 text-xs text-muted-foreground">
                     Gerado em {new Date(c.criadoEm).toLocaleDateString('pt-BR')} · esperando cadastro
                   </p>
@@ -90,7 +90,7 @@ function Convites() {
                 <Button
                   variant="ghost"
                   size="icon-lg"
-                  aria-label="Copiar link do convite"
+                  aria-label="Copiar link do Convite para a Crônica"
                   onClick={() => void copiar(linkDoConvite(c.token), 'Link copiado.')}
                 >
                   <Copy />
@@ -98,7 +98,7 @@ function Convites() {
                 <Button
                   variant="ghost"
                   size="icon-lg"
-                  aria-label="Cancelar convite"
+                  aria-label="Cancelar Convite para a Crônica"
                   onClick={async () => {
                     await cancelarConvite({ data: { id: c.id } })
                     await router.invalidate()

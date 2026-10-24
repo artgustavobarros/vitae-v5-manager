@@ -8,6 +8,7 @@ import {
   fichaNeofito,
   fichaSchema,
   geracoesPermitidas,
+  marcasDe,
   normalizarFicha,
   vitalidadeMax,
   vontadeMax,
@@ -209,5 +210,17 @@ describe('Clã e Geração', () => {
   it('escolher uma Geração que não combina com o Clã apaga o Clã', () => {
     expect(escolherGeracao({ cla: 'toreador', geracao: null }, 15)).toEqual({ cla: null, geracao: 15 })
     expect(escolherGeracao({ cla: 'sangue-ralo', geracao: null }, 15)).toEqual({ cla: 'sangue-ralo', geracao: 15 })
+  })
+})
+
+describe('marcasDe', () => {
+  it('separa da Ficha só o que o Jogador marca sozinho', () => {
+    const ficha = { ...fichaNeofito(), fome: 3, manchas: 2, danoVontade: { superficial: 1, agravado: 0 } }
+    expect(marcasDe(ficha)).toEqual({
+      danoVitalidade: { superficial: 0, agravado: 0 },
+      danoVontade: { superficial: 1, agravado: 0 },
+      fome: 3,
+      manchas: 2,
+    })
   })
 })

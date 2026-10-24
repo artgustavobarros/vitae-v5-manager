@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { decidirPapel, normalizarEmail } from './acesso'
+import { decidirPapel, nomeCurto, normalizarEmail } from './acesso'
 
 const narradorEmail = 'narrador@exemplo.com'
 
@@ -54,5 +54,21 @@ describe('decidirPapel', () => {
 describe('normalizarEmail', () => {
   it('remove espaços e põe em minúsculas', () => {
     expect(normalizarEmail('  Ana@Exemplo.COM ')).toBe('ana@exemplo.com')
+  })
+})
+
+describe('nomeCurto', () => {
+  it('pega os dois primeiros nomes da conta Google', () => {
+    expect(nomeCurto('Arthur Gustavo Barros Costa')).toBe('Arthur Gustavo')
+  })
+
+  it('mantém a partícula entre os dois nomes', () => {
+    expect(nomeCurto('Maria da Silva Santos')).toBe('Maria da Silva')
+    expect(nomeCurto('João de Souza')).toBe('João de Souza')
+  })
+
+  it('nome único ou com espaços sobrando', () => {
+    expect(nomeCurto('  Ana  ')).toBe('Ana')
+    expect(nomeCurto('Rui   Barbosa  Lima')).toBe('Rui Barbosa')
   })
 })

@@ -3,7 +3,6 @@ import { useEffect, type ReactNode } from 'react'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { ATRIBUTOS, CLAS, DISCIPLINAS, GRUPOS, HABILIDADES, SEITAS, type Ficha } from '#/domain/ficha'
 
 import { ListaTracos } from './atributos'
 import {
@@ -18,7 +17,7 @@ import {
   type EdicaoFicha,
   type ValoresFormulario,
 } from './formulario'
-import { Pontos } from './marcadores'
+import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
 
 export const ETAPAS = ['Identidade', 'Atributos', 'Habilidades', 'Disciplinas', 'Sangue', 'Revisão'] as const
 
@@ -35,6 +34,7 @@ export function WizardCriacao({
   onConcluir,
   concluirBloqueado = false,
   extraRevisao,
+  regrasCriacao,
 }: {
   inicial: ValoresFormulario
   /** De 1 a ETAPAS.length. */
@@ -48,6 +48,8 @@ export function WizardCriacao({
   concluirBloqueado?: boolean
   /** Conteúdo a mais no fim da Revisão, como "Atribuir a um Jogador" para o Narrador. */
   extraRevisao?: ReactNode
+  /** Regra de Clã e Geração na Identidade; vale para o Jogador, não para o Narrador. */
+  regrasCriacao: boolean
 }) {
   const edicao = useEdicaoFicha(inicial)
   const titulo = ETAPAS[etapa - 1]
@@ -67,7 +69,7 @@ export function WizardCriacao({
       <Progresso etapa={etapa} />
 
       <Secao titulo={titulo}>
-        {etapa === 1 && <CamposIdentidade edicao={edicao} regrasCriacao />}
+        {etapa === 1 && <CamposIdentidade edicao={edicao} regrasCriacao={regrasCriacao} />}
         {etapa === 2 && <CamposAtributos edicao={edicao} />}
         {etapa === 3 && <CamposHabilidades edicao={edicao} />}
         {etapa === 4 && <CamposDisciplinas edicao={edicao} />}
@@ -131,6 +133,7 @@ function Progresso({ etapa }: { etapa: number }) {
 function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa: number) => void }) {
   const { valores } = edicao
   const { nome, ficha } = valores()
+  const habilidades = gruposHabilidades(ficha, { soComPontos: true })
 
   return (
     <div className="flex flex-col gap-8">
@@ -144,44 +147,26 @@ function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa
 
       <BlocoRevisao titulo="Identidade" etapa={1} onAlterar={onAlterar}>
         <Dado rotulo="Nome" valor={nome} />
-        <Dado rotulo="Clã" valor={CLAS.find((c) => c.id === ficha.cla)?.nome ?? ''} />
-        <Dado rotulo="Geração" valor={ficha.geracao === null ? '' : `${ficha.geracao}ª Geração`} />
-        <Dado rotulo="Seita" valor={SEITAS.find((s) => s.id === ficha.seita)?.nome ?? ''} />
+        <Dado rotulo="Clã" valor={nomeCla(ficha)} />
+        <Dado rotulo="Geração" valor={ficha.geracao === null ? '' : rotuloGeracao(ficha.geracao)} />
+        <Dado rotulo="Seita" valor={nomeSeita(ficha)} />
         <Dado rotulo="Senhor" valor={ficha.senhor} />
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Atributos" etapa={2} onAlterar={onAlterar}>
-        <ListaTracos
-          grupos={GRUPOS.map((g) => ({
-            titulo: g.atributos,
-            tracos: ATRIBUTOS.filter((a) => a.grupo === g.id).map((a) => ({
-              nome: a.nome,
-              valor: ficha.atributos[a.id],
-            })),
-          }))}
-        />
+        <ListaTracos grupos={gruposAtributos(ficha)} />
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Habilidades" etapa={3} onAlterar={onAlterar}>
-        <HabilidadesComPontos ficha={ficha} />
+        {habilidades.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma Habilidade com pontos.</p>
+        ) : (
+          <ListaTracos grupos={habilidades} />
+        )}
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Disciplinas" etapa={4} onAlterar={onAlterar}>
-        {ficha.disciplinas.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma Disciplina.</p>
-        ) : (
-          <ul>
-            {ficha.disciplinas.map((d) => {
-              const nomeDisciplina = DISCIPLINAS.find((x) => x.id === d.disciplina)?.nome ?? d.disciplina
-              return (
-                <li key={d.disciplina} className="flex h-11 items-center justify-between border-b text-base">
-                  <span>{nomeDisciplina}</span>
-                  <Pontos valor={d.nivel} rotulo={nomeDisciplina} />
-                </li>
-              )
-            })}
-          </ul>
-        )}
+        <ListaDisciplinas ficha={ficha} />
       </BlocoRevisao>
 
       <BlocoRevisao titulo="Sangue" etapa={5} onAlterar={onAlterar}>
@@ -192,21 +177,6 @@ function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa
       </BlocoRevisao>
     </div>
   )
-}
-
-/** Na Revisão, só as Habilidades com pelo menos um ponto. */
-function HabilidadesComPontos({ ficha }: { ficha: Ficha }) {
-  const grupos = GRUPOS.map((g) => ({
-    titulo: g.habilidades,
-    tracos: HABILIDADES.filter((h) => h.grupo === g.id && ficha.habilidades[h.id].valor > 0).map((h) => ({
-      nome: h.nome,
-      valor: ficha.habilidades[h.id].valor,
-      detalhe: ficha.habilidades[h.id].especializacoes.join(', ') || undefined,
-    })),
-  })).filter((g) => g.tracos.length > 0)
-
-  if (grupos.length === 0) return <p className="text-sm text-muted-foreground">Nenhuma Habilidade com pontos.</p>
-  return <ListaTracos grupos={grupos} />
 }
 
 function BlocoRevisao({

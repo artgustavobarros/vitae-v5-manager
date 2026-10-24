@@ -56,7 +56,7 @@ Os demais itens da Ficha entram em fatias seguintes da v1: poderes de Disciplina
   - etapas: Identidade, Atributos, Habilidades, Disciplinas, Sangue (Potência do Sangue, Humanidade, Ambição e Desejo) e Revisão;
   - cada "Próximo" salva o Rascunho; "Concluir" fica na Revisão.
 - O Narrador edita uma Ficha Ativa pelo formulário inteiro, numa página só.
-- Tela da Ficha, segundo o layout de `src/routes/demo/ficha.tsx`:
+- Tela da Ficha, com o layout em `src/components/ficha/ficha.tsx` (validado antes numa demo, já removida):
   - topo: nome e a linha "Clã · Geração · Potência do Sangue";
   - preso no topo: Humanidade com Manchas, Vitalidade, Força de Vontade e Fome;
   - abas: Atributos, Habilidades, Disciplinas e Personagem. A aba Notas entra na fatia das Notas;

@@ -3,55 +3,19 @@ import { toast } from 'sonner'
 
 import { Badge } from '#/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
-import {
-  ATRIBUTOS,
-  CLAS,
-  SEITAS,
-  DISCIPLINAS,
-  GRUPOS,
-  HABILIDADES,
-  vitalidadeMax,
-  vontadeMax,
-  type Ficha,
-  type Marcas,
-} from '#/domain/ficha'
+import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/domain/ficha'
 import type { AcessoFicha, StatusPersonagem } from '#/domain/permissoes-ficha'
 import { marcar } from '#/server/personagens'
 
-import { ListaTracos, type GrupoTracos } from './atributos'
+import { ListaTracos } from './atributos'
 import { CabecalhoFicha } from './cabecalho-ficha'
 import { HorizonteHumanidade, TrilhaDano, TrilhaFome } from './estado'
-import { Pontos } from './marcadores'
+import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
 
 /** Linha do topo: "Clã · 12ª Geração · Potência do Sangue N", sem as partes vazias. */
 function descricao(ficha: Ficha): string {
-  const cla = CLAS.find((c) => c.id === ficha.cla)?.nome
-  const geracao = ficha.geracao === null ? undefined : `${ficha.geracao}ª Geração`
-  return [cla, geracao, `Potência do Sangue ${ficha.potenciaSangue}`].filter(Boolean).join(' · ')
-}
-
-function gruposAtributos(ficha: Ficha): GrupoTracos[] {
-  return GRUPOS.map((g) => ({
-    titulo: g.atributos,
-    tracos: ATRIBUTOS.filter((a) => a.grupo === g.id).map((a) => ({
-      nome: a.nome,
-      valor: ficha.atributos[a.id],
-    })),
-  }))
-}
-
-function gruposHabilidades(ficha: Ficha): GrupoTracos[] {
-  return GRUPOS.map((g) => ({
-    titulo: g.habilidades,
-    tracos: HABILIDADES.filter((h) => h.grupo === g.id).map((h) => {
-      const { valor, especializacoes } = ficha.habilidades[h.id]
-      return { nome: h.nome, valor, detalhe: especializacoes.join(', ') || undefined }
-    }),
-  }))
-}
-
-function marcasDe({ danoVitalidade, danoVontade, fome, manchas }: Ficha): Marcas {
-  return { danoVitalidade, danoVontade, fome, manchas }
+  const geracao = ficha.geracao === null ? '' : rotuloGeracao(ficha.geracao)
+  return [nomeCla(ficha), geracao, `Potência do Sangue ${ficha.potenciaSangue}`].filter(Boolean).join(' · ')
 }
 
 /**
@@ -96,7 +60,7 @@ export function FichaPersonagem({
 
   const fichaAtual = { ...ficha, ...marcas }
   const campos = [
-    { rotulo: 'Seita', valor: SEITAS.find((s) => s.id === ficha.seita)?.nome ?? '' },
+    { rotulo: 'Seita', valor: nomeSeita(ficha) },
     { rotulo: 'Senhor', valor: ficha.senhor },
     { rotulo: 'Ambição', valor: ficha.ambicao },
     { rotulo: 'Desejo', valor: ficha.desejo },
@@ -150,22 +114,8 @@ export function FichaPersonagem({
           <TabsContent value="habilidades">
             <ListaTracos grupos={gruposHabilidades(ficha)} />
           </TabsContent>
-          <TabsContent value="disciplinas">
-            {ficha.disciplinas.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nenhuma Disciplina.</p>
-            ) : (
-              <ul className="mt-4">
-                {ficha.disciplinas.map((d) => {
-                  const nomeDisciplina = DISCIPLINAS.find((x) => x.id === d.disciplina)?.nome ?? d.disciplina
-                  return (
-                    <li key={d.disciplina} className="flex h-11 items-center justify-between border-b text-base">
-                      <span>{nomeDisciplina}</span>
-                      <Pontos valor={d.nivel} rotulo={nomeDisciplina} />
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+          <TabsContent value="disciplinas" className="mt-4">
+            <ListaDisciplinas ficha={ficha} />
           </TabsContent>
           <TabsContent value="personagem">
             <dl className="mt-4">

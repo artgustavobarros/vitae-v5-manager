@@ -31,9 +31,13 @@ function Personagens() {
           <ListaPersonagens
             itens={personagens.map((p) => ({
               ...p,
-              detalhe: p.jogador ?? (p.atribuidoA ? `Atribuído a ${p.atribuidoA} · esperando resposta` : 'PdN'),
-              // PdN em Rascunho é do próprio Narrador.
-              meuRascunho: p.jogador === null && p.status === 'rascunho',
+              detalhe:
+                p.jogador ??
+                (p.atribuidoA
+                  ? `Atribuído a ${p.atribuidoA} · esperando resposta`
+                  : p.pdn
+                    ? 'PdN'
+                    : 'Rascunho do Narrador'),
             }))}
             onApagado={() => router.invalidate()}
           />

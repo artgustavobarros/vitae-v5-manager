@@ -41,7 +41,7 @@ function Inicio() {
               </p>
             ) : (
               <ListaPersonagens
-                itens={personagens.map((p) => ({ ...p, meuRascunho: p.status === 'rascunho' }))}
+                itens={personagens}
                 onApagado={() => router.invalidate()}
               />
             )}

@@ -7,7 +7,8 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { Separator } from '#/components/ui/separator'
-import { DOMINIO_EMAIL_SINTETICO, validarNomeUsuario } from '#/domain/convite'
+import { validarNomeUsuario } from '#/domain/convite'
+import { DOMINIO_EMAIL_SINTETICO } from '#/lib/cadastro'
 import { authClient } from '#/lib/auth-client'
 import { mensagemErroAuth } from '#/lib/erros-auth'
 import { prepararCadastro, verConvite } from '#/server/convites'
@@ -50,8 +51,8 @@ function Convite() {
             <Alert>
               <AlertDescription>
                 {estado === 'usado'
-                  ? 'Este convite já foi usado. Cada convite vale para um só cadastro: se a conta é sua, entre normalmente; se não, peça um novo ao Narrador.'
-                  : 'Este convite não existe ou foi cancelado. Peça um novo ao Narrador.'}
+                  ? 'Este Convite para a Crônica já foi usado. Cada um vale para um só cadastro: se a conta é sua, entre normalmente; se não, peça um novo ao Narrador.'
+                  : 'Este Convite para a Crônica não existe ou foi cancelado. Peça um novo ao Narrador.'}
               </AlertDescription>
             </Alert>
             <Button asChild variant="secondary" size="lg">

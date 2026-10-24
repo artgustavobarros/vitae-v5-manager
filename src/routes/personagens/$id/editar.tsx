@@ -17,14 +17,13 @@ export const Route = createFileRoute('/personagens/$id/editar')({
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
   },
-  loader: async ({ params, context }) => {
+  loader: async ({ params }) => {
     const personagem = await buscarFicha({ data: { id: params.id } }).catch(() => null)
     if (!personagem) throw redirect({ to: '/' })
     if (personagem.acesso !== 'editar') throw redirect({ to: '/personagens/$id', params })
     // Rascunho do Narrador: ele pode atribuí-lo a um Jogador na Revisão.
-    const atribuivel = context.usuario?.papel === 'narrador' && personagem.status === 'rascunho' && !personagem.atribuidoA
-    const jogadores = atribuivel ? await listarJogadores() : []
-    return { personagem, jogadores, atribuivel }
+    const jogadores = personagem.podeAtribuir ? await listarJogadores() : []
+    return { personagem, jogadores }
   },
   component: EditarFicha,
 })
@@ -34,7 +33,7 @@ function erroDoServidor(erro: unknown) {
 }
 
 function EditarFicha() {
-  const { personagem, jogadores, atribuivel } = Route.useLoaderData()
+  const { personagem, jogadores } = Route.useLoaderData()
   const { etapa = 1 } = Route.useSearch()
   const navigate = useNavigate()
   const router = useRouter()
@@ -80,10 +79,10 @@ function EditarFicha() {
         <p className="mt-1 mb-8 text-sm text-muted-foreground">
           {rascunho ? 'Rascunho' : 'Editando a Ficha'} · provisório, sem as regras de criação do V5
         </p>
-        {personagem.atribuidoA && (
+        {personagem.podeCancelarAtribuicao && personagem.atribuidoA && (
           <AvisoAtribuicao id={id} jogador={personagem.atribuidoA.nome} onCancelado={() => router.invalidate()} />
         )}
-        {rascunho ? (
+        {personagem.abreNoWizard ? (
           <WizardCriacao
             inicial={inicial}
             etapa={etapa}
@@ -91,9 +90,10 @@ function EditarFicha() {
             onIrPara={(destino) => navigate({ to: '.', search: { etapa: destino } })}
             onSalvar={salvar}
             onConcluir={salvarEConcluir}
-            concluirBloqueado={personagem.atribuidoA !== null}
+            concluirBloqueado={!personagem.podeConcluir}
+            regrasCriacao={personagem.regrasCriacao}
             extraRevisao={
-              atribuivel && (
+              personagem.podeAtribuir && (
                 <AtribuirPersonagem
                   id={id}
                   jogadores={jogadores}

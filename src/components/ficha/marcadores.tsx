@@ -1,5 +1,6 @@
 import { cn } from 'cn'
 
+import { Button } from '#/components/ui/button'
 import { alternarPontos, type CaixaDano } from '#/domain/trilhas'
 
 /** Glifos da ficha oficial: caixa vazia, "/" superficial e "X" agravado, com o mesmo traço. */
@@ -81,16 +82,18 @@ export function SeletorPontos({
   return (
     <div role="group" aria-label={`${rotulo}: ${valor} de ${max}`} className={cn('flex', className)}>
       {Array.from({ length: max }, (_, i) => (
-        <button
+        <Button
           key={i}
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label={`${rotulo} ${i + 1}`}
           aria-pressed={i < valor}
           onClick={() => onChange(alternarPontos(valor, i, min))}
-          className="grid h-12 w-10 place-items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-12 w-10 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-transparent"
         >
           <Bolinha cheia={i < valor} grande />
-        </button>
+        </Button>
       ))}
     </div>
   )

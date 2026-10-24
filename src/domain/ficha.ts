@@ -162,6 +162,10 @@ export const marcasSchema = fichaSchema.pick({
 
 export type Marcas = z.infer<typeof marcasSchema>
 
+export function marcasDe({ danoVitalidade, danoVontade, fome, manchas }: Ficha): Marcas {
+  return { danoVitalidade, danoVontade, fome, manchas }
+}
+
 /** Regra do V5 aplicada na criação: Sangue-Ralo é da 14ª Geração em diante; os demais clãs, até a 13ª. */
 const ULTIMA_GERACAO_PLENA = 13
 
