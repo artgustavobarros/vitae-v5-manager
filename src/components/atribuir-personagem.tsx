@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { Combobox } from '#/components/combobox'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { Label } from '#/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select'
 import { atribuir, cancelarAtribuicao } from '#/server/personagens'
 
 function mensagem(erro: unknown, padrao: string) {
@@ -81,18 +81,14 @@ export function AtribuirPersonagem({
         <div className="flex items-end gap-2">
           <div className="grid flex-1 gap-2">
             <Label htmlFor="jogador-atribuido">Jogador</Label>
-            <Select value={jogadorId} onValueChange={setJogadorId}>
-              <SelectTrigger id="jogador-atribuido" className="w-full">
-                <SelectValue placeholder="Escolha um Jogador" />
-              </SelectTrigger>
-              <SelectContent>
-                {jogadores.map((j) => (
-                  <SelectItem key={j.id} value={j.id}>
-                    {j.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="jogador-atribuido"
+              opcoes={jogadores.map((j) => ({ valor: j.id, rotulo: j.nome }))}
+              valor={jogadorId || null}
+              onChange={setJogadorId}
+              placeholder="Escolha um Jogador"
+              busca="Buscar Jogador"
+            />
           </div>
           <Button
             variant="secondary"

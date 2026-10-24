@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { Papel } from './acesso'
+import { escolhaVantagemSchema } from './ficha'
 import type { StatusPersonagem } from './permissoes-ficha'
 
 export const FAIXA_DOMINIO = { min: 0, max: 5 } as const
@@ -14,6 +15,15 @@ export const coterieSchema = z.object({
 })
 
 export type DadosCoterie = z.infer<typeof coterieSchema>
+
+/** Tipo, Vantagens e Defeitos da Coterie, do Catálogo. Só o Narrador edita; sem conta de pontos. */
+export const catalogoCoterieSchema = z.object({
+  tipo: z.string().min(1).nullable(),
+  vantagens: z.array(escolhaVantagemSchema),
+  defeitos: z.array(escolhaVantagemSchema),
+})
+
+export type CatalogoCoterie = z.infer<typeof catalogoCoterieSchema>
 
 type Usuario = { id: string; papel: Papel }
 

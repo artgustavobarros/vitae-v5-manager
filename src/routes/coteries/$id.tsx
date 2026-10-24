@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
+import { CatalogoDaCoterie } from '#/components/catalogo-coterie'
+import { Combobox } from '#/components/combobox'
 import { TermoRegra } from '#/components/consulta-regra'
 import { Pontos, SeletorPontos } from '#/components/ficha/marcadores'
 import { PainelCard } from '#/components/painel-card'
@@ -30,7 +32,6 @@ import {
 } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select'
 import {
   adicionarPdnCoterie,
   apagarCoterie,
@@ -340,6 +341,13 @@ function DetalheCoterie() {
           </div>
         </section>
 
+        <CatalogoDaCoterie
+          key={coterie.atualizadoEm.toString()}
+          id={coterie.id}
+          inicial={{ tipo: coterie.tipo, vantagens: coterie.vantagens, defeitos: coterie.defeitos }}
+          ehNarrador={ehNarrador}
+        />
+
         {/* Membros */}
         <section className="flex flex-col gap-4 border-t pt-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -500,19 +508,15 @@ function DetalheCoterie() {
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label>Escolha o Personagem</Label>
-              <Select value={personagemParaConvidar} onValueChange={setPersonagemParaConvidar}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um Personagem" />
-                </SelectTrigger>
-                <SelectContent>
-                  {candidatosConvite.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome} ({c.jogador})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="personagem-convite">Escolha o Personagem</Label>
+              <Combobox
+                id="personagem-convite"
+                opcoes={candidatosConvite.map((c) => ({ valor: c.id, rotulo: `${c.nome} (${c.jogador})` }))}
+                valor={personagemParaConvidar || null}
+                onChange={setPersonagemParaConvidar}
+                placeholder="Selecione um Personagem"
+                busca="Buscar Personagem"
+              />
             </div>
 
             <DialogFooter className="mt-2">
@@ -539,19 +543,15 @@ function DetalheCoterie() {
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label>Escolha o PdN</Label>
-              <Select value={pdnParaAdicionar} onValueChange={setPdnParaAdicionar}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um PdN" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pdnsDisponiveis.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="pdn-adicionar">Escolha o PdN</Label>
+              <Combobox
+                id="pdn-adicionar"
+                opcoes={pdnsDisponiveis.map((p) => ({ valor: p.id, rotulo: p.nome }))}
+                valor={pdnParaAdicionar || null}
+                onChange={setPdnParaAdicionar}
+                placeholder="Selecione um PdN"
+                busca="Buscar PdN"
+              />
             </div>
 
             <DialogFooter className="mt-2">

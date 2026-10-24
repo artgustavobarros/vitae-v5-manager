@@ -1,17 +1,11 @@
 import { Info, Trash2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
+import { Combobox, type OpcaoCombobox } from '#/components/combobox'
 import { TermoRegra } from '#/components/consulta-regra'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import {
   CLAS,
   DISCIPLINAS,
@@ -30,11 +24,27 @@ import {
   type Seita,
 } from '#/domain/ficha'
 
+import {
+  CamposPoderes,
+  CamposRituais,
+  CamposVantagensPersonagem,
+  ListaSoltos,
+  semItem,
+  temPoderes,
+  tipoRitualDa,
+} from './catalogo'
 import { SeletorPontos } from './marcadores'
 import { atributosDoGrupo, habilidadesDoGrupo, nomeDisciplina, rotuloGeracao } from './tracos'
 
-// O Select do Radix não aceita valor vazio; este marca "Sem Clã", "Sem Geração" e "Sem Seita".
+// Valor da opção "Sem Clã", "Sem Geração" e "Sem Seita" nos combobox.
 const NENHUM = 'nenhum'
+
+function opcoesDe(lista: readonly { id: string; nome: string; nomeOriginal: string }[], semNada: string): OpcaoCombobox[] {
+  return [
+    { valor: NENHUM, rotulo: semNada },
+    ...lista.map((x) => ({ valor: x.id, rotulo: x.nome, original: x.nomeOriginal })),
+  ]
+}
 
 const GERACOES = Array.from(
   { length: FAIXAS.geracao.max - FAIXAS.geracao.min + 1 },
@@ -121,6 +131,9 @@ export function FormularioFicha({
       <Secao titulo="Sangue e Humanidade">
         <CamposSangue edicao={edicao} />
       </Secao>
+      <Secao titulo="Vantagens e Defeitos">
+        <CamposVantagensPersonagem ficha={edicao.ficha} regras={false} mudar={edicao.mudar} />
+      </Secao>
       <div className="border-t pt-4">
         <Button type="submit" disabled={salvando}>
           Salvar
@@ -146,62 +159,39 @@ export function CamposIdentidade({ edicao, regrasCriacao = false }: { edicao: Ed
       <div className="grid grid-cols-2 gap-4">
         <Campo id="cla" rotulo="Clã">
           <div className="flex items-center gap-2">
-          <Select
-            value={ficha.cla ?? NENHUM}
-            onValueChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
-          >
-            <SelectTrigger id="cla" className="w-full flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NENHUM}>Sem Clã</SelectItem>
-              {clas.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {ficha.cla && <InfoRegra tipo="cla" id={ficha.cla} />}
+            <Combobox
+              id="cla"
+              opcoes={opcoesDe(clas, 'Sem Clã')}
+              valor={ficha.cla ?? NENHUM}
+              onChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
+              busca="Buscar Clã"
+              className="flex-1"
+            />
+            {ficha.cla && <InfoRegra tipo="cla" id={ficha.cla} />}
           </div>
         </Campo>
         <Campo id="geracao" rotulo="Geração">
-          <Select
-            value={ficha.geracao === null ? NENHUM : String(ficha.geracao)}
-            onValueChange={(v) => mudar(escolherGeracao(ficha, v === NENHUM ? null : Number(v)))}
-          >
-            <SelectTrigger id="geracao" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NENHUM}>Sem Geração</SelectItem>
-              {geracoes.map((g) => (
-                <SelectItem key={g} value={String(g)}>
-                  {rotuloGeracao(g)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            id="geracao"
+            opcoes={[
+              { valor: NENHUM, rotulo: 'Sem Geração' },
+              ...geracoes.map((g) => ({ valor: String(g), rotulo: rotuloGeracao(g) })),
+            ]}
+            valor={ficha.geracao === null ? NENHUM : String(ficha.geracao)}
+            onChange={(v) => mudar(escolherGeracao(ficha, v === NENHUM ? null : Number(v)))}
+            busca="Buscar Geração"
+          />
         </Campo>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Campo id="seita" rotulo="Seita" opcional>
-          <Select
-            value={ficha.seita ?? NENHUM}
-            onValueChange={(v) => mudar({ seita: v === NENHUM ? null : (v as Seita) })}
-          >
-            <SelectTrigger id="seita" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NENHUM}>Sem Seita</SelectItem>
-              {SEITAS.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            id="seita"
+            opcoes={opcoesDe(SEITAS, 'Sem Seita')}
+            valor={ficha.seita ?? NENHUM}
+            onChange={(v) => mudar({ seita: v === NENHUM ? null : (v as Seita) })}
+            busca="Buscar Seita"
+          />
         </Campo>
         <Campo id="senhor" rotulo="Senhor" opcional>
           <Input id="senhor" value={ficha.senhor} onChange={(e) => mudar({ senhor: e.target.value })} />
@@ -289,8 +279,10 @@ export function CamposHabilidades({ edicao }: { edicao: EdicaoFicha }) {
   ))
 }
 
-export function CamposDisciplinas({ edicao }: { edicao: EdicaoFicha }) {
+/** Com `regrasCriacao` (Jogador), poderes e Rituais seguem as regras do V5; sem ela (Narrador), tudo com aviso. */
+export function CamposDisciplinas({ edicao, regrasCriacao = false }: { edicao: EdicaoFicha; regrasCriacao?: boolean }) {
   const { ficha, mudar } = edicao
+  const papel = regrasCriacao ? 'jogador' : 'narrador'
   const escolhidas = new Set(ficha.disciplinas.map((d) => d.disciplina))
   const proximaDisciplina = DISCIPLINAS.find((d) => !escolhidas.has(d.id))
 
@@ -307,18 +299,18 @@ export function CamposDisciplinas({ edicao }: { edicao: EdicaoFicha }) {
           return (
             <li key={d.disciplina} className="border-b pb-2">
               <div className="flex items-center gap-2">
-                <Select value={d.disciplina} onValueChange={(v) => trocar({ disciplina: v as Disciplina })}>
-                  <SelectTrigger aria-label={`Disciplina ${i + 1}`} className="w-full flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DISCIPLINAS.filter((x) => x.id === d.disciplina || !escolhidas.has(x.id)).map((x) => (
-                      <SelectItem key={x.id} value={x.id}>
-                        {x.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  rotulo={`Disciplina ${i + 1}`}
+                  opcoes={DISCIPLINAS.filter((x) => x.id === d.disciplina || !escolhidas.has(x.id)).map((x) => ({
+                    valor: x.id,
+                    rotulo: x.nome,
+                    original: x.nomeOriginal,
+                  }))}
+                  valor={d.disciplina}
+                  onChange={(v) => trocar({ disciplina: v as Disciplina })}
+                  busca="Buscar Disciplina"
+                  className="flex-1"
+                />
                 <InfoRegra tipo="disciplina" id={d.disciplina} />
                 <Button
                   type="button"
@@ -337,10 +329,19 @@ export function CamposDisciplinas({ edicao }: { edicao: EdicaoFicha }) {
                 max={FAIXAS.disciplina.max}
                 onChange={(nivel) => trocar({ nivel })}
               />
+              <div className="flex flex-col gap-4 pb-2">
+                {temPoderes(d.disciplina) && (
+                  <CamposPoderes ficha={ficha} disciplina={d.disciplina} papel={papel} mudar={mudar} />
+                )}
+                {tipoRitualDa(d.disciplina) && (
+                  <CamposRituais ficha={ficha} tipo={tipoRitualDa(d.disciplina)!} papel={papel} mudar={mudar} />
+                )}
+              </div>
             </li>
           )
         })}
       </ul>
+      <ListaSoltos ficha={ficha} onRemover={(id) => mudar(semItem(ficha, id))} />
       <Button
         type="button"
         variant="secondary"

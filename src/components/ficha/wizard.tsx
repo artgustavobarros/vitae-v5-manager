@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 
 import { ListaTracos } from './atributos'
+import { CamposVantagensPersonagem, ListaVantagens } from './catalogo'
 import {
   CamposAmbicaoDesejo,
   CamposAtributos,
@@ -19,10 +20,10 @@ import {
 } from './formulario'
 import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
 
-export const ETAPAS = ['Identidade', 'Atributos', 'Habilidades', 'Disciplinas', 'Sangue', 'Revisão'] as const
+export const ETAPAS = ['Identidade', 'Atributos', 'Habilidades', 'Disciplinas', 'Sangue', 'Vantagens e Defeitos', 'Revisão'] as const
 
 /**
- * Criação do Rascunho em etapas, sem regras do V5 (fatia 2).
+ * Criação do Rascunho em etapas. Para o Jogador, valem Clã e Geração e as regras de poderes, Rituais e Vantagens.
  * Cada passo para a frente ou para trás salva o Rascunho; "Concluir" fica na Revisão.
  */
 export function WizardCriacao({
@@ -72,12 +73,15 @@ export function WizardCriacao({
         {etapa === 1 && <CamposIdentidade edicao={edicao} regrasCriacao={regrasCriacao} />}
         {etapa === 2 && <CamposAtributos edicao={edicao} />}
         {etapa === 3 && <CamposHabilidades edicao={edicao} />}
-        {etapa === 4 && <CamposDisciplinas edicao={edicao} />}
+        {etapa === 4 && <CamposDisciplinas edicao={edicao} regrasCriacao={regrasCriacao} />}
         {etapa === 5 && (
           <>
             <CamposSangue edicao={edicao} />
             <CamposAmbicaoDesejo edicao={edicao} />
           </>
+        )}
+        {etapa === 6 && (
+          <CamposVantagensPersonagem ficha={edicao.ficha} regras={regrasCriacao} mudar={edicao.mudar} />
         )}
         {revisao && <Revisao edicao={edicao} onAlterar={irPara} />}
         {revisao && extraRevisao}
@@ -174,6 +178,13 @@ function Revisao({ edicao, onAlterar }: { edicao: EdicaoFicha; onAlterar: (etapa
         <Dado rotulo="Humanidade" valor={String(ficha.humanidade)} />
         <Dado rotulo="Ambição" valor={ficha.ambicao} />
         <Dado rotulo="Desejo" valor={ficha.desejo} />
+      </BlocoRevisao>
+
+      <BlocoRevisao titulo="Vantagens e Defeitos" etapa={6} onAlterar={onAlterar}>
+        <div className="mt-2 flex flex-col gap-4">
+          <ListaVantagens titulo="Vantagens" escolhidas={ficha.vantagens} />
+          <ListaVantagens titulo="Defeitos" escolhidas={ficha.defeitos} />
+        </div>
       </BlocoRevisao>
     </div>
   )

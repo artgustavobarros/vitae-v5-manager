@@ -26,6 +26,7 @@ import { sairDaCoterie } from '#/server/coteries'
 import { alternarCompartilharCondicao, marcar } from '#/server/personagens'
 
 import { ListaTracos } from './atributos'
+import { ListaVantagens } from './catalogo'
 import { CabecalhoFicha } from './cabecalho-ficha'
 import { HorizonteHumanidade, TrilhaDano, TrilhaFome } from './estado'
 import { gruposAtributos, gruposHabilidades, ListaDisciplinas, nomeCla, nomeSeita, rotuloGeracao } from './tracos'
@@ -51,7 +52,12 @@ function LinhaDescricao({ ficha }: { ficha: Ficha }) {
         </>
       )}
       <span className="text-muted-foreground">·</span>
-      <span>Potência do Sangue {ficha.potenciaSangue}</span>
+      <span>
+        <TermoRegra tipo="termo" id="potencia-do-sangue" className="text-sm font-medium text-foreground">
+          Potência do Sangue
+        </TermoRegra>{' '}
+        {ficha.potenciaSangue}
+      </span>
     </span>
   )
 }
@@ -161,23 +167,26 @@ export function FichaPersonagem({
         horizonte={
           <HorizonteHumanidade
             trilha={{ humanidade: ficha.humanidade, manchas: marcas.manchas }}
+            consulta
             onChange={aoMarcar((t: { manchas: number }) => ({ ...marcas, manchas: t.manchas }))}
           />
         }
       >
         <TrilhaDano
           rotulo="Vitalidade"
+          termo="vitalidade"
           dano={marcas.danoVitalidade}
           max={vitalidadeMax(fichaAtual)}
           onChange={aoMarcar((dano: Marcas['danoVitalidade']) => ({ ...marcas, danoVitalidade: dano }))}
         />
         <TrilhaDano
           rotulo="Força de Vontade"
+          termo="forca-de-vontade"
           dano={marcas.danoVontade}
           max={vontadeMax(fichaAtual)}
           onChange={aoMarcar((dano: Marcas['danoVontade']) => ({ ...marcas, danoVontade: dano }))}
         />
-        <TrilhaFome fome={marcas.fome} onChange={aoMarcar((fome: number) => ({ ...marcas, fome }))} />
+        <TrilhaFome consulta fome={marcas.fome} onChange={aoMarcar((fome: number) => ({ ...marcas, fome }))} />
       </CabecalhoFicha>
 
       <div className="mx-auto max-w-3xl px-4">
@@ -206,6 +215,12 @@ export function FichaPersonagem({
                 </div>
               ))}
             </dl>
+
+            <section className="mt-8 flex flex-col gap-4 border-t pt-4">
+              <h2 className="font-serif text-2xl">Vantagens e Defeitos</h2>
+              <ListaVantagens titulo="Vantagens" escolhidas={ficha.vantagens} />
+              <ListaVantagens titulo="Defeitos" escolhidas={ficha.defeitos} />
+            </section>
 
             {/* Bloco Coteries na aba Personagem */}
             <section className="mt-8 flex flex-col gap-4 border-t pt-4">

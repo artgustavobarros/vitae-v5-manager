@@ -1,5 +1,6 @@
 import { cn } from 'cn'
 
+import { TermoRegra } from '#/components/consulta-regra'
 import { Button } from '#/components/ui/button'
 import {
   alternarCaixaDano,
@@ -24,11 +25,14 @@ export function TrilhaDano({
   dano,
   max,
   onChange,
+  termo,
 }: {
   rotulo: string
   dano: Dano
   max: number
   onChange?: (dano: Dano) => void
+  /** Id do termo da consulta rápida; com ele, o rótulo abre a consulta. */
+  termo?: string
 }) {
   const caixas = caixasDano(dano, max)
   const restante = caixas.filter((c) => c === 'vazio').length
@@ -37,7 +41,7 @@ export function TrilhaDano({
     // Quebra de linha só quando as caixas não cabem ao lado do rótulo (Vitalidade alta, card estreito).
     <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-2">
       <span className="text-sm text-muted-foreground tabular-nums">
-        {rotulo} {restante}/{max}
+        <Rotulo termo={termo}>{rotulo}</Rotulo> {restante}/{max}
       </span>
       <div role="group" aria-label={rotulo} className="flex flex-wrap">
         {caixas.map((estado, i) => (
@@ -59,10 +63,21 @@ export function TrilhaDano({
   )
 }
 
-export function TrilhaFome({ fome, onChange }: { fome: number; onChange?: (fome: number) => void }) {
+export function TrilhaFome({
+  fome,
+  onChange,
+  consulta = false,
+}: {
+  fome: number
+  onChange?: (fome: number) => void
+  /** O rótulo abre a consulta rápida. */
+  consulta?: boolean
+}) {
   return (
     <div className="flex h-12 items-center justify-between gap-4">
-      <span className="text-sm text-muted-foreground">Fome</span>
+      <span className="text-sm text-muted-foreground">
+        <Rotulo termo={consulta ? 'fome' : undefined}>Fome</Rotulo>
+      </span>
       <div className="flex items-center gap-2">
         <span className="text-2xl font-semibold text-fome tabular-nums" aria-hidden>
           {fome}
@@ -93,9 +108,12 @@ export function TrilhaFome({ fome, onChange }: { fome: number; onChange?: (fome:
 export function HorizonteHumanidade({
   trilha,
   onChange,
+  consulta = false,
 }: {
   trilha: TrilhaHumanidade
   onChange?: (trilha: TrilhaHumanidade) => void
+  /** Humanidade e Manchas abrem a consulta rápida. */
+  consulta?: boolean
 }) {
   const manchas = trilha.manchas === 1 ? '1 Mancha' : `${trilha.manchas} Manchas`
 
@@ -137,9 +155,21 @@ export function HorizonteHumanidade({
         })}
       </div>
       <div className="-mt-2 flex justify-between text-xs text-muted-foreground">
-        <span>Humanidade {trilha.humanidade}</span>
-        <span>{trilha.manchas > 0 ? manchas : 'Sem Manchas'}</span>
+        <span>
+          <Rotulo termo={consulta ? 'humanidade' : undefined} pequeno>Humanidade</Rotulo> {trilha.humanidade}
+        </span>
+        <Rotulo termo={consulta ? 'manchas' : undefined} pequeno>{trilha.manchas > 0 ? manchas : 'Sem Manchas'}</Rotulo>
       </div>
     </div>
+  )
+}
+
+/** Rótulo de trilha que abre a consulta rápida quando há termo; sem termo, só texto. */
+function Rotulo({ termo, pequeno = false, children }: { termo?: string; pequeno?: boolean; children: string }) {
+  if (!termo) return <>{children}</>
+  return (
+    <TermoRegra tipo="termo" id={termo} className={cn('text-muted-foreground', pequeno ? 'text-xs' : 'text-sm')}>
+      {children}
+    </TermoRegra>
   )
 }

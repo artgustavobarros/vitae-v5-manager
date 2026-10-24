@@ -1,6 +1,6 @@
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
-import type { Ficha } from '#/domain/ficha'
+import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
 
 import { user } from './auth-schema.ts'
@@ -50,7 +50,7 @@ export const personagem = pgTable(
 /**
  * Coterie: grupo de Personagens que o Narrador gerencia.
  * A Coterie Padrão nasce com a Crônica e não pode ser apagada.
- * Domínio: Caça, Abrigo e Porte (0 a 5 cada).
+ * Domínio: Caça, Abrigo e Porte (0 a 5 cada). Tipo, Vantagens e Defeitos vêm do Catálogo, por id.
  */
 export const coterie = pgTable('coterie', {
   id: uuid().primaryKey().defaultRandom(),
@@ -59,6 +59,10 @@ export const coterie = pgTable('coterie', {
   caca: integer().notNull().default(0),
   abrigo: integer().notNull().default(0),
   porte: integer().notNull().default(0),
+  /** Tipo de Coterie (id do Catálogo), opcional e só descritivo. */
+  tipo: text(),
+  vantagens: jsonb().$type<EscolhaVantagem[]>().notNull().default([]),
+  defeitos: jsonb().$type<EscolhaVantagem[]>().notNull().default([]),
   ehPadrao: boolean('eh_padrao').notNull().default(false),
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
   atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
@@ -127,4 +131,24 @@ export const notificacao = pgTable(
     index('notificacao_usuario_id_idx').on(t.usuarioId),
     index('notificacao_criado_em_idx').on(t.criadoEm),
   ],
+)
+
+export const statusRevisao = pgEnum('status_revisao', ['aprovado', 'sugerido'])
+
+/**
+ * Revisão de tradução do Catálogo (`/catalogo/revisao`), só do Narrador.
+ * "aprovado" tira o item da fila; "sugerido" guarda a sugestão, que é aplicada no código.
+ */
+export const revisaoTraducao = pgTable(
+  'revisao_traducao',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /** Id do item no Catálogo ou do termo da consulta rápida. */
+    itemId: text('item_id').notNull(),
+    status: statusRevisao().notNull(),
+    sugestaoNome: text('sugestao_nome'),
+    sugestaoDescricao: text('sugestao_descricao'),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('revisao_traducao_item_id_idx').on(t.itemId)],
 )

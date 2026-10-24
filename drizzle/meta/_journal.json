@@ -64,6 +64,13 @@
       "when": 1792809655181,
       "tag": "0008_coterie_paineis_tempo_real",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792857353806,
+      "tag": "0009_catalogo",
+      "breakpoints": true
     }
   ]
 }

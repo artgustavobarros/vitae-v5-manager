@@ -16,7 +16,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '#/components/ui/sheet'
-import { buscarConsultaRegra } from '#/domain/regras-consulta'
+import { buscarConsultaRegra, type TipoConsulta } from '#/domain/catalogo/regras-consulta'
 import { useMediaQuery } from '#/lib/use-media-query'
 
 export function TermoRegra({
@@ -26,7 +26,8 @@ export function TermoRegra({
   className,
   icone = false,
 }: {
-  tipo: 'atributo' | 'habilidade' | 'cla' | 'disciplina' | 'dominio'
+  /** 'catalogo' abre o cartão de um item do Catálogo (poder, Ritual, Vantagem...) pelo id. */
+  tipo: TipoConsulta | 'catalogo'
   id: string
   children: ReactNode
   className?: string
@@ -44,6 +45,44 @@ export function TermoRegra({
   const conteudo = (
     <div className="flex flex-col gap-4 text-sm">
       <p className="text-muted-foreground leading-relaxed">{item.descricao}</p>
+
+      {item.campos && item.campos.length > 0 && (
+        <dl className="flex flex-col divide-y border-y">
+          {item.campos.map((c) => (
+            <div key={c.rotulo} className="flex justify-between gap-4 py-2">
+              <dt className="text-muted-foreground">{c.rotulo}</dt>
+              <dd className="text-right text-foreground">{c.valor}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {item.tabela && (
+        <div className="overflow-x-auto border-t pt-3">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                {item.tabela.colunas.map((c) => (
+                  <th key={c} className="px-1 pb-2 font-medium">
+                    {c}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {item.tabela.linhas.map((linha, i) => (
+                <tr key={i} className="border-t">
+                  {linha.map((celula, j) => (
+                    <td key={j} className="px-1 py-2 tabular-nums">
+                      {celula}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {item.exemplosEspecializacoes && item.exemplosEspecializacoes.length > 0 && (
         <div className="flex flex-col gap-1 border-t pt-3">
@@ -98,6 +137,8 @@ export function TermoRegra({
           </div>
         </div>
       )}
+
+      <CreditoWiki />
     </div>
   )
 
@@ -149,5 +190,32 @@ export function TermoRegra({
         </Sheet>
       )}
     </>
+  )
+}
+
+/** Rodapé de crédito da consulta rápida e da página de revisão. */
+export function CreditoWiki() {
+  return (
+    <p className="border-t pt-3 text-xs text-muted-foreground">
+      Dados de referência:{' '}
+      <a
+        href="https://vtm.paradoxwikis.com/VTM_Wiki"
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-4 hover:text-vinho"
+      >
+        VTM Wiki
+      </a>{' '}
+      (
+      <a
+        href="https://creativecommons.org/licenses/by-sa/3.0/"
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-4 hover:text-vinho"
+      >
+        CC BY-SA 3.0
+      </a>
+      )
+    </p>
   )
 }

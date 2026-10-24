@@ -1,3 +1,5 @@
+import { cn } from 'cn'
+
 import { TermoRegra } from '#/components/consulta-regra'
 import {
   ATRIBUTOS,
@@ -12,6 +14,7 @@ import {
 } from '#/domain/ficha'
 
 import type { GrupoTracos } from './atributos'
+import { ListaPoderes, ListaSoltos } from './catalogo'
 import { Pontos } from './marcadores'
 
 // Rótulos e agrupamentos que a Ficha, o wizard e o formulário mostram do mesmo jeito.
@@ -57,24 +60,30 @@ export function gruposHabilidades(ficha: Ficha, { soComPontos = false } = {}): G
   })).filter((g) => g.tracos.length > 0)
 }
 
-/** Disciplinas só para leitura: nome e pontos, sem poderes (fatia 2). */
+/** Disciplinas só para leitura: nome, pontos e, embaixo, os poderes e Rituais. */
 export function ListaDisciplinas({ ficha, className }: { ficha: Ficha; className?: string }) {
-  if (ficha.disciplinas.length === 0) {
+  if (ficha.disciplinas.length === 0 && ficha.poderes.length === 0) {
     return <p className="text-sm text-muted-foreground">Nenhuma Disciplina.</p>
   }
   return (
-    <ul className={className}>
-      {ficha.disciplinas.map((d) => {
-        const nome = nomeDisciplina(d.disciplina)
-        return (
-          <li key={d.disciplina} className="flex h-11 items-center justify-between border-b text-base">
-            <TermoRegra tipo="disciplina" id={d.disciplina}>
-              {nome}
-            </TermoRegra>
-            <Pontos valor={d.nivel} rotulo={nome} />
-          </li>
-        )
-      })}
-    </ul>
+    <div className={cn('flex flex-col gap-4', className)}>
+      <ul>
+        {ficha.disciplinas.map((d) => {
+          const nome = nomeDisciplina(d.disciplina)
+          return (
+            <li key={d.disciplina} className="border-b">
+              <div className="flex h-11 items-center justify-between text-base">
+                <TermoRegra tipo="disciplina" id={d.disciplina}>
+                  {nome}
+                </TermoRegra>
+                <Pontos valor={d.nivel} rotulo={nome} />
+              </div>
+              <ListaPoderes ficha={ficha} disciplina={d.disciplina} />
+            </li>
+          )
+        })}
+      </ul>
+      <ListaSoltos ficha={ficha} />
+    </div>
   )
 }

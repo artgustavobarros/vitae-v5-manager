@@ -7,6 +7,7 @@ import { db } from '#/db'
 import { coterie, membroCoterie, personagem, user } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
 import { podeAlternarCompartilharCondicao } from '#/domain/condicao'
+import { escolhasInvalidas } from '#/domain/catalogo/escolhas'
 import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasDe, marcasSchema, normalizarFicha } from '#/domain/ficha'
 import { detectarMudancasCondicao, notificacoesEventos } from '#/domain/notificacoes'
 import {
@@ -161,6 +162,9 @@ export const salvarFicha = createServerFn({ method: 'POST' })
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
       if (exigeRegrasCriacao(context.usuario, p) && !claGeracaoCombinam(data.ficha)) {
         throw new Error('Sangue-Ralo é da 14ª à 16ª Geração; os demais clãs, até a 13ª.')
+      }
+      if (exigeRegrasCriacao(context.usuario, p) && escolhasInvalidas(p.ficha, data.ficha).length > 0) {
+        throw new Error('Há escolhas do Catálogo fora das regras do V5.')
       }
       await tx
         .update(personagem)

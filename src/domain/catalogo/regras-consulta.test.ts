@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { ATRIBUTOS, CLAS, DISCIPLINAS, HABILIDADES } from './ficha'
+import { ATRIBUTOS, CLAS, DISCIPLINAS, HABILIDADES } from '../ficha'
 import {
   buscarConsultaRegra,
+  consultaDoCatalogo,
   CONSULTA_ATRIBUTOS,
   CONSULTA_CLAS,
   CONSULTA_DISCIPLINAS,
@@ -46,5 +47,37 @@ describe('regras-consulta', () => {
     expect(buscarConsultaRegra('dominio', 'caca')).toBeDefined()
     expect(buscarConsultaRegra('dominio', 'abrigo')).toBeDefined()
     expect(buscarConsultaRegra('dominio', 'porte')).toBeDefined()
+  })
+})
+
+describe('consultaDoCatalogo', () => {
+  it('monta o cartão do poder com custo, parada, amálgama e fonte', () => {
+    const cartao = consultaDoCatalogo({
+      id: 'dominacao-1-compelir',
+      tipo: 'poder',
+      disciplina: 'dominacao',
+      nivel: 1,
+      nome: 'Compelir',
+      nomeOriginal: 'Compel',
+      descricao: 'd',
+      custo: 'Grátis',
+      parada: 'Carisma + Dominação',
+      amalgama: { disciplina: 'auspicios', nivel: 2 },
+      fonte: { livro: 'Corebook', pagina: 256 },
+      errata: true,
+      confianca: 'certo',
+    })
+    expect(cartao.titulo).toBe('Compelir (Compel)')
+    expect(cartao.subtitulo).toBe('Dominação · Nível 1')
+    expect(cartao.campos).toEqual([
+      { rotulo: 'Custo', valor: 'Grátis' },
+      { rotulo: 'Parada', valor: 'Carisma + Dominação' },
+      { rotulo: 'Amálgama', valor: 'Auspícios 2' },
+      { rotulo: 'Fonte', valor: 'Corebook, p. 256 (com errata)' },
+    ])
+  })
+
+  it('id fora do Catálogo não abre consulta', () => {
+    expect(buscarConsultaRegra('catalogo', 'dominacao-9-sumiu')).toBeNull()
   })
 })

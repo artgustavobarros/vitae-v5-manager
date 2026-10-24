@@ -12,6 +12,7 @@ import {
 } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
 import {
+  catalogoCoterieSchema,
   coterieSchema,
   podeAdicionarPdn,
   podeApagarCoterie,
@@ -247,6 +248,18 @@ export const editarCoterie = createServerFn({ method: 'POST' })
     barramento.emitir({ tipo: 'mudanca', escopo: 'coterie', id: data.id })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })
     return atualizada
+  })
+
+/** Tipo, Vantagens e Defeitos da Coterie. Não gera notificação. */
+export const salvarCatalogoCoterie = createServerFn({ method: 'POST' })
+  .middleware([exigirNarrador])
+  .validator(z.object({ id: z.string().uuid(), catalogo: catalogoCoterieSchema }))
+  .handler(async ({ data, context }) => {
+    if (!podeEditarCoterie(context.usuario)) throw new Error('Acesso negado')
+
+    await db.update(coterie).set(data.catalogo).where(eq(coterie.id, data.id))
+
+    barramento.emitir({ tipo: 'mudanca', escopo: 'coterie', id: data.id })
   })
 
 export const apagarCoterie = createServerFn({ method: 'POST' })

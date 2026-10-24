@@ -1,7 +1,8 @@
 /**
- * Ficha básica do Personagem (fatia 2): identidade, Atributos, Habilidades,
- * Disciplinas sem poderes, Potência do Sangue, Humanidade e as trilhas do dia a dia.
- * O nome fica numa coluna própria da tabela `personagem`, fora da Ficha.
+ * Ficha do Personagem: identidade, Atributos, Habilidades, Disciplinas com poderes,
+ * Rituais, Cerimônias e Fórmulas, Vantagens e Defeitos, Potência do Sangue, Humanidade
+ * e as trilhas do dia a dia. O nome fica numa coluna própria da tabela `personagem`.
+ * Itens do Catálogo ficam por id (`src/domain/catalogo/`); um id que saiu do Catálogo não é apagado.
  */
 
 import { z } from 'zod'
@@ -9,28 +10,28 @@ import { z } from 'zod'
 import { MAX_FOME, TOTAL_HUMANIDADE, type Dano } from './trilhas'
 
 export const CLAS = [
-  { id: 'banu-haqim', nome: 'Banu Haqim' },
-  { id: 'brujah', nome: 'Brujah' },
-  { id: 'gangrel', nome: 'Gangrel' },
-  { id: 'hecata', nome: 'Hecata' },
-  { id: 'lasombra', nome: 'Lasombra' },
-  { id: 'malkaviano', nome: 'Malkaviano' },
-  { id: 'ministerio', nome: 'Ministério' },
-  { id: 'nosferatu', nome: 'Nosferatu' },
-  { id: 'ravnos', nome: 'Ravnos' },
-  { id: 'salubri', nome: 'Salubri' },
-  { id: 'toreador', nome: 'Toreador' },
-  { id: 'tremere', nome: 'Tremere' },
-  { id: 'tzimisce', nome: 'Tzimisce' },
-  { id: 'ventrue', nome: 'Ventrue' },
-  { id: 'caitiff', nome: 'Caitiff' },
-  { id: 'sangue-ralo', nome: 'Sangue-Ralo' },
+  { id: 'banu-haqim', nome: 'Banu Haqim', nomeOriginal: 'Banu Haqim' },
+  { id: 'brujah', nome: 'Brujah', nomeOriginal: 'Brujah' },
+  { id: 'gangrel', nome: 'Gangrel', nomeOriginal: 'Gangrel' },
+  { id: 'hecata', nome: 'Hecata', nomeOriginal: 'Hecata' },
+  { id: 'lasombra', nome: 'Lasombra', nomeOriginal: 'Lasombra' },
+  { id: 'malkaviano', nome: 'Malkaviano', nomeOriginal: 'Malkavian' },
+  { id: 'ministerio', nome: 'Ministério', nomeOriginal: 'The Ministry' },
+  { id: 'nosferatu', nome: 'Nosferatu', nomeOriginal: 'Nosferatu' },
+  { id: 'ravnos', nome: 'Ravnos', nomeOriginal: 'Ravnos' },
+  { id: 'salubri', nome: 'Salubri', nomeOriginal: 'Salubri' },
+  { id: 'toreador', nome: 'Toreador', nomeOriginal: 'Toreador' },
+  { id: 'tremere', nome: 'Tremere', nomeOriginal: 'Tremere' },
+  { id: 'tzimisce', nome: 'Tzimisce', nomeOriginal: 'Tzimisce' },
+  { id: 'ventrue', nome: 'Ventrue', nomeOriginal: 'Ventrue' },
+  { id: 'caitiff', nome: 'Caitiff', nomeOriginal: 'Caitiff' },
+  { id: 'sangue-ralo', nome: 'Sangue-Ralo', nomeOriginal: 'Thin-blood' },
 ] as const
 
 export const SEITAS = [
-  { id: 'camarilla', nome: 'Camarilla' },
-  { id: 'saba', nome: 'Sabá' },
-  { id: 'anarquistas', nome: 'Anarquistas' },
+  { id: 'camarilla', nome: 'Camarilla', nomeOriginal: 'Camarilla' },
+  { id: 'saba', nome: 'Sabá', nomeOriginal: 'Sabbat' },
+  { id: 'anarquistas', nome: 'Anarquistas', nomeOriginal: 'Anarch' },
 ] as const
 
 export type Grupo = 'fisico' | 'social' | 'mental'
@@ -85,18 +86,18 @@ export const HABILIDADES = [
 ] as const satisfies readonly { id: string; nome: string; grupo: Grupo }[]
 
 export const DISCIPLINAS = [
-  { id: 'alquimia-de-sangue-ralo', nome: 'Alquimia de Sangue-Ralo' },
-  { id: 'animalismo', nome: 'Animalismo' },
-  { id: 'auspicios', nome: 'Auspícios' },
-  { id: 'celeridade', nome: 'Celeridade' },
-  { id: 'dominacao', nome: 'Dominação' },
-  { id: 'feiticaria-de-sangue', nome: 'Feitiçaria de Sangue' },
-  { id: 'fortitude', nome: 'Fortitude' },
-  { id: 'oblivio', nome: 'Oblívio' },
-  { id: 'ofuscacao', nome: 'Ofuscação' },
-  { id: 'potencia', nome: 'Potência' },
-  { id: 'presenca', nome: 'Presença' },
-  { id: 'proteanismo', nome: 'Proteanismo' },
+  { id: 'alquimia-de-sangue-ralo', nome: 'Alquimia de Sangue-Ralo', nomeOriginal: 'Thin-blood Alchemy' },
+  { id: 'animalismo', nome: 'Animalismo', nomeOriginal: 'Animalism' },
+  { id: 'auspicios', nome: 'Auspícios', nomeOriginal: 'Auspex' },
+  { id: 'celeridade', nome: 'Celeridade', nomeOriginal: 'Celerity' },
+  { id: 'dominacao', nome: 'Dominação', nomeOriginal: 'Dominate' },
+  { id: 'feiticaria-de-sangue', nome: 'Feitiçaria de Sangue', nomeOriginal: 'Blood Sorcery' },
+  { id: 'fortitude', nome: 'Fortitude', nomeOriginal: 'Fortitude' },
+  { id: 'oblivio', nome: 'Oblívio', nomeOriginal: 'Oblivion' },
+  { id: 'ofuscacao', nome: 'Ofuscação', nomeOriginal: 'Obfuscate' },
+  { id: 'potencia', nome: 'Potência', nomeOriginal: 'Potence' },
+  { id: 'presenca', nome: 'Presença', nomeOriginal: 'Presence' },
+  { id: 'proteanismo', nome: 'Proteanismo', nomeOriginal: 'Protean' },
 ] as const
 
 export type Cla = (typeof CLAS)[number]['id']
@@ -125,6 +126,20 @@ function faixa({ min, max }: { min: number; max: number }) {
 
 const danoSchema = z.object({ superficial: z.int().min(0), agravado: z.int().min(0) })
 
+/** Vantagem ou Defeito escolhido do Catálogo, com o nível e uma nota livre (ex.: quem é o Contato). */
+export const escolhaVantagemSchema = z.object({
+  id: z.string().min(1),
+  nivel: z.int().min(1).max(5),
+  nota: z.string().max(200).optional(),
+})
+
+export type EscolhaVantagem = z.infer<typeof escolhaVantagemSchema>
+
+const idsCatalogo = z
+  .array(z.string().min(1))
+  .refine((ids) => new Set(ids).size === ids.length, { message: 'Item repetido' })
+  .default([])
+
 export const fichaSchema = z.object({
   cla: z.enum(ids(CLAS)).nullable(),
   geracao: faixa(FAIXAS.geracao).nullable(),
@@ -142,6 +157,16 @@ export const fichaSchema = z.object({
     .refine((lista) => new Set(lista.map((d) => d.disciplina)).size === lista.length, {
       message: 'Disciplina repetida',
     }),
+  /** Poderes de Disciplina, por id do Catálogo. */
+  poderes: idsCatalogo,
+  /** Rituais de Feitiçaria de Sangue. */
+  rituais: idsCatalogo,
+  /** Cerimônias de Oblívio. */
+  cerimonias: idsCatalogo,
+  /** Fórmulas de Alquimia de Sangue-Ralo. */
+  formulas: idsCatalogo,
+  vantagens: z.array(escolhaVantagemSchema).default([]),
+  defeitos: z.array(escolhaVantagemSchema).default([]),
   potenciaSangue: faixa(FAIXAS.potenciaSangue),
   humanidade: faixa(FAIXAS.humanidade),
   manchas: z.int().min(0).max(TOTAL_HUMANIDADE),
@@ -217,6 +242,12 @@ export function fichaNeofito(): Ficha {
       HABILIDADES.map((h) => [h.id, { valor: 0, especializacoes: [] as string[] }]),
     ) as Ficha['habilidades'],
     disciplinas: [],
+    poderes: [],
+    rituais: [],
+    cerimonias: [],
+    formulas: [],
+    vantagens: [],
+    defeitos: [],
     potenciaSangue: 1,
     humanidade: 7,
     manchas: 0,
