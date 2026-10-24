@@ -227,7 +227,7 @@ export function WizardCriacao({
         {revisao && extraRevisao}
       </Secao>
 
-      <div className="sticky bottom-0 -mx-4 flex flex-col gap-4 border-t bg-background px-4 py-4">
+      <div className="sticky bottom-0 -mx-4 flex flex-col gap-4 border-t bg-background px-4 py-4 min-[1472px]:mx-0 min-[1472px]:px-0">
         {revisao && (
           <p className="text-sm text-muted-foreground">
             Ao concluir, o Personagem fica Ativo e a Ficha é bloqueada: você passa a marcar só dano, Fome e

@@ -59,7 +59,7 @@ function TelaFicha() {
         <div className="flex flex-col">
           <BarraApp acoes={acoes} />
           {ehPdnAtivo && (
-            <div className="flex justify-end px-4 pt-1">
+            <div className="flex justify-end pt-1">
               <Button
                 variant={personagem.fixado ? 'secondary' : 'outline'}
                 size="sm"

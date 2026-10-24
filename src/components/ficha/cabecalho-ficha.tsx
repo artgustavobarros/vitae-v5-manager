@@ -28,9 +28,9 @@ export function CabecalhoFicha({
   return (
     <>
       <section className="topo-fome" style={nivel}>
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-[1440px] px-4 min-[1472px]:px-0">
           {barra}
-          <div className="px-4 pt-2 pb-4">
+          <div className="pt-2 pb-4">
             <h1 className="font-serif text-display text-balance">{nome}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{descricao}</p>
             {selo && <div className="mt-2">{selo}</div>}
@@ -38,7 +38,7 @@ export function CabecalhoFicha({
         </div>
       </section>
       <section aria-label="Estado do Personagem" className="faixa-fome sticky top-0 z-10 border-b" style={nivel}>
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-[1440px] px-4 min-[1472px]:px-0">
           {horizonte}
           <div className="mt-2 divide-y border-t border-t-vinho/25">{children}</div>
         </div>

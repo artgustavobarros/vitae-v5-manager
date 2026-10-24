@@ -70,10 +70,10 @@ function ConfiguracaoCronica() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-3xl flex-col">
+    <div className="mx-auto flex min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0 flex-col">
       <BarraApp />
 
-      <main className="flex flex-1 flex-col gap-6 px-4 py-6">
+      <main className="flex flex-1 flex-col gap-6 py-6">
         <div>
           <h1 className="font-serif text-2xl font-semibold">Configuração da Crônica</h1>
           <p className="text-sm text-muted-foreground">

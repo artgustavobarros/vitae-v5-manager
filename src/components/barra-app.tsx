@@ -13,7 +13,7 @@ export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
   const { usuario } = useRouteContext({ from: '__root__' })
 
   return (
-    <header className="flex h-14 items-center justify-between gap-2 px-4">
+    <header className="flex h-14 items-center justify-between gap-2">
       <div className="flex items-center gap-4">
         <Link to="/" className="rounded-sm font-serif text-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
           Umbra

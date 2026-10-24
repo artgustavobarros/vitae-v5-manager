@@ -62,9 +62,9 @@ function CoteriesNarrador() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl">
+    <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
       <BarraApp />
-      <div className="flex flex-col gap-6 px-4 pt-2 pb-12">
+      <div className="flex flex-col gap-6 pt-2 pb-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-display text-balance">Coteries</h1>

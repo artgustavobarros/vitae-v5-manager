@@ -38,7 +38,7 @@ export const Route = createRootRoute({
 // Endereço que não existe (inclusive /favicon.ico e o .well-known do Chrome DevTools) cai aqui.
 function NaoEncontrada() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-start justify-center gap-4 px-4">
+    <main className="mx-auto flex min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0 flex-col items-start justify-center gap-4">
       <h1 className="font-serif text-display text-balance">Página não encontrada</h1>
       <p className="text-sm text-muted-foreground">Esse endereço não existe no Umbra.</p>
       <Button asChild variant="secondary" size="lg">

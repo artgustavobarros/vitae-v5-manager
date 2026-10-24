@@ -63,9 +63,9 @@ function Jogadores() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl">
+    <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
       <BarraApp />
-      <div className="flex flex-col gap-4 px-4 pt-2 pb-12">
+      <div className="flex flex-col gap-4 pt-2 pb-12">
         <h1 className="font-serif text-display text-balance">Jogadores</h1>
 
         <h2 className="mt-4 font-serif text-2xl">Convite para a Crônica</h2>

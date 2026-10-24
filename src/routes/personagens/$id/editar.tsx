@@ -73,11 +73,11 @@ function EditarFicha() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl">
+    <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
       <BarraApp
         acoes={rascunho ? [] : [{ rotulo: 'Voltar para a Ficha', link: { to: '/personagens/$id', params: { id } } }]}
       />
-      <div className="px-4 pt-2">
+      <div className="pt-2">
         <h1 className="font-serif text-display text-balance">{personagem.nome || 'Novo Personagem'}</h1>
         <p className="mt-1 mb-8 text-sm text-muted-foreground">
           {rascunho ? 'Criação guiada de Personagem (V5)' : 'Editando a Ficha'}

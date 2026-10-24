@@ -189,7 +189,7 @@ export function FichaPersonagem({
         <TrilhaFome consulta fome={marcas.fome} onChange={aoMarcar((fome: number) => ({ ...marcas, fome }))} />
       </CabecalhoFicha>
 
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-[1440px] px-4 min-[1472px]:px-0">
         <Tabs defaultValue="atributos" className="mt-4">
           <TabsList variant="line" className="w-full justify-between gap-2 sm:justify-start sm:gap-6 rounded-none border-b p-0">
             <TabsTrigger value="atributos" className="flex-none px-0 after:bg-vinho">Atributos</TabsTrigger>
