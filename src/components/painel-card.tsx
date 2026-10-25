@@ -4,7 +4,9 @@ import { toast } from 'sonner'
 
 import { TrilhaDano, TrilhaFome } from '#/components/ficha/estado'
 import { Bolinha, GlifoDano } from '#/components/ficha/marcadores'
+import { Badge } from '#/components/ui/badge'
 import { Card } from '#/components/ui/card'
+import type { CompulsaoAtivaPersonagem, RessonanciaAtualPersonagem } from '#/db/schema'
 import type { Condicao } from '#/domain/condicao'
 import type { Marcas } from '#/domain/ficha'
 import { caixasDano, MAX_FOME, type Dano } from '#/domain/trilhas'
@@ -20,6 +22,8 @@ export type DadosCardPainel = {
   manchas?: number
   ehMeu?: boolean
   compartilhaCondicao?: boolean
+  ressonanciaAtual?: RessonanciaAtualPersonagem | null
+  compulsaoAtiva?: CompulsaoAtivaPersonagem | null
 }
 
 type MarcasCondicao = Pick<Marcas, 'danoVitalidade' | 'danoVontade' | 'fome'>
@@ -47,6 +51,21 @@ export function PainelCard({ item, editavel = false }: { item: DadosCardPainel; 
           </h2>
           {item.coteries.length > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">{item.coteries.join(' · ')}</p>
+          )}
+          {(item.ressonanciaAtual || item.compulsaoAtiva) && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {item.ressonanciaAtual && (
+                <Badge variant="outline" className="text-xs border-vinho/40 text-vinho">
+                  Ressonância: {item.ressonanciaAtual.tipo} ({item.ressonanciaAtual.intensidade})
+                  {item.ressonanciaAtual.manifestacaoSangueFraco && ` · SF: ${item.ressonanciaAtual.manifestacaoSangueFraco.disciplinaNome} Nv${item.ressonanciaAtual.manifestacaoSangueFraco.nivel}`}
+                </Badge>
+              )}
+              {item.compulsaoAtiva && (
+                <Badge variant="outline" className="text-xs border-destructive/40 text-destructive">
+                  Compulsão: {item.compulsaoAtiva.nome}
+                </Badge>
+              )}
+            </div>
           )}
         </div>
         {item.jogador && <span className="shrink-0 text-xs font-medium text-muted-foreground">{item.jogador}</span>}

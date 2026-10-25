@@ -1,0 +1,1 @@
+ALTER TABLE "modelo_antagonista" ADD COLUMN "categoria" text DEFAULT 'Geral' NOT NULL;

@@ -84,6 +84,29 @@ export const notificacoesEventos = {
     destino: { to: '/personagens/$id', params: { id: personagemId } },
   }),
 
+  combateIniciado: (nomePersonagem: string): { texto: string; destino: DestinoNotificacao } => ({
+    texto: `Combate iniciado com ${nomePersonagem}`,
+    destino: { to: '/combate' },
+  }),
+
+  ressonanciaAplicada: (
+    nomePersonagem: string,
+    ressonancia: string,
+    personagemId: string,
+  ): { texto: string; destino: DestinoNotificacao } => ({
+    texto: `Ressonância Atual aplicada a ${nomePersonagem}: ${ressonancia}`,
+    destino: { to: '/personagens/$id', params: { id: personagemId } },
+  }),
+
+  compulsaoAplicada: (
+    nomePersonagem: string,
+    compulsao: string,
+    personagemId: string,
+  ): { texto: string; destino: DestinoNotificacao } => ({
+    texto: `Compulsão Ativa aplicada a ${nomePersonagem}: ${compulsao}`,
+    destino: { to: '/personagens/$id', params: { id: personagemId } },
+  }),
+
   // Para o Narrador
   novoJogador: (nomeJogador: string): { texto: string; destino: DestinoNotificacao } => ({
     texto: `${nomeJogador} entrou na Crônica`,

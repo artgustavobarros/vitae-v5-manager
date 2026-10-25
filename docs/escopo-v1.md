@@ -115,7 +115,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 ## Combate
 
-- O Bestiário é privado do Narrador e guarda Modelos com a ficha simplificada de antagonista do V5: paradas Físico, Social e Mental, paradas especiais, Vitalidade, Força de Vontade, Disciplinas e notas.
+- O Bestiário é privado do Narrador e guarda Modelos com a ficha simplificada de antagonista do V5: paradas Físico, Social e Mental, paradas excepcionais, Vitalidade, Força de Vontade, Especiais e notas.
 - No Combate entram:
   - Personagens;
   - PdNs;

@@ -85,6 +85,20 @@
       "when": 1792869358526,
       "tag": "0011_opcoes_cronica",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792878939689,
+      "tag": "0012_fatia-6-combate-sorteios",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792902051065,
+      "tag": "0013_categoria_modelo_antagonista",
+      "breakpoints": true
     }
   ]
 }

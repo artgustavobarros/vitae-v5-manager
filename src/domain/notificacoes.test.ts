@@ -61,6 +61,16 @@ describe('notificacoesEventos', () => {
     expect(notificacoesEventos.narradorEditouFicha('Helena', 'id-1').texto).toBe(
       'O Narrador editou a Ficha de Helena',
     )
+    expect(notificacoesEventos.combateIniciado('Helena').texto).toBe(
+      'Combate iniciado com Helena',
+    )
+    expect(notificacoesEventos.combateIniciado('Helena').destino).toEqual({ to: '/combate' })
+    expect(notificacoesEventos.ressonanciaAplicada('Helena', 'Colérico (Fugaz)', 'id-1').texto).toBe(
+      'Ressonância Atual aplicada a Helena: Colérico (Fugaz)',
+    )
+    expect(notificacoesEventos.compulsaoAplicada('Helena', 'Comando Régio', 'id-1').texto).toBe(
+      'Compulsão Ativa aplicada a Helena: Comando Régio',
+    )
   })
 
   it('formata notificações do Narrador conforme acordado', () => {

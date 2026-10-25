@@ -20,11 +20,16 @@ import { Button } from '#/components/ui/button'
 import { Label } from '#/components/ui/label'
 import { Switch } from '#/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import type { CompulsaoAtivaPersonagem, RessonanciaAtualPersonagem } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
 import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/domain/ficha'
 import type { AcessoFicha, StatusPersonagem } from '#/domain/permissoes-ficha'
 import { sairDaCoterie } from '#/server/coteries'
 import { alternarCompartilharCondicao, marcar } from '#/server/personagens'
+import {
+  encerrarCompulsaoPersonagemServer,
+  encerrarRessonanciaPersonagemServer,
+} from '#/server/sorteios'
 
 import { ListaTracos } from './atributos'
 import { ListaVantagens } from './catalogo'
@@ -76,6 +81,8 @@ export function FichaPersonagem({
   compartilhaCondicao = false,
   coteries = [],
   podeCompartilharCondicao = false,
+  ressonanciaAtual,
+  compulsaoAtiva,
   papelUsuario,
   barra,
 }: {
@@ -88,6 +95,8 @@ export function FichaPersonagem({
   coteries?: { id: string; nome: string }[]
   /** Regra de `podeAlternarCompartilharCondicao`, calculada no servidor. */
   podeCompartilharCondicao?: boolean
+  ressonanciaAtual?: RessonanciaAtualPersonagem | null
+  compulsaoAtiva?: CompulsaoAtivaPersonagem | null
   papelUsuario?: Papel
   barra: ReactNode
 }) {
@@ -161,9 +170,59 @@ export function FichaPersonagem({
         descricao={<LinhaDescricao ficha={ficha} />}
         fome={marcas.fome}
         selo={
-          status === 'rascunho' && (
-            <Badge variant="outline">{acesso === 'ler' ? 'Rascunho · só leitura' : 'Rascunho'}</Badge>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            {status === 'rascunho' && (
+              <Badge variant="outline">{acesso === 'ler' ? 'Rascunho · só leitura' : 'Rascunho'}</Badge>
+            )}
+            {ressonanciaAtual && (
+              <div className="flex flex-wrap items-center gap-1.5 rounded-full border border-vinho/40 bg-vinho/10 px-2.5 py-0.5 text-xs text-foreground">
+                <span className="font-semibold text-vinho">Ressonância Atual:</span>
+                <span>
+                  {ressonanciaAtual.tipo} ({ressonanciaAtual.intensidade})
+                </span>
+                {ressonanciaAtual.discrasia && <span>&bull; {ressonanciaAtual.discrasia.nome}</span>}
+                {ressonanciaAtual.manifestacaoSangueFraco && (
+                  <span title={ressonanciaAtual.manifestacaoSangueFraco.poderes.map((p) => `${p.nome} (Nv ${p.nivel}): ${p.descricao}`).join(' | ')}>
+                    &bull; Sangue-Fraco: <strong className="text-primary">{ressonanciaAtual.manifestacaoSangueFraco.disciplinaNome} (Nv {ressonanciaAtual.manifestacaoSangueFraco.nivel})</strong> [{ressonanciaAtual.manifestacaoSangueFraco.poderes.map((p) => p.nome).join(', ')}]
+                  </span>
+                )}
+                {papelUsuario === 'narrador' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await encerrarRessonanciaPersonagemServer({ data: { personagemId: id } })
+                      toast.success('Ressonância encerrada.')
+                      router.invalidate()
+                    }}
+                    className="ml-1 text-muted-foreground hover:text-foreground font-bold"
+                    title="Encerrar Ressonância"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            )}
+            {compulsaoAtiva && (
+              <div className="flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-2.5 py-0.5 text-xs text-foreground">
+                <span className="font-semibold text-destructive">Compulsão Ativa:</span>
+                <span>{compulsaoAtiva.nome}</span>
+                {papelUsuario === 'narrador' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await encerrarCompulsaoPersonagemServer({ data: { personagemId: id } })
+                      toast.success('Compulsão encerrada.')
+                      router.invalidate()
+                    }}
+                    className="ml-1 text-muted-foreground hover:text-foreground font-bold"
+                    title="Encerrar Compulsão"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         }
         horizonte={
           <HorizonteHumanidade

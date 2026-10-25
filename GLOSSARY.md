@@ -80,6 +80,14 @@ _Avoid_: Encontro, luta, batalha
 Entrada do Bestiário que descreve um tipo de inimigo com a ficha simplificada de antagonista.
 _Avoid_: Template, monstro, ficha de inimigo
 
+**Paradas Excepcionais**:
+Paradas de dados específicas de um Modelo de antagonista fora das paradas gerais Físico, Social e Mental (ex.: Armas de Fogo, Furtividade).
+_Avoid_: Paradas especiais, perícias de antagonista, perícias de NPC, atributos específicos
+
+**Especial**:
+Regra, poder ou característica tática própria de um Modelo de antagonista (ex.: Mordida Feroz, Armadura Tática). Na tela aparece como badge clicável que revela seus detalhes.
+_Avoid_: Disciplina de antagonista, poder de NPC, trait, habilidade especial
+
 **Inimigo**:
 Participante de um Combate criado a partir de um Modelo, com Vitalidade e Força de Vontade próprias.
 _Avoid_: Mob, capanga, NPC
@@ -98,12 +106,12 @@ _Avoid_: Compêndio, base de dados, conteúdo
 Característica calculada a partir de outras (ex.: Vitalidade = Vigor + 3); o Jogador nunca a edita, só o Narrador a sobrescreve.
 _Avoid_: Valor calculado, stat derivado
 
-**Sorteio**:
-Resultado aleatório de uma tabela do V5 (Ressonância, Discrasia, Compulsão) gerado na hora pelo Narrador, sem rolagem de dados visível.
-_Avoid_: Rolagem, rolar, teste
+**Rolagem**:
+Resultado aleatório de uma tabela do V5 (Ressonância, Discrasia, Compulsão) gerado pelo Narrador, com regras de intensidades e manifestações de Sangue-Fraco.
+_Avoid_: Sorteio, teste
 
 **Ressonância Atual**:
-A Ressonância que o Narrador aplicou a um Personagem a partir de um Sorteio.
+A Ressonância que o Narrador aplicou a um Personagem a partir de uma Rolagem.
 _Avoid_: Ressonância ativa, sangue atual
 
 **Compulsão Ativa**:

@@ -43,6 +43,8 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
         nomeDono: user.name,
         papelDono: user.papel,
         ficha: personagem.ficha,
+        ressonanciaAtual: personagem.ressonanciaAtual,
+        compulsaoAtiva: personagem.compulsaoAtiva,
       })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
@@ -59,6 +61,8 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
         nomeDono: user.name,
         papelDono: user.papel,
         ficha: personagem.ficha,
+        ressonanciaAtual: personagem.ressonanciaAtual,
+        compulsaoAtiva: personagem.compulsaoAtiva,
       })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
@@ -76,6 +80,8 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
         condicao: condicaoDe(p.ficha),
         humanidade: p.ficha.humanidade,
         manchas: p.ficha.manchas,
+        ressonanciaAtual: p.ressonanciaAtual,
+        compulsaoAtiva: p.compulsaoAtiva,
       }
     }
 

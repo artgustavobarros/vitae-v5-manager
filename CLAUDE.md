@@ -9,7 +9,10 @@ Gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Leia antes de mudar c
 ## Convenções
 
 - UI é shadcn first: todo componente de interface começa de um componente shadcn (`pnpm dlx shadcn@latest add <nome>`). Não escreva `<button>`, `<input>`, `<select>` ou cartões em Tailwind cru quando existir equivalente shadcn. Use os tokens do tema (`bg-background`, `text-muted-foreground`), não cores fixas do Tailwind.
-- Todo select é combobox (shadcn Popover + Command) com busca ao digitar, que ignora acento e caixa e casa também o nome original em inglês.
+- Regra Estrita de Selects/Combobox (PROIBIDO `<select>` nativo):
+  - Todo seletor simples DEVE usar `Combobox` (`src/components/combobox.tsx`) no formato novo: input direto para digitação rápida com PopoverAnchor + Command + ChevronsUpDown.
+  - Todo seletor múltiplo DEVE usar `SelectMultiplo` (`src/components/ui/select-multiplo.tsx`), que segue a mesma identidade de combobox com input direto para busca, ChevronsUpDown e checkboxes customizados.
+  - Nunca crie tags `<select>` HTML nativo ou botões dropdown improvisados. Seletor sem filtro por digitação direta é bug visual e de experiência.
 - Régua de design (classes Tailwind, nunca valores arbitrários `[...]` no nosso código):
   - Espaçamento e tamanhos: só passos inteiros do Tailwind (múltiplos de 4px). Sem meios passos (`p-1.5`, `gap-2.5`).
   - Fontes: só `text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-4xl` e `text-display` (40/44). Sem `text-lg` e `text-3xl`.

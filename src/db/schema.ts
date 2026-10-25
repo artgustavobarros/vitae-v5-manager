@@ -1,5 +1,7 @@
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+import type { EspecialAntagonista, ParadaExcepcional } from '#/domain/bestiario'
+import type { ParticipanteCombate } from '#/domain/combate'
 import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import { OPCOES_CRIACAO_CRONICA_PADRAO, type OpcoesCriacaoCronica } from '#/domain/cronica'
 import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
@@ -8,6 +10,24 @@ import { user } from './auth-schema.ts'
 
 export * from './auth-schema.ts'
 export type { OpcoesCriacaoCronica } from '#/domain/cronica'
+
+export type RessonanciaAtualPersonagem = {
+  tipo: string
+  intensidade: string
+  discrasia?: { nome: string; descricao: string } | null
+  manifestacaoSangueFraco?: {
+    disciplinaId?: string
+    disciplinaNome: string
+    nivel: number
+    poderes: Array<{ id?: string; nome: string; nivel: number; descricao: string }>
+  } | null
+}
+
+export type CompulsaoAtivaPersonagem = {
+  tipo: 'geral' | 'cla'
+  nome: string
+  descricao: string
+}
 
 /** Configurações da Crônica gerenciadas pelo Narrador (ex.: regras de criação da mesa). */
 export const cronica = pgTable('cronica', {
@@ -52,6 +72,10 @@ export const personagem = pgTable(
     ficha: jsonb().$type<Ficha>().notNull(),
     /** Compartilhamento da Condição (Vitalidade + Força de Vontade + Fome) com quem divide Coterie. */
     compartilhaCondicao: boolean('compartilha_condicao').notNull().default(false),
+    /** Ressonância Atual aplicada pelo Narrador a partir de um Sorteio. */
+    ressonanciaAtual: jsonb('ressonancia_atual').$type<RessonanciaAtualPersonagem | null>(),
+    /** Compulsão Ativa aplicada pelo Narrador que vale até ele encerrar. */
+    compulsaoAtiva: jsonb('compulsao_ativa').$type<CompulsaoAtivaPersonagem | null>(),
     /** PdN fixado no Painel do Narrador. */
     fixado: boolean().notNull().default(false),
     criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
@@ -168,3 +192,49 @@ export const revisaoTraducao = pgTable(
   },
   (t) => [index('revisao_traducao_item_id_idx').on(t.itemId)],
 )
+
+/**
+ * Modelos de antagonistas do Bestiário privado do Narrador.
+ * Ficha simplificada de V5: paradas, Vitalidade, Força de Vontade, paradas excepcionais, disciplinas e notas.
+ */
+export const modeloAntagonista = pgTable('modelo_antagonista', {
+  id: uuid().primaryKey().defaultRandom(),
+  nome: text().notNull(),
+  categoria: text().notNull().default('Geral'),
+  paradaFisico: integer('parada_fisico').notNull().default(1),
+  paradaSocial: integer('parada_social').notNull().default(1),
+  paradaMental: integer('parada_mental').notNull().default(1),
+  vitalidade: integer().notNull().default(3),
+  vontade: integer().notNull().default(3),
+  paradasExcepcionais: jsonb('paradas_excepcionais')
+    .$type<ParadaExcepcional[]>()
+    .notNull()
+    .default([]),
+  especiais: jsonb('especiais')
+    .$type<EspecialAntagonista[]>()
+    .notNull()
+    .default([]),
+  notas: text().notNull().default(''),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+})
+
+/**
+ * Gerenciador de Combate: apenas 1 combate ativo por vez na Crônica.
+ * Descartável ao encerrar (ou marcado inativo).
+ */
+export const combate = pgTable('combate', {
+  id: uuid().primaryKey().defaultRandom(),
+  rodada: integer().notNull().default(1),
+  turnoAtual: integer('turno_atual').notNull().default(0),
+  participantes: jsonb().$type<ParticipanteCombate[]>().notNull().default([]),
+  ativo: boolean().notNull().default(true),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+})

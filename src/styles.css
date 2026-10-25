@@ -135,4 +135,13 @@
     background: color-mix(in oklab, var(--vinho) 45%, transparent);
     color: var(--foreground);
   }
+  /* Remove setas padrão (spinners) de inputs numéricos */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
 }

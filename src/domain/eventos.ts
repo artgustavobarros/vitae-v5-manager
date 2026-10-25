@@ -1,7 +1,7 @@
 export type EventoReal =
   | {
       tipo: 'mudanca'
-      escopo: 'personagem' | 'coterie' | 'painel' | 'notificacao'
+      escopo: 'personagem' | 'coterie' | 'painel' | 'notificacao' | 'combate'
       id?: string
       paraUsuarioId?: string
       apenasNarrador?: boolean

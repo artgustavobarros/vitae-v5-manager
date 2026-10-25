@@ -130,6 +130,8 @@ export const buscarFicha = createServerFn({ method: 'GET' })
       ficha: p.ficha,
       compartilhaCondicao: p.compartilhaCondicao,
       fixado: p.fixado,
+      ressonanciaAtual: p.ressonanciaAtual,
+      compulsaoAtiva: p.compulsaoAtiva,
       pdn,
       /** Quem decide se a Condição aparece para a Coterie: o Jogador dono, ou o Narrador num PdN. */
       podeCompartilharCondicao:
