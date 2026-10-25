@@ -12,6 +12,7 @@ import {
 import type { Cla } from '#/domain/ficha'
 import { notificacoesEventos } from '#/domain/notificacoes'
 import {
+  ehSangueFraco,
   sortearCompulsao,
   sortearDiscrasia,
   sortearRessonancia,
@@ -91,6 +92,7 @@ export const aplicarRessonanciaPersonagemServer = createServerFn({ method: 'POST
         nome: personagem.nome,
         donoId: personagem.donoId,
         papelDono: user.papel,
+        ficha: personagem.ficha,
       })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
@@ -98,9 +100,16 @@ export const aplicarRessonanciaPersonagemServer = createServerFn({ method: 'POST
 
     if (!p) throw new Error('Personagem não encontrado')
 
+    const ressonancia = {
+      ...data.ressonancia,
+      manifestacaoSangueFraco: ehSangueFraco(p.ficha.cla)
+        ? data.ressonancia.manifestacaoSangueFraco
+        : null,
+    }
+
     await db
       .update(personagem)
-      .set({ ressonanciaAtual: data.ressonancia })
+      .set({ ressonanciaAtual: ressonancia })
       .where(eq(personagem.id, data.personagemId))
 
     if (p.papelDono === 'jogador') {

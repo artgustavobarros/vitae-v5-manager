@@ -30,7 +30,9 @@ Decisões de implementação para a **Fatia 6**, seguindo rigorosamente o `GLOSS
 - Visibilidade:
   - Jogadores enxergam a ordem e os Inimigos.
   - Vitalidade do Inimigo só é visível aos Jogadores se o Narrador liberar (`revelarVitalidade`).
-  - Condição dos Personagens no Combate segue estritamente as regras de Coterie (visível apenas para o dono ou para quem compartilha Condição e divide Coterie).
+  - Os valores da Condição dos Personagens seguem as regras de Coterie (visíveis apenas para o dono ou para quem compartilha Condição e divide Coterie).
+  - Por decisão do Narrador, as tags de saúde e de condições/debuffs ficam visíveis aos Jogadores mesmo quando os valores das trilhas estão ocultos. Isso não libera valores, paradas ou notas privadas nas respostas das ações.
+  - Layout aprovado: cards minimizados mostram identificação e dot de saúde na primeira linha, números de Vitalidade/Força de Vontade/Fome na segunda e condições na terceira. Os números de dano são superficial/agravado, com amarelo/vermelho, em carrossel drag-free quando necessário. Nos inimigos incapacitados, identificação, dano e ações ficam na primeira linha; saúde e condições, na segunda.
 - Sincronização em tempo real via Server-Sent Events (SSE) sem polling, com revalidação automática das rotas no barramento (`escopo: 'combate'`).
 - Notificação imediata para o Jogador quando o Narrador inicia um combate contendo um Personagem dele na ordem de turnos.
 

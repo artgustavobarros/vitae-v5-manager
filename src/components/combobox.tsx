@@ -1,6 +1,6 @@
 import { cn } from 'cn'
 import { Command as CommandPrimitive } from 'cmdk'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, Plus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -44,6 +44,8 @@ export function Combobox({
   rotulo,
   disabled = false,
   className,
+  permiteCriar = false,
+  textoCriar,
 }: {
   opcoes: readonly OpcaoCombobox[]
   /** null mostra o placeholder; num seletor de "Adicionar", fica sempre null. */
@@ -57,21 +59,25 @@ export function Combobox({
   rotulo?: string
   disabled?: boolean
   className?: string
+  /** Se true, permite digitar um novo valor não presente nas opções existentes */
+  permiteCriar?: boolean
+  /** Mensagem customizada para criar novo item. Padrão: (termo) => `Usar "${termo}"` */
+  textoCriar?: (termo: string) => string
 }) {
   const [aberto, setAberto] = useState(false)
   const [focado, setFocado] = useState(false)
   const escolhida = opcoes.find((o) => o.valor === valor)
-  const [textoInput, setTextoInput] = useState(escolhida?.rotulo ?? '')
+  const [textoInput, setTextoInput] = useState(escolhida?.rotulo ?? (permiteCriar ? valor ?? '' : ''))
   const [termo, setTermo] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Sincroniza com mudanças externas de `valor` quando o usuário não estiver digitando
   useEffect(() => {
     if (!focado) {
-      setTextoInput(escolhida?.rotulo ?? '')
+      setTextoInput(escolhida?.rotulo ?? (permiteCriar ? valor ?? '' : ''))
       setTermo('')
     }
-  }, [valor, escolhida?.rotulo, focado])
+  }, [valor, escolhida?.rotulo, focado, permiteCriar])
 
   // Se o termo estiver vazio, mostra todas as opções; senão, filtra pelo texto digitado
   const visiveis =
@@ -86,10 +92,20 @@ export function Combobox({
     else grupos.push({ titulo: opcao.grupo, opcoes: [opcao] })
   }
 
+  const temExato = opcoes.some(
+    (o) =>
+      o.rotulo.trim().toLowerCase() === termo.trim().toLowerCase() ||
+      o.valor.trim().toLowerCase() === termo.trim().toLowerCase(),
+  )
+  const exibirOpcaoCriar = permiteCriar && termo.trim() !== '' && !temExato
+
   function selecionar(opcaoValor: string) {
-    onChange(opcaoValor)
     const selecionada = opcoes.find((o) => o.valor === opcaoValor)
-    setTextoInput(selecionada?.rotulo ?? '')
+    const valorFinal = selecionada ? selecionada.valor : opcaoValor
+    const rotuloFinal = selecionada ? selecionada.rotulo : opcaoValor
+
+    onChange(valorFinal)
+    setTextoInput(rotuloFinal)
     setTermo('')
     setAberto(false)
     inputRef.current?.blur()
@@ -122,7 +138,7 @@ export function Combobox({
                 }}
                 onBlur={() => {
                   setFocado(false)
-                  setTextoInput(escolhida?.rotulo ?? '')
+                  setTextoInput(escolhida?.rotulo ?? (permiteCriar ? valor ?? '' : ''))
                   setTermo('')
                 }}
                 onKeyDown={(e) => {
@@ -190,6 +206,14 @@ export function Combobox({
                   ))}
                 </CommandGroup>
               ))}
+              {exibirOpcaoCriar && (
+                <CommandGroup>
+                  <CommandItem value={termo.trim()} onSelect={() => selecionar(termo.trim())}>
+                    <Plus className="size-4" />
+                    {textoCriar?.(termo.trim()) ?? `Usar "${termo.trim()}"`}
+                  </CommandItem>
+                </CommandGroup>
+              )}
             </CommandList>
           </PopoverContent>
         </Popover>

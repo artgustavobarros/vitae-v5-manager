@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import {
   criarModeloAntagonistaPadrao,
+  paradaExcepcionalSchema,
   validarModeloAntagonista,
   type ModeloAntagonista,
+  type ParadaExcepcional,
 } from './bestiario'
 
 describe('Bestiário - Modelos de Antagonistas', () => {
@@ -22,6 +24,11 @@ describe('Bestiário - Modelos de Antagonistas', () => {
   })
 
   it('valida modelo com paradas excepcionais e especiais', () => {
+    const paradasExcepcionais: ParadaExcepcional[] = [
+      { nome: 'Armas de Fogo', valor: 7 },
+      { nome: 'Prontidão', valor: 6 },
+    ]
+
     const modelo: ModeloAntagonista = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       nome: 'Guarda da Camarilla',
@@ -31,10 +38,7 @@ describe('Bestiário - Modelos de Antagonistas', () => {
       paradaMental: 3,
       vitalidade: 6,
       vontade: 4,
-      paradasExcepcionais: [
-        { nome: 'Armas de Fogo', valor: 7 },
-        { nome: 'Prontidão', valor: 6 },
-      ],
+      paradasExcepcionais,
       especiais: [
         { nome: 'Potência Sobrenatural', descricao: 'Adiciona 2 de dano em ataques físicos.' },
         { nome: 'Armadura Tática', descricao: 'Reduz 1 ponto de dano superficial sofrido.' },
@@ -49,6 +53,17 @@ describe('Bestiário - Modelos de Antagonistas', () => {
       expect(resultado.dados.paradasExcepcionais).toHaveLength(2)
       expect(resultado.dados.especiais).toHaveLength(2)
     }
+  })
+
+  it('valida paradaExcepcionalSchema corretamente', () => {
+    const valida = paradaExcepcionalSchema.safeParse({ nome: 'Furtividade', valor: 6 })
+    expect(valida.success).toBe(true)
+
+    const semNome = paradaExcepcionalSchema.safeParse({ nome: '', valor: 4 })
+    expect(semNome.success).toBe(false)
+
+    const valorZero = paradaExcepcionalSchema.safeParse({ nome: 'Briga', valor: 0 })
+    expect(valorZero.success).toBe(false)
   })
 
   it('rejeita modelo sem nome ou com valores negativos', () => {

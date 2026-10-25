@@ -7,9 +7,6 @@ export const paradaExcepcionalSchema = z.object({
 
 export type ParadaExcepcional = z.infer<typeof paradaExcepcionalSchema>
 
-export const paradaEspecialSchema = paradaExcepcionalSchema
-export type ParadaEspecial = ParadaExcepcional
-
 export const especialAntagonistaSchema = z.object({
   nome: z.string().min(1, 'Nome do especial é obrigatório'),
   descricao: z.string().default(''),

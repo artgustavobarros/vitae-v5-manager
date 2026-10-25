@@ -24,6 +24,7 @@ import type { CompulsaoAtivaPersonagem, RessonanciaAtualPersonagem } from '#/db/
 import type { Papel } from '#/domain/acesso'
 import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/domain/ficha'
 import type { AcessoFicha, StatusPersonagem } from '#/domain/permissoes-ficha'
+import { ehSangueFraco } from '#/domain/sorteios'
 import { sairDaCoterie } from '#/server/coteries'
 import { alternarCompartilharCondicao, marcar } from '#/server/personagens'
 import {
@@ -181,7 +182,7 @@ export function FichaPersonagem({
                   {ressonanciaAtual.tipo} ({ressonanciaAtual.intensidade})
                 </span>
                 {ressonanciaAtual.discrasia && <span>&bull; {ressonanciaAtual.discrasia.nome}</span>}
-                {ressonanciaAtual.manifestacaoSangueFraco && (
+                {ehSangueFraco(ficha.cla) && ressonanciaAtual.manifestacaoSangueFraco && (
                   <span title={ressonanciaAtual.manifestacaoSangueFraco.poderes.map((p) => `${p.nome} (Nv ${p.nivel}): ${p.descricao}`).join(' | ')}>
                     &bull; Sangue-Fraco: <strong className="text-primary">{ressonanciaAtual.manifestacaoSangueFraco.disciplinaNome} (Nv {ressonanciaAtual.manifestacaoSangueFraco.nivel})</strong> [{ressonanciaAtual.manifestacaoSangueFraco.poderes.map((p) => p.nome).join(', ')}]
                   </span>

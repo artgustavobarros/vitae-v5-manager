@@ -50,6 +50,22 @@ export type CompulsaoClanicaDef = {
   descricao: string
 }
 
+/**
+ * Verifica se um clã (ou identificador/objeto) corresponde a Sangue-Fraco / Sangue-Ralo.
+ * V5 p. 114/229: Manifestações temporárias de disciplinas só se aplicam a vampiros do clã Sangue-Fraco.
+ */
+export function ehSangueFraco(cla: unknown): boolean {
+  if (!cla) return false
+  if (typeof cla === 'string') {
+    return cla === 'sangue-fraco' || cla === 'sangue-ralo'
+  }
+  if (typeof cla === 'object' && 'id' in cla && typeof cla.id === 'string') {
+    const id = cla.id
+    return id === 'sangue-fraco' || id === 'sangue-ralo'
+  }
+  return false
+}
+
 export const RESSONANCIAS: readonly RessonanciaDef[] = [
   {
     id: 'colerico',

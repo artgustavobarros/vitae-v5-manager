@@ -122,7 +122,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   - Inimigos criados a partir de Modelos, cada um com Vitalidade e Força de Vontade próprias.
 - A ordem de turnos é manual (arrastar), com destaque de quem está agindo e contador de Rodadas.
 - Os Jogadores veem a ordem e os Inimigos. Veem a Vitalidade de um Inimigo só se o Narrador liberar.
-- A Condição dos Personagens no Combate segue as mesmas regras de compartilhamento.
+- Os valores da Condição dos Personagens no Combate seguem as mesmas regras de compartilhamento. As tags de saúde e de condições/debuffs permanecem públicas, por decisão do Narrador, mesmo quando os valores estão ocultos.
 - Há um Combate ativo por vez, descartado ao encerrar.
 
 ## Sorteios

@@ -72,6 +72,15 @@
   --color-fome: var(--fome);
   --color-marcador: var(--marcador);
 
+  /* Combate: cores aprovadas para os trackers e a gradação das tags. */
+  --color-dano-superficial: var(--color-amber-400);
+  --color-saude-saudavel: var(--color-emerald-400);
+  --color-saude-escoriado: var(--color-blue-400);
+  --color-saude-ferido: var(--color-amber-400);
+  --color-saude-torpor: var(--color-purple-300);
+  --color-condicao-chamas: var(--color-orange-400);
+
+
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;

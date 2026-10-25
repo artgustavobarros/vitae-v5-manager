@@ -3,6 +3,8 @@ import { Plus, Trash2, Edit3, ShieldAlert, Copy, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { BarraApp } from '#/components/barra-app'
+import { Combobox } from '#/components/combobox'
+import { BadgeEspecial } from '#/components/badge-especial'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +29,6 @@ import {
 } from '#/components/ui/dialog'
 import { Input, InputNumero } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '#/components/ui/popover'
 import { EditorRichText, VisualizadorMarkdown } from '#/components/ui/editor-rich-text'
 import {
   criarModeloAntagonistaPadrao,
@@ -51,30 +52,6 @@ export const Route = createFileRoute('/narrador/bestiario')({
   component: PaginaBestiario,
 })
 
-function BadgeEspecial({ nome, descricao }: { nome: string; descricao?: string }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
-        >
-          {nome}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-64 overflow-y-auto p-3 text-xs" side="top">
-        <h4 className="font-semibold text-sm mb-1.5 text-foreground">{nome}</h4>
-        {descricao?.trim() ? (
-          <div className="text-muted-foreground text-xs leading-relaxed">
-            <VisualizadorMarkdown markdown={descricao} />
-          </div>
-        ) : (
-          <p className="text-muted-foreground italic text-xs">Sem detalhes adicionais.</p>
-        )}
-      </PopoverContent>
-    </Popover>
-  )
-}
 
 function PaginaBestiario() {
   const modelos = Route.useLoaderData()
@@ -183,7 +160,7 @@ function PaginaBestiario() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
+    <main className="container-app mx-auto min-h-dvh">
       <BarraApp />
       <div className="flex flex-col gap-6 pt-2 pb-12">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -235,7 +212,7 @@ function PaginaBestiario() {
 
               {/* Busca por texto */}
               <div className="relative w-full sm:w-64 shrink-0">
-                <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
+                <Search className="absolute left-2 top-2 size-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar modelo ou especial..."
                   value={busca}
@@ -312,7 +289,7 @@ function PaginaBestiario() {
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="flex justify-end gap-1.5 border-t pt-3">
+                    <CardFooter className="flex justify-end gap-1 border-t pt-3">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -320,7 +297,7 @@ function PaginaBestiario() {
                         onClick={() => abrirDuplicar(m)}
                         title="Duplicar modelo como nova variante"
                       >
-                        <Copy className="size-3.5" />
+                        <Copy className="size-4" />
                         Duplicar
                       </Button>
                       <Button
@@ -329,7 +306,7 @@ function PaginaBestiario() {
                         className="gap-1 text-xs"
                         onClick={() => abrirEditar(m)}
                       >
-                        <Edit3 className="size-3.5" />
+                        <Edit3 className="size-4" />
                         Editar
                       </Button>
                       <Button
@@ -338,7 +315,7 @@ function PaginaBestiario() {
                         className="gap-1 text-xs text-destructive hover:text-destructive"
                         onClick={() => setModeloParaExcluir(m)}
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                         Excluir
                       </Button>
                     </CardFooter>
@@ -352,7 +329,7 @@ function PaginaBestiario() {
 
       {/* Dialog para Criar/Editar Modelo */}
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-9/10 overflow-y-auto">
           <form onSubmit={handleSalvar}>
             <DialogHeader>
               <DialogTitle className="font-serif text-xl">
@@ -372,7 +349,7 @@ function PaginaBestiario() {
             {modeloEmEdicao && (
               <div className="flex flex-col gap-4 py-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="nome-modelo">Nome do Modelo</Label>
                     <Input
                       id="nome-modelo"
@@ -384,28 +361,22 @@ function PaginaBestiario() {
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="categoria-modelo">Categoria / Arquétipo</Label>
-                    <Input
+                    <Combobox
                       id="categoria-modelo"
-                      list="categorias-existentes"
+                      rotulo="Categoria / Arquétipo"
+                      opcoes={categoriasExistentes.map((categoria) => ({ valor: categoria, rotulo: categoria }))}
+                      valor={modeloEmEdicao.categoria || null}
+                      onChange={(categoria) => setModeloEmEdicao({ ...modeloEmEdicao, categoria })}
                       placeholder="Ex: Carniçal, Mortal, Segunda Inquisição..."
-                      value={modeloEmEdicao.categoria}
-                      onChange={(e) =>
-                        setModeloEmEdicao({ ...modeloEmEdicao, categoria: e.target.value })
-                      }
-                      required
+                      permiteCriar
                     />
-                    <datalist id="categorias-existentes">
-                      {categoriasExistentes.map((cat) => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="parada-fisico">Físico</Label>
                     <InputNumero
                       id="parada-fisico"
@@ -421,7 +392,7 @@ function PaginaBestiario() {
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="parada-social">Social</Label>
                     <InputNumero
                       id="parada-social"
@@ -437,7 +408,7 @@ function PaginaBestiario() {
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="parada-mental">Mental</Label>
                     <InputNumero
                       id="parada-mental"
@@ -456,7 +427,7 @@ function PaginaBestiario() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="vitalidade">Vitalidade</Label>
                     <InputNumero
                       id="vitalidade"
@@ -472,7 +443,7 @@ function PaginaBestiario() {
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="vontade">Força de Vontade</Label>
                     <InputNumero
                       id="vontade"
@@ -509,7 +480,7 @@ function PaginaBestiario() {
                         })
                       }
                     >
-                      <Plus className="size-3.5" />
+                      <Plus className="size-4" />
                       Adicionar
                     </Button>
                   </div>
@@ -580,7 +551,7 @@ function PaginaBestiario() {
                         })
                       }
                     >
-                      <Plus className="size-3.5" />
+                      <Plus className="size-4" />
                       Adicionar
                     </Button>
                   </div>

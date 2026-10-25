@@ -5,6 +5,7 @@ import {
   COMPULSOES_GERAIS,
   DISCRASIAS,
   RESSONANCIAS,
+  ehSangueFraco,
   sortearCompulsao,
   sortearDiscrasia,
   sortearRessonancia,
@@ -135,5 +136,27 @@ describe('Sorteios de Compulsão', () => {
     expect(compulsao.tipo).toBe('cla')
     expect(compulsao.claId).toBeDefined()
     expect(compulsao.nome).toBeDefined()
+  })
+})
+
+describe('Regra de Sangue-Fraco (ehSangueFraco)', () => {
+  it('retorna true para string "sangue-fraco" e "sangue-ralo"', () => {
+    expect(ehSangueFraco('sangue-fraco')).toBe(true)
+    expect(ehSangueFraco('sangue-ralo')).toBe(true)
+  })
+
+  it('retorna true para objetos com id "sangue-fraco" e "sangue-ralo"', () => {
+    expect(ehSangueFraco({ id: 'sangue-fraco' })).toBe(true)
+    expect(ehSangueFraco({ id: 'sangue-ralo' })).toBe(true)
+  })
+
+  it('retorna false para outros clãs ou formatos inválidos', () => {
+    expect(ehSangueFraco('ventrue')).toBe(false)
+    expect(ehSangueFraco('brujah')).toBe(false)
+    expect(ehSangueFraco('caitiff')).toBe(false)
+    expect(ehSangueFraco({ id: 'toreador' })).toBe(false)
+    expect(ehSangueFraco(null)).toBe(false)
+    expect(ehSangueFraco(undefined)).toBe(false)
+    expect(ehSangueFraco('')).toBe(false)
   })
 })

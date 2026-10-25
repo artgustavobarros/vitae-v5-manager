@@ -22,6 +22,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
+import { BadgeEspecial } from '#/components/badge-especial'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,9 +55,11 @@ import {
   calcularEstadoSaude,
   CONDICOES_COMBATE_V5,
   ehInimigoIncapacitado,
+  ehParticipanteVampiro,
   obterCondicaoCombate,
   obterProximoIndiceAtivo,
   type CombateVisivel,
+  type EstadoSaude,
   type InfoEstadoSaude,
   type ParticipanteCombate,
   type ParticipanteInimigo,
@@ -90,6 +93,48 @@ type PersonagemSorteio = {
   donoNome: string
 }
 
+function obterClasseCorEstadoSaude(estado: EstadoSaude): string {
+  switch (estado) {
+    case 'morto':
+      return 'bg-destructive/20 text-destructive border-destructive/40 font-bold'
+    case 'torpor':
+      return 'bg-saude-torpor/15 text-saude-torpor border-saude-torpor/30 font-semibold'
+    case 'debilitado':
+      return 'bg-destructive/15 text-destructive border-destructive/30 font-semibold'
+    case 'ferido':
+      return 'bg-saude-ferido/15 text-saude-ferido border-saude-ferido/30'
+    case 'escoriado':
+      return 'bg-saude-escoriado/15 text-saude-escoriado border-saude-escoriado/30'
+    case 'saudavel':
+    default:
+      return 'bg-saude-saudavel/15 text-saude-saudavel border-saude-saudavel/30'
+  }
+}
+
+function obterClasseCorCondicao(condId: string, categoria?: string): string {
+  switch (condId) {
+    case 'morto':
+      return 'bg-destructive/20 text-destructive border-destructive/40 font-bold'
+    case 'torpor':
+      return 'bg-saude-torpor/15 text-saude-torpor border-saude-torpor/30 font-semibold'
+    case 'desacordado':
+      return 'bg-muted-foreground/15 text-muted-foreground border-muted-foreground/30 font-medium'
+    case 'frenesi':
+      return 'bg-destructive/15 text-destructive border-destructive/30 font-semibold'
+    case 'em-chamas':
+      return 'bg-condicao-chamas/15 text-condicao-chamas border-condicao-chamas/30'
+    case 'estacado':
+      return 'bg-saude-torpor/15 text-saude-torpor border-saude-torpor/30'
+    case 'imobilizado':
+      return 'bg-destructive/15 text-destructive border-destructive/30'
+    default:
+      if (categoria === 'buff') {
+        return 'bg-saude-saudavel/15 text-saude-saudavel border-saude-saudavel/30'
+      }
+      return 'bg-dano-superficial/15 text-dano-superficial border-dano-superficial/30'
+  }
+}
+
 function BadgeSaude({
   vitalidadeMax,
   dano,
@@ -120,33 +165,37 @@ function BadgeSaude({
       ? Math.min(vitalidadeMax, dano.superficial + dano.agravado)
       : null
 
+  const classeCor = obterClasseCorEstadoSaude(info.estado)
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           type="button"
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-md border text-xs font-semibold transition-colors focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none',
+            'inline-flex h-auto items-center gap-1 rounded-md border text-xs font-semibold transition-colors focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none',
             soTag
               ? 'size-6 p-0 items-center justify-center shrink-0'
-              : 'px-2 py-0.5',
-            info.classeCor,
+              : 'px-2 py-1',
+            classeCor,
           )}
           title={`Estado de Saúde: ${info.rotulo}`}
         >
           <span className="size-2 rounded-full bg-current shrink-0" />
           {!soTag && <span>{info.rotulo}</span>}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3 text-xs" side="top">
-        <div className="flex items-center justify-between gap-2 border-b pb-1.5 mb-2">
+        <div className="flex items-center justify-between gap-2 border-b pb-1 mb-2">
           <span className="font-semibold text-sm text-foreground">Estado de Saúde</span>
-          <Badge variant="outline" className={cn('text-xs font-semibold', info.classeCor)}>
+          <Badge variant="outline" className={cn('text-xs font-semibold', classeCor)}>
             {info.rotulo}
           </Badge>
         </div>
         <p className="text-muted-foreground leading-relaxed mb-2">{info.descricao}</p>
-        <div className="flex flex-col gap-1 text-[11px] bg-muted/50 rounded p-2">
+        <div className="flex flex-col gap-1 text-xs bg-muted/50 rounded p-2">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground font-medium">Penalidade:</span>
             <span className="font-semibold text-foreground">{info.penalidade}</span>
@@ -154,12 +203,15 @@ function BadgeSaude({
           {total !== null && !ocultarNumeros && dano && vitalidadeMax ? (
             <div className="flex justify-between items-center pt-1 border-t border-border/40">
               <span className="text-muted-foreground font-medium">Dano na Trilha:</span>
-              <span className="font-mono text-foreground">
-                {dano.superficial} Sup. / {dano.agravado} Agr. ({total}/{vitalidadeMax})
+              <span className="font-mono text-foreground flex items-center gap-1">
+                <span className="text-dano-superficial font-bold">{dano.superficial}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-destructive font-bold">{dano.agravado}</span>
+                <span className="text-muted-foreground text-xs">({total}/{vitalidadeMax})</span>
               </span>
             </div>
           ) : (
-            <div className="text-muted-foreground italic text-[10px] pt-1 border-t border-border/40">
+            <div className="text-muted-foreground italic text-xs pt-1 border-t border-border/40">
               Valores exatos da trilha ocultos pelo Narrador.
             </div>
           )}
@@ -204,26 +256,28 @@ function TrilhaTatilExpandida({
   }
 
   return (
-    <div className="flex items-start gap-3 select-none py-0.5">
-      <span className="text-sm sm:text-base font-semibold text-foreground shrink-0 w-28 sm:w-36 pt-0.5">
+    <div className="flex items-start gap-3 select-none py-1">
+      <span className="text-sm sm:text-base font-semibold text-foreground shrink-0 w-28 sm:w-36 pt-1">
         {rotulo}:
       </span>
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-1 flex-wrap">
         {Array.from({ length: max }, (_, i) => {
           const ehAgravado = i < dano.agravado
           const ehSuperficial = !ehAgravado && i < dano.agravado + dano.superficial
 
           return (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               key={i}
               type="button"
               disabled={!podeEditar}
               onClick={() => handleCliqueBox(i)}
               className={cn(
-                'size-7 rounded-md border-2 flex items-center justify-center font-mono text-sm font-bold transition-all',
+                'size-7 p-0 rounded-md border-2 flex items-center justify-center font-mono text-sm font-bold transition-all',
                 podeEditar ? 'cursor-pointer hover:border-foreground active:scale-95' : 'cursor-default',
                 ehAgravado && 'border-destructive bg-destructive/20 text-destructive',
-                ehSuperficial && 'border-amber-500/80 bg-amber-500/20 text-amber-600 dark:text-amber-400',
+                ehSuperficial && 'border-dano-superficial/80 bg-dano-superficial/20 text-dano-superficial',
                 !ehAgravado && !ehSuperficial && 'border-border/80 bg-background/50 text-transparent',
               )}
               title={
@@ -237,7 +291,7 @@ function TrilhaTatilExpandida({
               }
             >
               {ehAgravado ? 'X' : ehSuperficial ? '/' : ''}
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -255,23 +309,25 @@ function FomeTatilExpandida({
   onChange?: (novoValor: number) => void
 }) {
   return (
-    <div className="flex items-start gap-3 select-none py-0.5 shrink-0">
-      <span className="text-sm sm:text-base font-semibold text-foreground shrink-0 w-28 sm:w-auto pt-0.5">
+    <div className="flex items-start gap-3 select-none py-1 shrink-0">
+      <span className="text-sm sm:text-base font-semibold text-foreground shrink-0 w-28 sm:w-auto pt-1">
         Fome:
       </span>
-      <div className="flex items-center gap-1.5 pt-0.5">
+      <div className="flex items-center gap-1 pt-1">
         {Array.from({ length: 5 }, (_, i) => {
           const cheia = i < fome
           return (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               key={i}
               type="button"
               disabled={!podeEditar}
               className={cn(
-                'size-6 rounded-full border-2 transition-all',
+                'size-6 p-0 rounded-full border-2 transition-all',
                 podeEditar ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-default',
                 cheia
-                  ? 'border-vinho bg-vinho shadow-[0_0_8px_rgba(159,18,57,0.4)]'
+                  ? 'border-vinho bg-vinho '
                   : 'border-border/80 bg-background/50',
               )}
               onClick={() => {
@@ -307,7 +363,7 @@ function TrackersNumericosLinha({
 }) {
   if (condicaoOculta) {
     return (
-      <span className="text-xs text-muted-foreground italic px-1 py-0.5">
+      <span className="text-xs text-muted-foreground italic px-1 py-1">
         Condição oculta (não compartilhada na Coterie)
       </span>
     )
@@ -316,16 +372,16 @@ function TrackersNumericosLinha({
   return (
     <CarrosselBadges>
       {vitalidadeOculta ? (
-        <span className="text-xs text-muted-foreground italic px-1 py-0.5 shrink-0">
+        <span className="text-xs text-muted-foreground italic px-1 py-1 shrink-0">
           Vitalidade oculta
         </span>
       ) : danoVitalidade && vitalidadeMax !== undefined ? (
         <div
-          className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-xs select-none shrink-0"
+          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-xs select-none shrink-0"
           title={`Vitalidade: ${danoVitalidade.superficial} superficial, ${danoVitalidade.agravado} agravado (máximo ${vitalidadeMax})`}
         >
           <span className="font-medium text-muted-foreground">Vitalidade</span>
-          <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+          <span className="font-mono font-bold text-dano-superficial">
             {danoVitalidade.superficial}
           </span>
           <span className="text-muted-foreground/60">/</span>
@@ -337,11 +393,11 @@ function TrackersNumericosLinha({
 
       {danoVontade && vontadeMax !== undefined ? (
         <div
-          className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-xs select-none shrink-0"
+          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-xs select-none shrink-0"
           title={`Força de Vontade: ${danoVontade.superficial} superficial, ${danoVontade.agravado} agravado (máximo ${vontadeMax})`}
         >
           <span className="font-medium text-muted-foreground">Vontade</span>
-          <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+          <span className="font-mono font-bold text-dano-superficial">
             {danoVontade.superficial}
           </span>
           <span className="text-muted-foreground/60">/</span>
@@ -353,11 +409,11 @@ function TrackersNumericosLinha({
 
       {fome !== undefined ? (
         <div
-          className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/60 px-2 py-0.5 text-xs select-none shrink-0"
+          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-xs select-none shrink-0"
           title={`Fome atual: ${fome}`}
         >
           <span className="font-medium text-muted-foreground">Fome</span>
-          <span className="font-mono font-bold text-vinho dark:text-rose-400">
+          <span className="font-mono font-bold text-fome">
             {fome}
           </span>
         </div>
@@ -371,13 +427,14 @@ function BadgesCondicoes({
   condicoes = [],
   podeEditar,
   onAlternarCondicao,
+  ehVampiro = true,
 }: {
   participanteId: string
   condicoes?: string[]
   podeEditar: boolean
   onAlternarCondicao: (participanteId: string, condicaoId: string) => Promise<void>
+  ehVampiro?: boolean
 }) {
-  const [aberto, setAberto] = useState(false)
   const [salvandoId, setSalvandoId] = useState<string | null>(null)
 
   async function handleToggle(condId: string) {
@@ -393,17 +450,23 @@ function BadgesCondicoes({
     .map((cId) => obterCondicaoCombate(cId))
     .filter((c): c is NonNullable<typeof c> => !!c)
 
+  const opcoesCondicoes = CONDICOES_COMBATE_V5.filter(
+    (c) => ehVampiro || c.id !== 'torpor' || condicoes.includes(c.id),
+  )
+
   return (
-    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+    <div className="flex items-center justify-between gap-2 min-w-0 flex-1">
       <CarrosselBadges className="min-w-0 flex-1">
         {condicoesValidas.map((cond) => (
           <Popover key={cond.id}>
             <PopoverTrigger asChild>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 type="button"
                 className={cn(
-                  'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none',
-                  cond.classeCor,
+                  'inline-flex h-auto items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none',
+                  obterClasseCorCondicao(cond.id, cond.categoria),
                 )}
               >
                 <span>{cond.nome}</span>
@@ -421,28 +484,28 @@ function BadgesCondicoes({
                         handleToggle(cond.id)
                       }
                     }}
-                    className="ml-0.5 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+                    className="ml-1 rounded-full p-1 hover:bg-muted"
                     title={`Remover ${cond.nome}`}
                   >
                     <X className="size-3" />
                   </span>
                 )}
-              </button>
+              </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-3 text-xs" side="top">
-              <div className="flex items-center justify-between gap-2 border-b pb-1.5 mb-2">
+              <div className="flex items-center justify-between gap-2 border-b pb-1 mb-2">
                 <span className="font-semibold text-sm text-foreground">{cond.nome}</span>
-                <Badge variant="outline" className="text-[10px] capitalize">
+                <Badge variant="outline" className="text-xs capitalize">
                   {cond.categoria}
                 </Badge>
               </div>
               <p className="text-muted-foreground leading-relaxed mb-2">{cond.descricao}</p>
-              <div className="bg-muted/60 p-2 rounded text-[11px] leading-tight text-foreground">
-                <span className="font-semibold block mb-0.5 text-muted-foreground">Efeito Mecânico:</span>
+              <div className="bg-muted/60 p-2 rounded text-xs leading-tight text-foreground">
+                <span className="font-semibold block mb-1 text-muted-foreground">Efeito Mecânico:</span>
                 {cond.efeitoMecanico}
               </div>
               {podeEditar && (
-                <div className="mt-2.5 pt-2 border-t flex justify-end">
+                <div className="mt-2 pt-2 border-t flex justify-end">
                   <Button
                     type="button"
                     variant="ghost"
@@ -451,7 +514,7 @@ function BadgesCondicoes({
                     onClick={() => handleToggle(cond.id)}
                     disabled={salvandoId === cond.id}
                   >
-                    <X className="size-3.5" />
+                    <X className="size-4" />
                     Remover Condição
                   </Button>
                 </div>
@@ -460,81 +523,53 @@ function BadgesCondicoes({
           </Popover>
         ))}
 
-        {podeEditar && (
-          <Popover open={aberto} onOpenChange={setAberto}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-muted-foreground/40 hover:border-foreground/60 bg-transparent px-2 py-0.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
-                title="Adicionar ou alternar condição/debuff"
-              >
-                <Plus className="size-3" />
-                <span>Condição</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 max-h-80 overflow-y-auto p-2 text-xs" side="bottom" align="start">
-              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
-                Condições & Debuffs (V5)
-              </div>
-              <div className="flex flex-col gap-1">
-                {CONDICOES_COMBATE_V5.map((c) => {
-                  const ativa = condicoes.includes(c.id)
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => handleToggle(c.id)}
-                      disabled={salvandoId === c.id}
-                      className={cn(
-                        'flex items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors cursor-pointer',
-                        ativa
-                          ? 'bg-secondary font-semibold text-secondary-foreground'
-                          : 'hover:bg-muted text-foreground',
-                      )}
-                    >
-                      <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-                        <span className="font-medium truncate">{c.nome}</span>
-                        <span className="text-[10px] text-muted-foreground truncate">
-                          {c.efeitoMecanico}
-                        </span>
-                      </div>
-                      {ativa && <span className="text-xs text-vinho font-bold shrink-0">✓</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
       </CarrosselBadges>
+
+      {podeEditar && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-auto gap-1 border-dashed px-2 py-1 text-xs text-muted-foreground shrink-0"
+              title="Adicionar ou alternar condição/debuff"
+            >
+              <Plus className="size-3" />
+              Condição
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-2" side="bottom" align="end">
+            <SelectMultiplo
+              rotulo="Condições de combate"
+              placeholder="Selecionar condições"
+              opcoes={opcoesCondicoes.map((c) => ({
+                valor: c.id,
+                rotulo: c.nome,
+                detalhe: c.efeitoMecanico,
+              }))}
+              valores={condicoes}
+              disabled={salvandoId !== null}
+              onChange={async (novasCondicoes) => {
+                const alteradas = [...new Set([...condicoes, ...novasCondicoes])]
+                  .filter((id) => condicoes.includes(id) !== novasCondicoes.includes(id))
+                try {
+                  setSalvandoId('lote')
+                  for (const id of alteradas) {
+                    await onAlternarCondicao(participanteId, id)
+                  }
+                } finally {
+                  setSalvandoId(null)
+                }
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   )
 }
 
-function BadgeEspecial({ nome, descricao }: { nome: string; descricao?: string }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
-        >
-          {nome}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-64 overflow-y-auto p-3 text-xs" side="top">
-        <h4 className="font-semibold text-sm mb-1.5 text-foreground">{nome}</h4>
-        {descricao?.trim() ? (
-          <div className="text-muted-foreground text-xs leading-relaxed">
-            <VisualizadorMarkdown markdown={descricao} />
-          </div>
-        ) : (
-          <p className="text-muted-foreground italic text-xs">Sem detalhes adicionais.</p>
-        )}
-      </PopoverContent>
-    </Popover>
-  )
-}
 
 export const Route = createFileRoute('/combate')({
   beforeLoad: ({ context }) => {
@@ -580,20 +615,20 @@ function CardInimigoIncapacitadoNarrador({
   return (
     <div className="flex flex-col rounded-lg border border-dashed border-border/70 bg-card/40 opacity-80 hover:opacity-100 transition-opacity text-xs overflow-hidden">
       {/* LINHA 1: IDENTIFICAÇÃO / CATEGORIA / DANO / AÇÕES */}
-      <div className="flex items-center justify-between gap-3 px-3.5 py-2">
+      <div className="flex items-center justify-between gap-3 px-4 py-2">
         <div className="flex items-center gap-2 min-w-0">
           <Skull className="size-4 text-muted-foreground shrink-0" />
           <span className="font-serif font-bold text-sm text-foreground truncate">
             {part.nome}
           </span>
           {part.categoria && (
-            <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4.5 text-muted-foreground shrink-0">
+            <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
               {part.categoria}
             </Badge>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -602,7 +637,7 @@ function CardInimigoIncapacitadoNarrador({
                 className="h-7 text-xs font-mono gap-1 px-2 cursor-pointer"
                 title="Ajustar dano do inimigo (reduzir dano agravado abaixo do máximo o reativa na iniciativa)"
               >
-                <span className="text-amber-500 font-bold">{part.danoVitalidade.superficial}</span>
+                <span className="text-dano-superficial font-bold">{part.danoVitalidade.superficial}</span>
                 <span className="text-muted-foreground">/</span>
                 <span className="text-destructive font-bold">{part.danoVitalidade.agravado}</span>
               </Button>
@@ -628,7 +663,7 @@ function CardInimigoIncapacitadoNarrador({
             className="size-7 text-muted-foreground hover:text-foreground"
             title="Editar detalhes do inimigo"
           >
-            <Edit3 className="size-3.5" />
+            <Edit3 className="size-4" />
           </Button>
 
           <Button
@@ -638,13 +673,13 @@ function CardInimigoIncapacitadoNarrador({
             className="size-7 text-destructive/70 hover:text-destructive"
             title="Remover definitivamente do combate"
           >
-            <Trash2 className="size-3.5" />
+            <Trash2 className="size-4" />
           </Button>
         </div>
       </div>
 
       {/* LINHA 2: ESTADO DE SAÚDE COMO CONDIÇÃO + OUTRAS CONDIÇÕES */}
-      <div className="flex items-center gap-1.5 px-3.5 py-1.5 border-t border-border/40 bg-muted/20 min-w-0">
+      <div className="flex items-center gap-1 px-4 py-1 border-t border-border/40 bg-muted/20 min-w-0">
         <BadgeSaude
           vitalidadeMax={part.vitalidadeMax}
           dano={part.danoVitalidade}
@@ -653,6 +688,7 @@ function CardInimigoIncapacitadoNarrador({
         />
         <BadgesCondicoes
           participanteId={part.id}
+          ehVampiro={ehParticipanteVampiro(part)}
           condicoes={(part.condicoes ?? []).filter(
             (c) => !['morto', 'desacordado', 'incapacitado', 'torpor'].includes(c),
           )}
@@ -674,14 +710,14 @@ function CardInimigoIncapacitadoJogador({
   return (
     <div className="flex flex-col rounded-lg border border-border/50 bg-card/30 text-xs text-muted-foreground overflow-hidden">
       {/* LINHA 1: IDENTIFICAÇÃO / CATEGORIA / DANO SE REVELADO */}
-      <div className="flex items-center justify-between gap-3 px-3.5 py-2">
+      <div className="flex items-center justify-between gap-3 px-4 py-2">
         <div className="flex items-center gap-2 min-w-0">
           <Skull className="size-4 text-muted-foreground shrink-0" />
           <span className="font-serif font-bold text-sm text-foreground truncate">
             {part.nome}
           </span>
           {part.categoria && (
-            <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4.5 text-muted-foreground shrink-0">
+            <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
               {part.categoria}
             </Badge>
           )}
@@ -689,7 +725,7 @@ function CardInimigoIncapacitadoJogador({
 
         {!part.vitalidadeOculta && part.danoVitalidade && (
           <div className="flex items-center gap-1 shrink-0 font-mono text-xs">
-            <span className="text-amber-500 font-bold">{part.danoVitalidade.superficial}</span>
+            <span className="text-dano-superficial font-bold">{part.danoVitalidade.superficial}</span>
             <span className="text-muted-foreground">/</span>
             <span className="text-destructive font-bold">{part.danoVitalidade.agravado}</span>
           </div>
@@ -697,7 +733,7 @@ function CardInimigoIncapacitadoJogador({
       </div>
 
       {/* LINHA 2: ESTADO DE SAÚDE COMO CONDIÇÃO + OUTRAS CONDIÇÕES */}
-      <div className="flex items-center gap-1.5 px-3.5 py-1.5 border-t border-border/40 bg-muted/10 min-w-0">
+      <div className="flex items-center gap-1 px-4 py-1 border-t border-border/40 bg-muted/10 min-w-0">
         <BadgeSaude
           vitalidadeMax={part.vitalidadeMax}
           dano={part.danoVitalidade}
@@ -708,6 +744,7 @@ function CardInimigoIncapacitadoJogador({
         />
         <BadgesCondicoes
           participanteId={part.id}
+          ehVampiro={ehParticipanteVampiro(part)}
           condicoes={(part.condicoes ?? []).filter(
             (c) => !['morto', 'desacordado', 'incapacitado', 'torpor'].includes(c),
           )}
@@ -1194,7 +1231,7 @@ function VisaoNarrador({
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
+    <main className="container-app mx-auto min-h-dvh">
       <BarraApp />
       <div className="flex flex-col gap-6 pt-2 pb-12">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1212,7 +1249,7 @@ function VisaoNarrador({
                     </Badge>
                   )}
                   {proximoParticipante && proximoParticipante.id !== participanteAtual?.id && (
-                    <Badge variant="outline" className="text-xs border-amber-500/70 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                    <Badge variant="outline" className="text-xs border-dano-superficial/70 bg-dano-superficial/10 text-dano-superficial font-semibold flex items-center gap-1">
                       <ArrowRight className="size-3" />
                       Próximo: {proximoParticipante.nome} {proximoParticipante.tipo === 'inimigo' ? '(Inimigo)' : ''}
                     </Badge>
@@ -1254,24 +1291,24 @@ function VisaoNarrador({
                 Turno Anterior
               </Button>
               <Button size="sm" onClick={handleAvancarTurno} className="gap-1 font-semibold">
-                <Play className="size-3.5 fill-current" />
+                <Play className="size-4 fill-current" />
                 Próximo Turno
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={alternarModoCompactoGeral}
-                className="gap-1.5"
+                className="gap-1"
                 title={modoCompactoGeral ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
               >
                 {modoCompactoGeral ? (
                   <>
-                    <Maximize2 className="size-3.5" />
+                    <Maximize2 className="size-4" />
                     <span>Expandir Cards</span>
                   </>
                 ) : (
                   <>
-                    <Minimize2 className="size-3.5" />
+                    <Minimize2 className="size-4" />
                     <span>Minimizar Cards</span>
                   </>
                 )}
@@ -1366,18 +1403,18 @@ function VisaoNarrador({
                     <div
                       className={cn(
                         'flex flex-col rounded-xl border bg-card transition-all shadow-xs overflow-hidden',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/[0.02]',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-amber-500/60 bg-amber-500/[0.02]',
+                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/2',
+                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 bg-dano-superficial/2',
                         !ehTurnoAtual && !ehProximoTurno && 'border-border/80 hover:border-border',
-                        arrastandoId === part.id && 'opacity-40 border-dashed border-primary scale-[0.99]',
+                        arrastandoId === part.id && 'opacity-40 border-dashed border-primary scale-100',
                         destinoId === part.id && arrastandoId !== part.id && 'ring-2 ring-primary ring-offset-2',
                       )}
                     >
                       {/* LINHA 1: IDENTIDADE / VEZ / ESTADO DE SAÚDE / AÇÕES */}
                       <div className="flex items-start justify-between gap-3 px-4 py-2">
-                        <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="flex items-start gap-2 min-w-0">
                           <div
-                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-0.5"
+                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-1"
                             title="Arraste para reordenar a iniciativa"
                           >
                             <GripVertical className="size-4" />
@@ -1385,38 +1422,40 @@ function VisaoNarrador({
                           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
                             {index + 1}
                           </span>
-                          <div className="flex flex-wrap items-start gap-2 min-w-0 pt-0.5">
-                            <span className="font-serif font-bold text-base text-foreground truncate leading-tight">
-                              {part.nome}
-                            </span>
+                          <div className="flex flex-wrap items-start gap-2 min-w-0 pt-1">
+                            <div className="flex max-w-full min-w-0 items-center gap-2">
+                              <span className="font-serif font-bold text-base text-foreground truncate leading-tight" title={part.nome}>
+                                {part.nome}
+                              </span>
 
-                            {ehTurnoAtual && (
-                              <span
-                                className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
-                                title="Agindo agora"
-                              >
-                                <span className="size-2 rounded-full bg-vinho animate-pulse" />
-                              </span>
-                            )}
-                            {ehProximoTurno && !ehTurnoAtual && (
-                              <span
-                                className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 border border-amber-500/40"
-                                title="Próximo a agir"
-                              >
-                                <span className="size-2 rounded-full bg-amber-500 dark:bg-amber-400" />
-                              </span>
-                            )}
+                              {ehTurnoAtual && (
+                                <span
+                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
+                                  title="Agindo agora"
+                                >
+                                  <span className="size-2 rounded-full bg-vinho animate-pulse" />
+                                </span>
+                              )}
+                              {ehProximoTurno && !ehTurnoAtual && (
+                                <span
+                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-dano-superficial/20 border border-dano-superficial/40"
+                                  title="Próximo a agir"
+                                >
+                                  <span className="size-2 rounded-full bg-dano-superficial" />
+                                </span>
+                              )}
+                            </div>
 
                             {part.tipo === 'inimigo' ? (
-                              <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4.5 text-muted-foreground shrink-0">
+                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 Inimigo
                               </Badge>
                             ) : part.ehPdn ? (
-                              <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4.5 text-muted-foreground shrink-0">
+                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 PdN
                               </Badge>
                             ) : (
-                              <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4.5 shrink-0">
+                              <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
                                 Personagem
                               </Badge>
                             )}
@@ -1424,7 +1463,7 @@ function VisaoNarrador({
                         </div>
 
                         {/* Direita: Dot de Saúde + Ações Narrador + Maximizar */}
-                        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                        <div className="flex items-center gap-1 shrink-0 pt-1">
                           {part.tipo === 'inimigo' ? (
                             <BadgeSaude
                               vitalidadeMax={part.vitalidadeMax}
@@ -1451,7 +1490,7 @@ function VisaoNarrador({
                             className="size-7"
                             aria-label="Mover para cima"
                           >
-                            <ArrowUp className="size-3.5" />
+                            <ArrowUp className="size-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1461,7 +1500,7 @@ function VisaoNarrador({
                             className="size-7"
                             aria-label="Mover para baixo"
                           >
-                            <ArrowDown className="size-3.5" />
+                            <ArrowDown className="size-4" />
                           </Button>
                           {part.tipo === 'inimigo' && (
                             <>
@@ -1472,7 +1511,7 @@ function VisaoNarrador({
                                 className="size-7"
                                 title="Editar este inimigo no combate"
                               >
-                                <Edit3 className="size-3.5" />
+                                <Edit3 className="size-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -1486,9 +1525,9 @@ function VisaoNarrador({
                                 }
                               >
                                 {part.revelarVitalidade ? (
-                                  <Eye className="size-3.5 text-vinho" />
+                                  <Eye className="size-4 text-vinho" />
                                 ) : (
-                                  <EyeOff className="size-3.5 text-muted-foreground" />
+                                  <EyeOff className="size-4 text-muted-foreground" />
                                 )}
                               </Button>
                             </>
@@ -1500,7 +1539,7 @@ function VisaoNarrador({
                             className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
                             title="Expandir card completo"
                           >
-                            <Maximize2 className="size-3.5" />
+                            <Maximize2 className="size-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1509,13 +1548,13 @@ function VisaoNarrador({
                             className="size-7 text-destructive hover:text-destructive"
                             aria-label="Remover participante"
                           >
-                            <Trash2 className="size-3.5" />
+                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </div>
 
                       {/* LINHA 2: TRACKERS EM VALORES NUMÉRICOS (CARROSSEL DRAG-FREE) */}
-                      <div className="flex items-center px-4 py-1.5 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
+                      <div className="flex items-center px-4 py-1 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
                         {part.tipo === 'inimigo' ? (
                           <TrackersNumericosLinha
                             danoVitalidade={part.danoVitalidade}
@@ -1532,16 +1571,17 @@ function VisaoNarrador({
                             fome={part.condicaoPersonagem.fome}
                           />
                         ) : (
-                          <span className="text-xs text-muted-foreground italic px-1 py-0.5">
+                          <span className="text-xs text-muted-foreground italic px-1 py-1">
                             Condição indisponível
                           </span>
                         )}
                       </div>
 
                       {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
-                      <div className="flex items-center justify-between gap-3 px-4 py-1.5 bg-muted/20 border-t border-border/50 text-xs min-h-9">
+                      <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
                         <BadgesCondicoes
                           participanteId={part.id}
+                          ehVampiro={ehParticipanteVampiro(part)}
                           condicoes={part.condicoes}
                           podeEditar={true}
                           onAlternarCondicao={handleAlternarCondicao}
@@ -1553,17 +1593,17 @@ function VisaoNarrador({
                     <Card
                       className={cn(
                         'py-4 transition-all duration-150',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/[0.03]',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-amber-500/60 shadow-sm bg-amber-500/[0.03]',
+                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
+                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
                         !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
-                        arrastandoId === part.id && 'opacity-40 border-dashed border-primary scale-[0.99]',
+                        arrastandoId === part.id && 'opacity-40 border-dashed border-primary scale-100',
                         destinoId === part.id && arrastandoId !== part.id && 'ring-2 ring-primary ring-offset-2',
                       )}
                     >
-                      <CardHeader className="py-2.5 px-4 flex flex-row items-start justify-between gap-2">
-                        <div className="flex items-start gap-2.5 min-w-0">
+                      <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 min-w-0">
                           <div
-                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-0.5"
+                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-1"
                             title="Arraste para reordenar a iniciativa"
                           >
                             <GripVertical className="size-4" />
@@ -1571,17 +1611,17 @@ function VisaoNarrador({
                           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
                             {index + 1}
                           </span>
-                          <div className="flex flex-wrap items-start gap-2 pt-0.5 min-w-0">
+                          <div className="flex flex-wrap items-start gap-2 pt-1 min-w-0">
                             <CardTitle className="font-serif text-xl truncate leading-tight">{part.nome}</CardTitle>
                             {ehTurnoAtual && (
-                              <Badge className="bg-vinho text-white border-0 text-xs font-semibold shrink-0">
+                              <Badge className="bg-vinho text-primary-foreground border-0 text-xs font-semibold shrink-0">
                                 Agindo agora
                               </Badge>
                             )}
                             {ehProximoTurno && !ehTurnoAtual && (
                               <Badge
                                 variant="outline"
-                                className="border-amber-500/80 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-xs flex items-center gap-1 shrink-0"
+                                className="border-dano-superficial/80 bg-dano-superficial/10 text-dano-superficial font-semibold text-xs flex items-center gap-1 shrink-0"
                               >
                                 <ArrowRight className="size-3" />
                                 Próximo a agir
@@ -1618,7 +1658,7 @@ function VisaoNarrador({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                        <div className="flex items-center gap-1 shrink-0 pt-1">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1690,7 +1730,7 @@ function VisaoNarrador({
                         </div>
                       </CardHeader>
 
-                      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2.5">
+                      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2">
                         {part.tipo === 'inimigo' ? (
                           <div className="flex flex-col gap-3">
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -1749,7 +1789,7 @@ function VisaoNarrador({
                             )}
 
                             {part.especiais && part.especiais.length > 0 && (
-                              <div className="flex items-center gap-1.5 pt-1 border-t min-w-0">
+                              <div className="flex items-center gap-1 pt-1 border-t min-w-0">
                                 <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
                                 <CarrosselBadges>
                                   {part.especiais.map((esp, i) => (
@@ -1759,10 +1799,11 @@ function VisaoNarrador({
                               </div>
                             )}
 
-                            <div className="flex items-center gap-1.5 pt-1.5 border-t min-w-0">
+                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
+                                ehVampiro={ehParticipanteVampiro(part)}
                                 condicoes={part.condicoes}
                                 podeEditar={true}
                                 onAlternarCondicao={handleAlternarCondicao}
@@ -1806,10 +1847,11 @@ function VisaoNarrador({
                               <p className="text-xs text-muted-foreground">Condição indisponível.</p>
                             )}
 
-                            <div className="flex items-center gap-1.5 pt-1.5 border-t min-w-0">
+                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
+                                ehVampiro={ehParticipanteVampiro(part)}
                                 condicoes={part.condicoes}
                                 podeEditar={true}
                                 onAlternarCondicao={handleAlternarCondicao}
@@ -1826,7 +1868,7 @@ function VisaoNarrador({
 
             {/* SEÇÃO INFERIOR: INIMIGOS FORA DE COMBATE (INCAPACITADOS / MORTOS / TORPOR) */}
             {inimigosIncapacitados.length > 0 && (
-              <div className="flex flex-col gap-2.5 pt-4 border-t border-dashed border-border/80 mt-2">
+              <div className="flex flex-col gap-2 pt-4 border-t border-dashed border-border/80 mt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Skull className="size-4 text-muted-foreground" />
@@ -1834,7 +1876,7 @@ function VisaoNarrador({
                       Inimigos Fora de Combate ({inimigosIncapacitados.length})
                     </h3>
                   </div>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Fora da iniciativa até o fim do combate
                   </span>
                 </div>
@@ -1858,7 +1900,7 @@ function VisaoNarrador({
 
       {/* DIALOG: NOVO COMBATE */}
       <Dialog open={dialogNovoCombate} onOpenChange={setDialogNovoCombate}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-9/10 overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl flex items-center gap-2">
               <Swords className="size-5" />
@@ -1871,7 +1913,7 @@ function VisaoNarrador({
 
           <div className="flex flex-col gap-6 py-4">
             <div className="flex flex-col gap-2">
-              <Label className="font-semibold flex items-center gap-1.5">
+              <Label className="font-semibold flex items-center gap-1">
                 <Users className="size-4" />
                 Personagens e PdNs da Crônica
               </Label>
@@ -1898,9 +1940,9 @@ function VisaoNarrador({
                   ])
                   setPersonagensTemp([])
                 }}
-                className="self-start gap-1.5"
+                className="self-start gap-1"
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-4" />
                 Adicionar {personagensTemp.length > 0 ? `(${personagensTemp.length})` : ''}
               </Button>
 
@@ -1924,7 +1966,7 @@ function VisaoNarrador({
                             setSelecaoPersonagens(selecaoPersonagens.filter((id) => id !== pId))
                           }}
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     )
@@ -1934,7 +1976,7 @@ function VisaoNarrador({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-semibold flex items-center gap-1.5">
+              <Label className="font-semibold flex items-center gap-1">
                 <Skull className="size-4" />
                 Inimigos a partir do Bestiário
               </Label>
@@ -1975,9 +2017,9 @@ function VisaoNarrador({
                       setInimigosParaAdicionar(novosInimigos)
                       setModelosTemp([])
                     }}
-                    className="self-start gap-1.5"
+                    className="self-start gap-1"
                   >
-                    <Plus className="size-3.5" />
+                    <Plus className="size-4" />
                     Adicionar {modelosTemp.length > 0 ? `(${modelosTemp.length})` : ''}
                   </Button>
 
@@ -1988,7 +2030,7 @@ function VisaoNarrador({
                         return (
                           <div
                             key={idx}
-                            className="flex items-center justify-between gap-2 text-sm py-1.5 border-b last:border-b-0"
+                            className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-b-0"
                           >
                             <div className="flex flex-col flex-1 min-w-0">
                               <Input
@@ -2001,7 +2043,7 @@ function VisaoNarrador({
                                 className="h-7 text-xs"
                               />
                               {mod?.categoria && (
-                                <span className="text-[10px] text-muted-foreground mt-0.5 ml-0.5">
+                                <span className="text-xs text-muted-foreground mt-1 ml-1">
                                   Categoria: <strong className="font-medium text-foreground">{mod.categoria}</strong>
                                 </span>
                               )}
@@ -2017,7 +2059,7 @@ function VisaoNarrador({
                                 )
                               }}
                             >
-                              <Trash2 className="size-3.5" />
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         )
@@ -2081,7 +2123,7 @@ function VisaoNarrador({
 
             {tipoNovoPart === 'inimigo' ? (
               <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1">
                   <Label>Modelo(s) do Bestiário</Label>
                   <SelectMultiplo
                     opcoes={modelos.map((m) => ({
@@ -2101,13 +2143,13 @@ function VisaoNarrador({
                   />
                 </div>
                 {modelosAvulsosTemp.length === 1 && (
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="nome-inimigo-avulso">Rótulo / Nome no Combate (opcional)</Label>
                       {(() => {
                         const mod = modelos.find((m) => m.id === modelosAvulsosTemp[0])
                         return mod ? (
-                          <span className="text-[11px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             Categoria: <strong className="font-medium text-foreground">{mod.categoria}</strong>
                           </span>
                         ) : null
@@ -2123,7 +2165,7 @@ function VisaoNarrador({
                 )}
               </div>
             ) : (
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 <Label>Personagem(ns) ou PdN(s)</Label>
                 <SelectMultiplo
                   opcoes={personagens.map((p) => ({
@@ -2193,7 +2235,7 @@ function VisaoNarrador({
           if (!aberto) setInimigoEmEdicao(null)
         }}
       >
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-9/10 overflow-y-auto">
           {inimigoEmEdicao && (
             <form onSubmit={handleSalvarEdicaoInimigo}>
               <DialogHeader>
@@ -2206,7 +2248,7 @@ function VisaoNarrador({
               </DialogHeader>
 
               <div className="flex flex-col gap-4 py-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1">
                   <Label htmlFor="nome-instancia">Rótulo / Nome no Combate</Label>
                   <Input
                     id="nome-instancia"
@@ -2220,7 +2262,7 @@ function VisaoNarrador({
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="inst-fisico">Físico</Label>
                     <InputNumero
                       id="inst-fisico"
@@ -2239,7 +2281,7 @@ function VisaoNarrador({
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="inst-social">Social</Label>
                     <InputNumero
                       id="inst-social"
@@ -2258,7 +2300,7 @@ function VisaoNarrador({
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="inst-mental">Mental</Label>
                     <InputNumero
                       id="inst-mental"
@@ -2280,7 +2322,7 @@ function VisaoNarrador({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="inst-vitalidade">Vitalidade Máx</Label>
                     <InputNumero
                       id="inst-vitalidade"
@@ -2296,7 +2338,7 @@ function VisaoNarrador({
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="inst-vontade">Força de Vontade Máx</Label>
                     <InputNumero
                       id="inst-vontade"
@@ -2341,7 +2383,7 @@ function VisaoNarrador({
                         })
                       }
                     >
-                      <Plus className="size-3.5" />
+                      <Plus className="size-4" />
                       Adicionar
                     </Button>
                   </div>
@@ -2422,7 +2464,7 @@ function VisaoNarrador({
                         })
                       }
                     >
-                      <Plus className="size-3.5" />
+                      <Plus className="size-4" />
                       Adicionar
                     </Button>
                   </div>
@@ -2508,7 +2550,7 @@ function VisaoNarrador({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif text-lg">
+            <AlertDialogTitle className="font-serif text-xl">
               Vitalidade Totalmente Agravada
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
@@ -2653,7 +2695,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
+    <main className="container-app mx-auto min-h-dvh">
       <BarraApp />
       <div className="flex flex-col gap-6 pt-2 pb-12">
         <div className="flex flex-col gap-1">
@@ -2670,7 +2712,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                   </Badge>
                 )}
                 {proximoParticipante && proximoParticipante.id !== participanteAtual?.id && (
-                  <Badge variant="outline" className="text-xs border-amber-500/70 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                  <Badge variant="outline" className="text-xs border-dano-superficial/70 bg-dano-superficial/10 text-dano-superficial font-semibold flex items-center gap-1">
                     <ArrowRight className="size-3" />
                     Próximo: {proximoParticipante.nome} {proximoParticipante.tipo === 'inimigo' ? '(Inimigo)' : ''}
                   </Badge>
@@ -2680,9 +2722,9 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                     size="sm"
                     onClick={handlePassarMeuTurno}
                     disabled={passandoTurno}
-                    className="gap-1.5 font-semibold bg-vinho hover:bg-vinho/90 text-white ml-auto sm:ml-0"
+                    className="gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground ml-auto sm:ml-0"
                   >
-                    <Play className="size-3.5 fill-current" />
+                    <Play className="size-4 fill-current" />
                     {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
                   </Button>
                 )}
@@ -2690,17 +2732,17 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                   variant="outline"
                   size="sm"
                   onClick={alternarModoCompactoGeral}
-                  className="gap-1.5 ml-auto sm:ml-0"
+                  className="gap-1 ml-auto sm:ml-0"
                   title={modoCompactoGeral ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
                 >
                   {modoCompactoGeral ? (
                     <>
-                      <Maximize2 className="size-3.5" />
+                      <Maximize2 className="size-4" />
                       <span>Expandir Cards</span>
                     </>
                   ) : (
                     <>
-                      <Minimize2 className="size-3.5" />
+                      <Minimize2 className="size-4" />
                       <span>Minimizar Cards</span>
                     </>
                   )}
@@ -2736,49 +2778,51 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                     <div
                       className={cn(
                         'flex flex-col rounded-xl border bg-card transition-all shadow-xs overflow-hidden',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/[0.02]',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-amber-500/60 bg-amber-500/[0.02]',
+                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/2',
+                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 bg-dano-superficial/2',
                         !ehTurnoAtual && !ehProximoTurno && 'border-border/80 hover:border-border',
                       )}
                     >
                       {/* LINHA 1: IDENTIDADE / VEZ / ESTADO DE SAÚDE / MAXIMIZAR */}
                       <div className="flex items-start justify-between gap-3 px-4 py-2">
-                        <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="flex items-start gap-2 min-w-0">
                           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
                             {index + 1}
                           </span>
-                          <div className="flex flex-wrap items-start gap-2 min-w-0 pt-0.5">
-                            <span className="font-serif font-bold text-base text-foreground truncate leading-tight">
-                              {part.nome}
-                            </span>
+                          <div className="flex flex-wrap items-start gap-2 min-w-0 pt-1">
+                            <div className="flex max-w-full min-w-0 items-center gap-2">
+                              <span className="font-serif font-bold text-base text-foreground truncate leading-tight" title={part.nome}>
+                                {part.nome}
+                              </span>
 
-                            {ehTurnoAtual && (
-                              <span
-                                className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
-                                title="Agindo agora"
-                              >
-                                <span className="size-2 rounded-full bg-vinho animate-pulse" />
-                              </span>
-                            )}
-                            {ehProximoTurno && !ehTurnoAtual && (
-                              <span
-                                className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 border border-amber-500/40"
-                                title="Próximo a agir"
-                              >
-                                <span className="size-2 rounded-full bg-amber-500 dark:bg-amber-400" />
-                              </span>
-                            )}
+                              {ehTurnoAtual && (
+                                <span
+                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
+                                  title="Agindo agora"
+                                >
+                                  <span className="size-2 rounded-full bg-vinho animate-pulse" />
+                                </span>
+                              )}
+                              {ehProximoTurno && !ehTurnoAtual && (
+                                <span
+                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-dano-superficial/20 border border-dano-superficial/40"
+                                  title="Próximo a agir"
+                                >
+                                  <span className="size-2 rounded-full bg-dano-superficial" />
+                                </span>
+                              )}
+                            </div>
 
                             {part.tipo === 'inimigo' ? (
-                              <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4.5 text-muted-foreground shrink-0">
+                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 Inimigo
                               </Badge>
                             ) : part.ehPdn ? (
-                              <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4.5 text-muted-foreground shrink-0">
+                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 PdN
                               </Badge>
                             ) : (
-                              <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4.5 shrink-0">
+                              <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
                                 Personagem
                               </Badge>
                             )}
@@ -2786,7 +2830,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                         </div>
 
                         {/* Direita: Dot de Saúde + Botão Maximizar */}
-                        <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                        <div className="flex items-center gap-2 shrink-0 pt-1">
                           {part.tipo === 'inimigo' ? (
                             <BadgeSaude
                               vitalidadeMax={part.vitalidadeMax}
@@ -2815,13 +2859,13 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                             className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
                             title="Expandir card completo"
                           >
-                            <Maximize2 className="size-3.5" />
+                            <Maximize2 className="size-4" />
                           </Button>
                         </div>
                       </div>
 
                       {/* LINHA 2: TRACKERS EM VALORES NUMÉRICOS (CARROSSEL DRAG-FREE) */}
-                      <div className="flex items-center px-4 py-1.5 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
+                      <div className="flex items-center px-4 py-1 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
                         {part.tipo === 'inimigo' ? (
                           <TrackersNumericosLinha
                             danoVitalidade={part.danoVitalidade}
@@ -2838,16 +2882,17 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                             condicaoOculta={part.condicaoOculta}
                           />
                         ) : (
-                          <span className="text-xs text-muted-foreground italic px-1 py-0.5">
+                          <span className="text-xs text-muted-foreground italic px-1 py-1">
                             {part.condicaoOculta ? 'Condição oculta' : 'Condição indisponível'}
                           </span>
                         )}
                       </div>
 
                       {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
-                      <div className="flex items-center justify-between gap-3 px-4 py-1.5 bg-muted/20 border-t border-border/50 text-xs min-h-9">
+                      <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
                         <BadgesCondicoes
                           participanteId={part.id}
+                          ehVampiro={ehParticipanteVampiro(part)}
                           condicoes={part.condicoes}
                           podeEditar={part.ehMeu === true}
                           onAlternarCondicao={handleAlternarCondicao}
@@ -2857,7 +2902,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                             size="sm"
                             onClick={handlePassarMeuTurno}
                             disabled={passandoTurno}
-                            className="h-7 text-xs gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-white shrink-0 ml-2 shadow-sm"
+                            className="h-7 text-xs gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground shrink-0 ml-2 shadow-sm"
                           >
                             <Play className="size-3 fill-current" />
                             {passandoTurno ? 'Passando...' : 'Concluir Turno'}
@@ -2870,27 +2915,27 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                     <Card
                       className={cn(
                         'py-4 transition-all duration-150',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/[0.03]',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-amber-500/60 shadow-sm bg-amber-500/[0.03]',
+                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
+                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
                         !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
                       )}
                     >
-                      <CardHeader className="py-2.5 px-4 flex flex-row items-start justify-between gap-2">
-                        <div className="flex items-start gap-2.5 min-w-0">
+                      <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 min-w-0">
                           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
                             {index + 1}
                           </span>
-                          <div className="flex flex-wrap items-start gap-2 pt-0.5 min-w-0">
+                          <div className="flex flex-wrap items-start gap-2 pt-1 min-w-0">
                             <CardTitle className="font-serif text-xl truncate leading-tight">{part.nome}</CardTitle>
                             {ehTurnoAtual && (
-                              <Badge className="bg-vinho text-white border-0 text-xs font-semibold shrink-0">
+                              <Badge className="bg-vinho text-primary-foreground border-0 text-xs font-semibold shrink-0">
                                 Agindo agora
                               </Badge>
                             )}
                             {ehProximoTurno && !ehTurnoAtual && (
                               <Badge
                                 variant="outline"
-                                className="border-amber-500/80 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-xs flex items-center gap-1 shrink-0"
+                                className="border-dano-superficial/80 bg-dano-superficial/10 text-dano-superficial font-semibold text-xs flex items-center gap-1 shrink-0"
                               >
                                 <ArrowRight className="size-3" />
                                 Próximo a agir
@@ -2931,7 +2976,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                        <div className="flex items-center gap-1 shrink-0 pt-1">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -2944,7 +2989,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                         </div>
                       </CardHeader>
 
-                      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2.5">
+                      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2">
                         {part.tipo === 'inimigo' ? (
                           <div className="flex flex-col gap-3">
                             {part.vitalidadeOculta ? (
@@ -2962,7 +3007,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                               </div>
                             )}
                             {part.especiais && part.especiais.length > 0 && (
-                              <div className="flex items-center gap-1.5 pt-1.5 border-t min-w-0">
+                              <div className="flex items-center gap-1 pt-1 border-t min-w-0">
                                 <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
                                 <CarrosselBadges>
                                   {part.especiais.map((esp, i) => (
@@ -2971,10 +3016,11 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                                 </CarrosselBadges>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5 pt-1.5 border-t min-w-0">
+                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
+                                ehVampiro={ehParticipanteVampiro(part)}
                                 condicoes={part.condicoes}
                                 podeEditar={false}
                                 onAlternarCondicao={handleAlternarCondicao}
@@ -3039,10 +3085,11 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                               <p className="text-xs text-muted-foreground">Condição indisponível.</p>
                             )}
 
-                            <div className="flex items-center gap-1.5 pt-1.5 border-t min-w-0">
+                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
+                                ehVampiro={ehParticipanteVampiro(part)}
                                 condicoes={part.condicoes}
                                 podeEditar={part.ehMeu === true}
                                 onAlternarCondicao={handleAlternarCondicao}
@@ -3057,9 +3104,9 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                               size="sm"
                               onClick={handlePassarMeuTurno}
                               disabled={passandoTurno}
-                              className="gap-1.5 font-semibold bg-vinho hover:bg-vinho/90 text-white shadow-sm"
+                              className="gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground shadow-sm"
                             >
-                              <Play className="size-3.5 fill-current" />
+                              <Play className="size-4 fill-current" />
                               {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
                             </Button>
                           </div>
@@ -3073,7 +3120,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
 
             {/* SEÇÃO INFERIOR: INIMIGOS FORA DE COMBATE (JOGADOR) */}
             {inimigosIncapacitados.length > 0 && (
-              <div className="flex flex-col gap-2.5 pt-4 border-t border-dashed border-border/80 mt-2">
+              <div className="flex flex-col gap-2 pt-4 border-t border-dashed border-border/80 mt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Skull className="size-4 text-muted-foreground" />
@@ -3081,7 +3128,7 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                       Inimigos Fora de Combate ({inimigosIncapacitados.length})
                     </h3>
                   </div>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Fora da iniciativa
                   </span>
                 </div>

@@ -12,8 +12,6 @@ export const paradaExcepcionalCombateSchema = z.object({
   valor: z.int(),
 })
 
-export const paradaEspecialCombateSchema = paradaExcepcionalCombateSchema
-
 export const especialCombateSchema = z.object({
   nome: z.string(),
   descricao: z.string().default(''),
@@ -27,7 +25,6 @@ export type CondicaoCombate = {
   categoria: 'debuff' | 'buff' | 'estado'
   descricao: string
   efeitoMecanico: string
-  classeCor: string
 }
 
 export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
@@ -37,7 +34,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Preso em combate corpo a corpo pelo oponente.',
     efeitoMecanico: '-2 dados em todas as ações exceto tentar escapar ou disputar o agarrão (V5 p. 301).',
-    classeCor: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
   },
   {
     id: 'caido',
@@ -45,7 +41,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'No chão após ser derrubado ou arremessado.',
     efeitoMecanico: '-2 dados em ataques corpo a corpo e esquivas; ganha cobertura contra armas de fogo à distância (V5 p. 302).',
-    classeCor: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
   },
   {
     id: 'imobilizado',
@@ -53,7 +48,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Completamente imobilizado por amarras, algemas ou trava total.',
     efeitoMecanico: 'Incapaz de esquivar; defesas ativas impossibilitadas ou limitadas (V5 p. 301).',
-    classeCor: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30',
   },
   {
     id: 'cego',
@@ -61,7 +55,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Cegueira temporária, escuridão sobrenatural ou fumaça densa.',
     efeitoMecanico: '-3 dados em paradas físicas e testes de percepção baseados em visão (V5 p. 302).',
-    classeCor: 'bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border-neutral-500/30',
   },
   {
     id: 'em-chamas',
@@ -69,7 +62,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'O fogo consome o corpo do personagem.',
     efeitoMecanico: 'Sofre de 1 a 3 pontos de dano Agravado por turno; vampiros devem testar Rôtschreck (Frenesi de Medo) a cada turno (V5 p. 221).',
-    classeCor: 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30',
   },
   {
     id: 'estacado',
@@ -77,7 +69,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Estaca de madeira perfurando o coração do vampiro.',
     efeitoMecanico: 'Paralisia total em torpor consciente; incapaz de qualquer ação física até remoção (V5 p. 221).',
-    classeCor: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30',
   },
   {
     id: 'surpreendido',
@@ -85,7 +76,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Apanhado de surpresa por emboscada ou ataque furtivo.',
     efeitoMecanico: 'Não pode realizar ações de ataque ou esquiva no turno da surpresa (V5 p. 300).',
-    classeCor: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
   },
   {
     id: 'frenesi',
@@ -93,7 +83,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'estado',
     descricao: 'A Besta assumiu o controle total da mente do vampiro.',
     efeitoMecanico: 'Imune a penalidades de ferimento e estado Debilitado; ignora restrições mentais; foco cego na causa (V5 p. 219).',
-    classeCor: 'bg-red-600/15 text-red-700 dark:text-red-400 border-red-600/30 font-semibold',
   },
   {
     id: 'sedado',
@@ -101,7 +90,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Sob efeito de narcóticos pesados, drogas no sangue ou veneno.',
     efeitoMecanico: '-2 dados em paradas físicas e mentais; dificuldade aumentada para permanecer desperto (V5 p. 310).',
-    classeCor: 'bg-teal-500/15 text-teal-700 dark:text-teal-400 border-teal-500/30',
   },
   {
     id: 'atordoado',
@@ -109,7 +97,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'debuff',
     descricao: 'Desorientado por forte choque físico, sonoro ou concussão.',
     efeitoMecanico: '-2 dados na próxima parada e perda de posicionamento.',
-    classeCor: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
   },
   {
     id: 'cobertura',
@@ -117,7 +104,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'buff',
     descricao: 'Abrigado atrás de anteparo sólido ou barricada.',
     efeitoMecanico: '+1 a +4 dados adicionais na parada de defesa contra projéteis e armas de fogo (V5 p. 302).',
-    classeCor: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   },
   {
     id: 'ofuscado',
@@ -125,7 +111,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'buff',
     descricao: 'Escondido pelas sombras ou camuflado por Ofuscação.',
     efeitoMecanico: 'Invisível a percepções normais; próximo ataque conta com benefício de surpresa (V5 p. 260).',
-    classeCor: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/30',
   },
   {
     id: 'desacordado',
@@ -133,7 +118,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'estado',
     descricao: 'Inconsciente ou incapacitado de lutar.',
     efeitoMecanico: 'Fora de combate. Incapaz de agir ou se defender.',
-    classeCor: 'bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30 font-medium',
   },
   {
     id: 'morto',
@@ -141,7 +125,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'estado',
     descricao: 'O corpo sucumbiu a ferimentos letais ou sofreu Morte Final.',
     efeitoMecanico: 'Falecido. Removido permanentemente da fila de combate.',
-    classeCor: 'bg-destructive/20 text-destructive border-destructive/40 font-bold',
   },
   {
     id: 'torpor',
@@ -149,7 +132,6 @@ export const CONDICOES_COMBATE_V5: readonly CondicaoCombate[] = [
     categoria: 'estado',
     descricao: 'O vampiro entrou em sono comatoso após dano agravado total.',
     efeitoMecanico: 'Coma vampírico. Fora de combate até despertar.',
-    classeCor: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 font-semibold',
   },
 ] as const
 
@@ -164,7 +146,6 @@ export type InfoEstadoSaude = {
   rotulo: string
   descricao: string
   penalidade: string
-  classeCor: string
 }
 
 export function calcularEstadoSaude(
@@ -186,17 +167,23 @@ export function calcularEstadoSaude(
         ? 'O vampiro sucumbiu a dano letal permanente e sofreu a Morte Final.'
         : 'O corpo sucumbiu a ferimentos letais.',
       penalidade: 'Falecido',
-      classeCor: 'bg-destructive/20 text-destructive border-destructive/40 font-bold',
     }
   }
 
   if (condicoes?.includes('torpor')) {
+    if (!ehVampiro) {
+      return {
+        estado: 'morto',
+        rotulo: 'Incapacitado',
+        descricao: 'Inconsciente ou incapaz de continuar lutando.',
+        penalidade: 'Fora de combate',
+      }
+    }
     return {
       estado: 'torpor',
       rotulo: 'Torpor',
       descricao: 'Vitalidade completamente preenchida com dano Agravado. O vampiro cai em torpor comatoso.',
       penalidade: 'Incapacitado',
-      classeCor: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 font-semibold',
     }
   }
 
@@ -206,7 +193,6 @@ export function calcularEstadoSaude(
       rotulo: 'Incapacitado',
       descricao: 'Inconsciente ou incapaz de continuar lutando.',
       penalidade: 'Fora de combate',
-      classeCor: 'bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30 font-medium',
     }
   }
 
@@ -217,7 +203,6 @@ export function calcularEstadoSaude(
         rotulo: 'Torpor',
         descricao: 'Vitalidade completamente preenchida com dano Agravado. O vampiro cai em torpor comatoso.',
         penalidade: 'Incapacitado',
-        classeCor: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 font-semibold',
       }
     }
     return {
@@ -225,7 +210,6 @@ export function calcularEstadoSaude(
       rotulo: 'Incapacitado / Morto',
       descricao: 'Vitalidade completamente preenchida com dano Agravado. O corpo sucumbe a ferimentos letais.',
       penalidade: 'Incapacitado / Morto',
-      classeCor: 'bg-destructive/20 text-destructive border-destructive/40 font-bold',
     }
   }
 
@@ -235,7 +219,6 @@ export function calcularEstadoSaude(
       rotulo: 'Debilitado (-2)',
       descricao: 'Trilha de Vitalidade cheia. Qualquer dano adicional sofrido converterá caixas superficiais em dano agravado.',
       penalidade: '-2 dados em todas as paradas físicas (V5 p. 126)',
-      classeCor: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30',
     }
   }
 
@@ -245,7 +228,6 @@ export function calcularEstadoSaude(
       rotulo: 'Ferido',
       descricao: 'Dano substancial acumulado (metade ou mais da trilha de Vitalidade preenchida).',
       penalidade: 'Sem penalidade direta de dados',
-      classeCor: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
     }
   }
 
@@ -255,7 +237,6 @@ export function calcularEstadoSaude(
       rotulo: 'Escoriado',
       descricao: 'Apenas escoriações ou ferimentos superficiais leves.',
       penalidade: 'Sem penalidades',
-      classeCor: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
     }
   }
 
@@ -264,7 +245,6 @@ export function calcularEstadoSaude(
     rotulo: 'Saudável',
     descricao: 'Nenhum dano registrado na trilha de Vitalidade.',
     penalidade: 'Sem penalidades',
-    classeCor: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   }
 }
 
@@ -308,6 +288,10 @@ export const participanteCombateSchema = z.discriminatedUnion('tipo', [
 export type ParticipanteInimigo = z.infer<typeof participanteInimigoSchema>
 export type ParticipantePersonagem = z.infer<typeof participantePersonagemSchema>
 export type ParticipanteCombate = z.infer<typeof participanteCombateSchema>
+
+export function ehParticipanteVampiro(p: ParticipanteCombate | ParticipanteVisivel): boolean {
+  return p.tipo === 'personagem' || (p.categoria?.toLowerCase().includes('vampiro') ?? false)
+}
 
 export const combateSchema = z.object({
   id: z.string().uuid(),
@@ -519,6 +503,10 @@ export function aplicarDanoInimigo(
   const novosParticipantes = combate.participantes.map((p) => {
     if (p.id !== participanteId || p.tipo !== 'inimigo') return p
 
+    if (condicaoAdicionar === 'torpor' && !ehParticipanteVampiro(p)) {
+      throw new Error('Torpor só se aplica a vampiros')
+    }
+
     let novasCondicoes = p.condicoes ?? []
     if (condicaoAdicionar) {
       if (['morto', 'desacordado', 'incapacitado', 'torpor'].includes(condicaoAdicionar)) {
@@ -585,6 +573,9 @@ export function alternarCondicaoParticipante(
     if (p.id !== participanteId) return p
     const condicoesAtuais = p.condicoes ?? []
     const existe = condicoesAtuais.includes(condicaoId)
+    if (!existe && condicaoId === 'torpor' && !ehParticipanteVampiro(p)) {
+      throw new Error('Torpor só se aplica a vampiros')
+    }
     const novasCondicoes = existe
       ? condicoesAtuais.filter((c) => c !== condicaoId)
       : [...condicoesAtuais, condicaoId]

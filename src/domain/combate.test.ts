@@ -55,6 +55,26 @@ const mockInimigo: ParticipanteCombate = {
 }
 
 describe('Combate - Ciclo de Turnos e Rodadas', () => {
+  it('recusa adicionar Torpor a um inimigo que não é vampiro', () => {
+    const combate = iniciarCombate([mockInimigo])
+    expect(() => alternarCondicaoParticipante(combate, mockInimigo.id, 'torpor'))
+      .toThrow('Torpor')
+    expect(() => aplicarDanoInimigo(combate, mockInimigo.id, 'vitalidade', { superficial: 0, agravado: 5 }, 'torpor'))
+      .toThrow('Torpor')
+  })
+
+  it('permite remover uma tag de Torpor antiga de um inimigo não vampiro', () => {
+    const combate = iniciarCombate([{ ...mockInimigo, condicoes: ['torpor'] }])
+    const atualizado = alternarCondicaoParticipante(combate, mockInimigo.id, 'torpor')
+    expect(atualizado.participantes[0].condicoes).toEqual([])
+  })
+
+  it('permite adicionar Torpor a um inimigo vampiro', () => {
+    const combate = iniciarCombate([{ ...mockInimigo, categoria: 'Vampiro' }])
+    const atualizado = alternarCondicaoParticipante(combate, mockInimigo.id, 'torpor')
+    expect(atualizado.participantes[0].condicoes).toEqual(['torpor'])
+  })
+
   it('inicia combate com rodada 1 e turno inicial no primeiro participante', () => {
     const combate = iniciarCombate([mockPersonagem1, mockPersonagem2, mockInimigo])
     expect(combate.rodada).toBe(1)
@@ -347,7 +367,7 @@ describe('Combate - Estado de Saúde e Condições V5', () => {
     expect(ini.condicoes).toEqual(['atordoado'])
   })
 
-  it('fornece estadoSaude e condicoes aos jogadores mesmo com vitalidade ou condicao oculta', () => {
+  it('mostra tags de saude sem revelar os valores da Condicao oculta, conforme pedido do Narrador', () => {
     const combate = iniciarCombate([mockPersonagem1, mockInimigo])
     const visao = filtrarCombateParaJogador(combate, {
       jogadorId: 'user-outro',
@@ -373,11 +393,22 @@ describe('Combate - Estado de Saúde e Condições V5', () => {
 
     const p1 = visao.participantes.find((p) => p.personagemId === 'char-1')!
     expect(p1.condicaoOculta).toBe(true)
-    expect(p1.estadoSaude).toBeDefined()
     expect(p1.estadoSaude?.rotulo).toBe('Ferido')
+    expect(p1.condicao).toBeUndefined()
+    expect(p1.danoVitalidade).toBeUndefined()
+    expect(p1.vitalidadeMax).toBeUndefined()
   })
 
   it('diferencia torpor de vampiro e desacordado/morto de carniçal e mortal', () => {
+    // Mortal com tag 'torpor' não entra em torpor: vira Incapacitado
+    const mortalComTagTorpor = calcularEstadoSaude(
+      6,
+      { superficial: 0, agravado: 0 },
+      false,
+      ['torpor'],
+    )
+    expect(mortalComTagTorpor.rotulo).toBe('Incapacitado')
+    expect(mortalComTagTorpor.estado).toBe('morto')
     // Vampiro com agravado max -> Torpor
     const saudeVampiro = calcularEstadoSaude(6, { superficial: 0, agravado: 6 }, true)
     expect(saudeVampiro.rotulo).toBe('Torpor')

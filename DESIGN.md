@@ -144,6 +144,8 @@ components:
 
 # Design System: Umbra
 
+Exceção aprovada para o Combate: dano superficial usa amarelo e dano agravado usa vermelho/vinho, tanto nos cards minimizados quanto nos abertos. As tags mantêm a gradação de saúde. Essas cores usam tokens semânticos do tema; a estrutura e a densidade dos cards seguem o layout aprovado em `docs/fatia-6-combate-sorteios.md`.
+
 ## Overview
 
 **Creative North Star: "A Ficha à Meia-Luz"**

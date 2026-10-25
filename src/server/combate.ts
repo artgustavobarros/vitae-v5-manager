@@ -300,7 +300,7 @@ export const avancarTurnoCombateServer = createServerFn({ method: 'POST' })
       .where(eq(combate.id, combateAtivo.id))
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'combate' })
-    return atualizado
+    return { ok: true }
   })
 
 export const voltarTurnoCombateServer = createServerFn({ method: 'POST' })
@@ -505,7 +505,7 @@ export const aplicarDanoInimigoCombateServer = createServerFn({ method: 'POST' }
 
       await db
         .update(combate)
-        .set({ participantes: atualizado.participantes })
+        .set({ participantes: atualizado.participantes, turnoAtual: atualizado.turnoAtual })
         .where(eq(combate.id, combateAtivo.id))
 
       barramento.emitir({ tipo: 'mudanca', escopo: 'combate' })
@@ -659,9 +659,9 @@ export const alternarCondicaoParticipanteCombateServer = createServerFn({ method
 
     await db
       .update(combate)
-      .set({ participantes: atualizado.participantes })
+      .set({ participantes: atualizado.participantes, turnoAtual: atualizado.turnoAtual })
       .where(eq(combate.id, combateAtivo.id))
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'combate' })
-    return atualizado
+    return { ok: true }
   })
