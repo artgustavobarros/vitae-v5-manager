@@ -1,0 +1,1 @@
+ALTER TABLE "personagem" ADD COLUMN "ordem_paradas" jsonb DEFAULT '[]'::jsonb NOT NULL;

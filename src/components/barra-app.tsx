@@ -6,8 +6,9 @@ import { SinoConectado } from './notificacoes/sino-conectado'
 import { Button } from './ui/button'
 
 /**
- * Barra do topo: marca Umbra e a navegação por papel à esquerda (hambúrguer abaixo de `lg`);
- * à direita, as ações da tela (`acoes`, que também vão para o hambúrguer), o sino e o menu de quem está logado.
+ * Barra do topo: marca Umbra e a navegação por papel à esquerda;
+ * à direita, as ações da tela, o sino e o menu de quem está logado.
+ * Abaixo de `lg` para o Jogador ou `xl` para o Narrador, navegação e ações vão para o hambúrguer.
  */
 export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
   const { usuario } = useRouteContext({ from: '__root__' })
@@ -22,7 +23,7 @@ export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
       </div>
       <div className="flex min-w-0 items-center gap-1">
         {acoes.map((acao) => (
-          <Button key={acao.rotulo} asChild variant="secondary" size="sm" className="hidden lg:inline-flex">
+          <Button key={acao.rotulo} asChild variant="secondary" size="sm" className={`hidden ${usuario?.papel === 'narrador' ? 'xl:inline-flex' : 'lg:inline-flex'}`}>
             <Link {...acao.link}>{acao.rotulo}</Link>
           </Button>
         ))}

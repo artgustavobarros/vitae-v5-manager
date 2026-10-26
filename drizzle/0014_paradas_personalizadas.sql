@@ -1,0 +1,1 @@
+ALTER TABLE "personagem" ADD COLUMN "paradas_personalizadas" jsonb DEFAULT '[]'::jsonb NOT NULL;

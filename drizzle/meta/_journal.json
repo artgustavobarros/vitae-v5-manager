@@ -99,6 +99,27 @@
       "when": 1792902051065,
       "tag": "0013_categoria_modelo_antagonista",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792945505693,
+      "tag": "0014_paradas_personalizadas",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792962760105,
+      "tag": "0015_ordem_paradas",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792964172136,
+      "tag": "0016_paradas_compartilhadas",
+      "breakpoints": true
     }
   ]
 }

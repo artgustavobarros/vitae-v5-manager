@@ -3,6 +3,7 @@ import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, time
 import type { EspecialAntagonista, ParadaExcepcional } from '#/domain/bestiario'
 import type { ParticipanteCombate } from '#/domain/combate'
 import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
+import type { ParadaPersonalizada } from '#/domain/paradas'
 import { OPCOES_CRIACAO_CRONICA_PADRAO, type OpcoesCriacaoCronica } from '#/domain/cronica'
 import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
 
@@ -86,6 +87,23 @@ export const personagem = pgTable(
   },
   (t) => [index('personagem_dono_id_idx').on(t.donoId)],
 )
+
+/** Definições de Paradas compartilhadas pela mesa; os valores vêm da Ficha selecionada. */
+export const paradaCompartilhada = pgTable('parada_compartilhada', {
+  id: uuid().primaryKey().defaultRandom(),
+  nome: text().notNull(),
+  atributo: text().$type<ParadaPersonalizada['atributo']>().notNull(),
+  habilidade: text().$type<ParadaPersonalizada['habilidade']>().notNull(),
+  criadoPorId: text('criado_por_id').references(() => user.id, { onDelete: 'set null' }),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [index('parada_compartilhada_criado_por_id_idx').on(t.criadoPorId)])
+
+/** A ordem é pessoal, independente do Personagem que o usuário estiver consultando. */
+export const preferenciaParadas = pgTable('preferencia_paradas', {
+  usuarioId: text('usuario_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  ordem: jsonb().$type<string[]>().notNull().default([]),
+})
 
 /**
  * Coterie: grupo de Personagens que o Narrador gerencia.

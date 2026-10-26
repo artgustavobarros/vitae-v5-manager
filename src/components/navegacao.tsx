@@ -10,7 +10,7 @@ import { contarRevisoesPendentes } from '#/server/revisao'
 
 type ItemNavegacao = { rotulo: string; to: LinkProps['to'] }
 
-/** Ação da tela atual, como "Editar" na Ficha: botão no header em `lg`+, item do hambúrguer abaixo. */
+/** Ação da tela atual, como "Editar" na Ficha: botão no header ou item do hambúrguer conforme o espaço disponível. */
 export type AcaoTela = { rotulo: string; link: LinkOptions }
 
 const ITENS: Record<Papel, ItemNavegacao[]> = {
@@ -18,6 +18,7 @@ const ITENS: Record<Papel, ItemNavegacao[]> = {
     { rotulo: 'Painel', to: '/' },
     { rotulo: 'Combate', to: '/combate' },
     { rotulo: 'Rolagens', to: '/narrador/rolagens' },
+    { rotulo: 'Paradas', to: '/paradas' },
     { rotulo: 'Bestiário', to: '/narrador/bestiario' },
     { rotulo: 'Personagens', to: '/narrador/personagens' },
     { rotulo: 'Coteries', to: '/narrador/coteries' },
@@ -27,6 +28,7 @@ const ITENS: Record<Papel, ItemNavegacao[]> = {
   ],
   jogador: [
     { rotulo: 'Meus Personagens', to: '/' },
+    { rotulo: 'Paradas', to: '/paradas' },
     { rotulo: 'Coteries', to: '/coteries' },
     { rotulo: 'Combate', to: '/combate' },
   ],
@@ -58,11 +60,11 @@ function Contador({ item, pendentes }: { item: ItemNavegacao; pendentes: number 
   )
 }
 
-/** Links principais inline no header, de `lg` para cima. */
+/** Links inline a partir de `lg` para o Jogador e de `xl` para o menu maior do Narrador. */
 export function NavegacaoInline({ papel }: { papel: Papel }) {
   const pendentes = usePendentesRevisao(papel)
   return (
-    <nav aria-label="Principal" className="hidden items-center gap-1 lg:flex">
+    <nav aria-label="Principal" className={`hidden items-center gap-1 ${papel === 'narrador' ? 'xl:flex' : 'lg:flex'}`}>
       {ITENS[papel].map((item) => (
         <Link
           key={item.to}
@@ -81,7 +83,7 @@ export function NavegacaoInline({ papel }: { papel: Papel }) {
   )
 }
 
-/** Abaixo de `lg` (tablet e celular), os mesmos links num Sheet aberto pelo hambúrguer. */
+/** Os mesmos links num Sheet abaixo do breakpoint da navegação inline de cada papel. */
 export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: AcaoTela[] }) {
   const [aberto, setAberto] = useState(false)
   const pendentes = usePendentesRevisao(papel)
@@ -89,7 +91,7 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
   return (
     <Sheet open={aberto} onOpenChange={setAberto}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon-lg" className="-mr-2 size-12 lg:hidden" aria-label="Abrir menu">
+        <Button variant="ghost" size="icon-lg" className={`-mr-2 size-12 ${papel === 'narrador' ? 'xl:hidden' : 'lg:hidden'}`} aria-label="Abrir menu">
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>

@@ -41,7 +41,10 @@ function TelaFicha() {
     }
   }
 
-  const acoes: AcaoTela[] = []
+  const acoes: AcaoTela[] = [{
+    rotulo: 'Paradas',
+    link: { to: '/paradas', search: { personagemId: personagem.id } },
+  }]
   if (personagem.acesso === 'editar') {
     acoes.push({
       rotulo: 'Editar',

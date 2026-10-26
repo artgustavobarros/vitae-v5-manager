@@ -48,6 +48,13 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   A Ficha não tem retrato.
 - Notas: só o Jogador escreve. O Narrador lê, exceto as Notas marcadas como privadas.
 
+## Paradas dos Personagens
+
+- Jogadores consultam Paradas Padrão com nome da ação, Atributo, Habilidade e total de dados base calculado da Ficha.
+- Paradas Personalizadas são compartilhadas pela mesa; o autor e o Narrador podem editar e remover. Os valores acompanham a Ficha selecionada. Combinações repetidas geram aviso com o título do card existente.
+- O grid compacto se adapta de uma a quatro colunas; o Jogador reordena as Paradas por drag and drop, com a ordem pessoal persistida por usuário, independente do Personagem selecionado.
+- A página não rola dados. Detalhes em `docs/paradas-personagens.md`.
+
 ## Narrador
 
 - O Narrador vê e edita todas as Fichas, e suas edições ignoram a validação.

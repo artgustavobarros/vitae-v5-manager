@@ -106,6 +106,10 @@ _Avoid_: Compêndio, base de dados, conteúdo
 Característica calculada a partir de outras (ex.: Vitalidade = Vigor + 3); o Jogador nunca a edita, só o Narrador a sobrescreve.
 _Avoid_: Valor calculado, stat derivado
 
+**Parada**:
+Conjunto de dados para uma ação, formado pela soma de um Atributo e uma Habilidade. As Paradas Padrão são sugestões disponíveis para todos os Personagens; as Paradas Personalizadas são combinações criadas pelos usuários e compartilhadas com toda a mesa.
+_Avoid_: Rodada de dados, rolagem padrão, macro
+
 **Rolagem**:
 Resultado aleatório de uma tabela do V5 (Ressonância, Discrasia, Compulsão) gerado pelo Narrador, com regras de intensidades e manifestações de Sangue-Fraco.
 _Avoid_: Sorteio, teste

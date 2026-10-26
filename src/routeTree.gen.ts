@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CombateRouteImport } from './routes/combate'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as ParadasRouteImport } from './routes/paradas'
 import { Route as ApiTempoRealRouteImport } from './routes/api/tempo-real'
 import { Route as CatalogoRevisaoRouteImport } from './routes/catalogo/revisao'
 import { Route as ConviteTokenRouteImport } from './routes/convite/$token'
@@ -47,6 +48,11 @@ const ContaRoute = ContaRouteImport.update({
 const EntrarRoute = EntrarRouteImport.update({
   id: '/entrar',
   path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParadasRoute = ParadasRouteImport.update({
+  id: '/paradas',
+  path: '/paradas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTempoRealRoute = ApiTempoRealRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/combate': typeof CombateRoute
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
+  '/paradas': typeof ParadasRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/catalogo/revisao': typeof CatalogoRevisaoRoute
   '/convite/$token': typeof ConviteTokenRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/combate': typeof CombateRoute
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
+  '/paradas': typeof ParadasRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/catalogo/revisao': typeof CatalogoRevisaoRoute
   '/convite/$token': typeof ConviteTokenRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/combate': typeof CombateRoute
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
+  '/paradas': typeof ParadasRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/catalogo/revisao': typeof CatalogoRevisaoRoute
   '/convite/$token': typeof ConviteTokenRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/combate'
     | '/conta'
     | '/entrar'
+    | '/paradas'
     | '/api/tempo-real'
     | '/catalogo/revisao'
     | '/convite/$token'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/combate'
     | '/conta'
     | '/entrar'
+    | '/paradas'
     | '/api/tempo-real'
     | '/catalogo/revisao'
     | '/convite/$token'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/combate'
     | '/conta'
     | '/entrar'
+    | '/paradas'
     | '/api/tempo-real'
     | '/catalogo/revisao'
     | '/convite/$token'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   CombateRoute: typeof CombateRoute
   ContaRoute: typeof ContaRoute
   EntrarRoute: typeof EntrarRoute
+  ParadasRoute: typeof ParadasRoute
   ApiTempoRealRoute: typeof ApiTempoRealRoute
   CatalogoRevisaoRoute: typeof CatalogoRevisaoRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/entrar'
       fullPath: '/entrar'
       preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paradas': {
+      id: '/paradas'
+      path: '/paradas'
+      fullPath: '/paradas'
+      preLoaderRoute: typeof ParadasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tempo-real': {
@@ -420,6 +440,7 @@ const rootRouteChildren: RootRouteChildren = {
   CombateRoute: CombateRoute,
   ContaRoute: ContaRoute,
   EntrarRoute: EntrarRoute,
+  ParadasRoute: ParadasRoute,
   ApiTempoRealRoute: ApiTempoRealRoute,
   CatalogoRevisaoRoute: CatalogoRevisaoRoute,
   ConviteTokenRoute: ConviteTokenRoute,
