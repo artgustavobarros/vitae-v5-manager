@@ -27,4 +27,4 @@ COPY --from=build --chown=node:node /app/package.json ./package.json
 
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "pnpm db:migrate && exec node .output/server/index.mjs"]
+CMD ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && exec node .output/server/index.mjs"]
