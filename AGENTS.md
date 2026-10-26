@@ -1,4 +1,4 @@
-# Umbra - Diretrizes para Agentes
+# Vitae - Diretrizes para Agentes
 
 Gerenciador de fichas de Vampiro: A Máscara 5ª Edição.
 

@@ -2,6 +2,8 @@ import { Link, type LinkOptions, type LinkProps } from '@tanstack/react-router'
 import { Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { MarcaVitae } from './marca-vitae'
+
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '#/components/ui/sheet'
@@ -97,7 +99,7 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
       </SheetTrigger>
       <SheetContent side="right" className="gap-0">
         <SheetHeader className="border-b">
-          <SheetTitle className="font-serif text-2xl">Umbra</SheetTitle>
+          <SheetTitle aria-label="Vitae"><MarcaVitae /></SheetTitle>
           <SheetDescription className="sr-only">Navegação principal</SheetDescription>
         </SheetHeader>
         <nav aria-label="Principal" className="flex flex-col gap-2 px-2 py-4">

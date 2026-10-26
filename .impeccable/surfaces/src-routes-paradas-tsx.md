@@ -7,7 +7,7 @@ related_targets: ["src/components/grid-paradas.tsx"]
 
 # Paradas do Personagem
 
-Modo Operate. O Jogador consulta combinações durante a sessão pelo celular. Herda o mundo visual do Umbra e seus componentes oficiais; o Narrador mantém o acesso permitido à Ficha. Sem rolagem de dados.
+Modo Operate. O Jogador consulta combinações durante a sessão pelo celular. Herda o mundo visual do Vitae e seus componentes oficiais; o Narrador mantém o acesso permitido à Ficha. Sem rolagem de dados.
 
 ## Direction contract
 

@@ -18,7 +18,7 @@ import { notificarNarradores } from '#/server/enviar-notificacao'
 const DEV = import.meta.env?.DEV ?? false
 
 export const auth = betterAuth({
-  appName: 'Umbra',
+  appName: 'Vitae',
   database: drizzleAdapter(db, { provider: 'pg', schema }),
   // A origem de BETTER_AUTH_URL já é confiável; outras (ex.: http://127.0.0.1:3005) vêm de
   // BETTER_AUTH_TRUSTED_ORIGINS, separadas por vírgula, que o better-auth lê do ambiente.

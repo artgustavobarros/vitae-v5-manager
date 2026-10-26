@@ -1,4 +1,4 @@
-# Umbra
+# Vitae
 
 Gerenciador de fichas de Vampiro: A Máscara 5ª Edição para uma única crônica presencial, em que o Narrador administra e os Jogadores controlam as próprias fichas pelo celular.
 

@@ -1,6 +1,6 @@
 # Vitae V5 Manager
 
-Umbra, gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Aplicação TanStack Start com PostgreSQL e Drizzle.
+Vitæ (Vitae), gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Aplicação TanStack Start com PostgreSQL e Drizzle.
 
 ## Desenvolvimento local
 
