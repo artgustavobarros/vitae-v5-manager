@@ -29,14 +29,16 @@ Parar quando as telas críticas estiverem dentro das metas ou quando o próximo 
 - [x] Repetir `/` três vezes: TTFB 375 ms na primeira carga e 15–21 ms nas duas seguintes; tratar o primeiro valor como inicialização fria, não como gargalo estável.
 - [x] Repetir `/combate` em build de produção: sem preload de CSS, LCP 1,47 / 1,51 / 1,65 s (mediana 1,51 s), CLS 0. Com preload, mediana 1,50 s. Diferença de 5 ms não supera o ruído; preload extra removido.
 - [x] Simular compressão do HTML no proxy local: com CSS separado, LCP frio mediano 1,60 s e quente 0,72 s. Inline + Brotli: frio 0,78 s e quente 0,73 s; inline + gzip: frio 0,80 s e quente 0,74 s. CLS 0 em todos. HTML inline caiu de 100.973 para 17.966 bytes com Brotli.
+- [x] Reduzir JS inicial de `/entrar`: `validateSearch` importava `ETAPAS` de `wizard.tsx`, puxando o wizard e catálogos para o chunk global. Separar a constante deixou os preloads do root em 3 assets (eram 9); o chunk principal caiu de 704,26 KB para 372,64 KB, gzip de 188,79 KB para 114,30 KB e Brotli de ~156 KB para ~96 KB.
+- [x] Repetir perfil frio de `/entrar`: produção antiga LCP 790/795/800 ms, CLS 0; build local após a divisão LCP 796/816/820 ms, CLS 0. Ambientes diferem; LCP segue perto de 0,8 s, sem ganho atribuível. Bloqueio total atribuído ao chunk principal foi 74–127 ms na produção antiga e 54–87 ms no proxy local; resultado indicativo, confirmar no domínio após deploy.
 - [x] Adotar inline CSS do manifesto TanStack e compressão no Traefik, excluindo `text/event-stream`. O endpoint publicado ainda respondeu HTML sem `Content-Encoding` na medição; falta confirmar após deploy. O proxy simulado não é o Traefik real.
 - [x] Investigar LCP de `/combate`: o elemento é texto; 97,6% do LCP ficou em atraso de renderização. CSS bloqueou renderização e o trace estimou 426–515 ms, mas preload não reduziu o LCP. Um forced reflow apareceu sem função identificada e sem economia estimada; sem alvo seguro para correção agora.
 - [x] Medir busca de Paradas com 17 itens: interação de digitação teve INP de 85 ms e CLS 0. A amostra não representa listas maiores.
 - [x] Adicionar smoke de produção no CI: verificar HTML público, preload da fonte, CSS e JavaScript com Brotli/cache imutável e gzip fallback. O smoke valida contratos de entrega; não garante CLS nem fixa um LCP sintético.
-- [ ] Repetir baseline com várias amostras e registrar mediana.
+- [x] Repetir baseline de `/entrar` com várias amostras; comparar novamente no domínio após deploy.
 - [ ] Medir edição de Ficha e interações de Jogador com uma sessão autenticada representativa.
 - [ ] Medir uma sessão de Jogador além da sessão de Narrador.
 - [ ] Confirmar após deploy que o HTML recebe `Content-Encoding` via Traefik e que eventos `text/event-stream` seguem sem compressão.
-- [ ] Investigar os assets de Ficha/schemas/popover carregados em `/entrar`; confirmar oportunidade de reduzir JS inicial com análise do grafo.
+- [x] Investigar assets de Ficha/schemas/popover em `/entrar`; o grafo confirmou que vinham do import eager de `ETAPAS` no wizard.
 - [ ] Priorizar alertas de loops do React Doctor apenas nas interações identificadas pelo perfil.
 - [ ] Definir budgets de CI depois de criar cenário estável para as telas críticas.

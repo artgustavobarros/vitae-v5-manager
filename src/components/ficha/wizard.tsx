@@ -37,17 +37,9 @@ import { CamposDisciplinasCriacao } from './wizard-disciplinas'
 import { CamposTipoPredadorCriacao } from './wizard-predador'
 import { CamposConviccoesCriacao } from './wizard-conviccoes'
 import { VisualizadorMarkdown } from '#/components/ui/editor-rich-text'
+import { ETAPAS } from './etapas-wizard'
 
-export const ETAPAS = [
-  'Identidade',
-  'Atributos',
-  'Habilidades',
-  'Disciplinas',
-  'Tipo de Predador',
-  'Vantagens e Defeitos',
-  'Convicções e Pilares',
-  'Revisão',
-] as const
+export { ETAPAS } from './etapas-wizard'
 
 /**
  * Criação guiada do Rascunho em 8 etapas.
