@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
+import { MarcaVitae } from '#/components/marca-vitae'
 import { Input } from '#/components/ui/input'
 import { InputSenha } from '#/components/ui/input-senha'
 import { Label } from '#/components/ui/label'
@@ -34,7 +35,7 @@ function Entrar() {
     >
       <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
         <div>
-          <h1 className="font-serif text-display">Umbra</h1>
+          <h1 aria-label="Vitae"><MarcaVitae tamanho="grande" /></h1>
           <p className="mt-1 text-sm text-muted-foreground">Fichas da Crônica</p>
         </div>
         {error && (

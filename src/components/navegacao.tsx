@@ -1,12 +1,12 @@
 import { Link, type LinkOptions, type LinkProps } from '@tanstack/react-router'
 import { Menu } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
-import { Badge } from '#/components/ui/badge'
+import { MarcaVitae } from './marca-vitae'
+
 import { Button } from '#/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '#/components/ui/sheet'
 import type { Papel } from '#/domain/acesso'
-import { contarRevisoesPendentes } from '#/server/revisao'
 
 type ItemNavegacao = { rotulo: string; to: LinkProps['to'] }
 
@@ -24,7 +24,6 @@ const ITENS: Record<Papel, ItemNavegacao[]> = {
     { rotulo: 'Coteries', to: '/narrador/coteries' },
     { rotulo: 'Jogadores', to: '/narrador/convites' },
     { rotulo: 'Crônica', to: '/narrador/cronica' },
-    { rotulo: 'Revisão', to: '/catalogo/revisao' },
   ],
   jogador: [
     { rotulo: 'Meus Personagens', to: '/' },
@@ -34,35 +33,8 @@ const ITENS: Record<Papel, ItemNavegacao[]> = {
   ],
 }
 
-/** Itens do Catálogo que o Narrador ainda não aprovou nem sugeriu; aparece ao lado de "Revisão". */
-function usePendentesRevisao(papel: Papel): number {
-  const [pendentes, setPendentes] = useState(0)
-  useEffect(() => {
-    if (papel !== 'narrador') return
-    const atualizar = () => {
-      contarRevisoesPendentes()
-        .then(setPendentes)
-        .catch(() => setPendentes(0))
-    }
-    atualizar()
-    window.addEventListener('revisao-atualizada', atualizar)
-    return () => window.removeEventListener('revisao-atualizada', atualizar)
-  }, [papel])
-  return pendentes
-}
-
-function Contador({ item, pendentes }: { item: ItemNavegacao; pendentes: number }) {
-  if (item.to !== '/catalogo/revisao' || pendentes === 0) return null
-  return (
-    <Badge variant="secondary" className="ml-2 tabular-nums" aria-label={`${pendentes} pendentes`}>
-      {pendentes}
-    </Badge>
-  )
-}
-
 /** Links inline a partir de `lg` para o Jogador e de `xl` para o menu maior do Narrador. */
 export function NavegacaoInline({ papel }: { papel: Papel }) {
-  const pendentes = usePendentesRevisao(papel)
   return (
     <nav aria-label="Principal" className={`hidden items-center gap-1 ${papel === 'narrador' ? 'xl:flex' : 'lg:flex'}`}>
       {ITENS[papel].map((item) => (
@@ -76,7 +48,6 @@ export function NavegacaoInline({ papel }: { papel: Papel }) {
           inactiveProps={{ className: 'text-muted-foreground' }}
         >
           {item.rotulo}
-          <Contador item={item} pendentes={pendentes} />
         </Link>
       ))}
     </nav>
@@ -86,7 +57,6 @@ export function NavegacaoInline({ papel }: { papel: Papel }) {
 /** Os mesmos links num Sheet abaixo do breakpoint da navegação inline de cada papel. */
 export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: AcaoTela[] }) {
   const [aberto, setAberto] = useState(false)
-  const pendentes = usePendentesRevisao(papel)
 
   return (
     <Sheet open={aberto} onOpenChange={setAberto}>
@@ -97,7 +67,7 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
       </SheetTrigger>
       <SheetContent side="right" className="gap-0">
         <SheetHeader className="border-b">
-          <SheetTitle className="font-serif text-2xl">Umbra</SheetTitle>
+          <SheetTitle aria-label="Vitae"><MarcaVitae /></SheetTitle>
           <SheetDescription className="sr-only">Navegação principal</SheetDescription>
         </SheetHeader>
         <nav aria-label="Principal" className="flex flex-col gap-2 px-2 py-4">
@@ -111,7 +81,6 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
               activeProps={{ className: 'bg-accent font-semibold', 'aria-current': 'page' }}
             >
               {item.rotulo}
-              <Contador item={item} pendentes={pendentes} />
             </Link>
           ))}
         </nav>

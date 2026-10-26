@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-22T00:00:00Z",
-  "title": "Design System: Umbra",
+  "title": "Design System: Vitae",
   "extensions": {
     "colorMeta": {
       "background": {
@@ -331,9 +331,9 @@
       "name": "Barra do topo",
       "kind": "nav",
       "refersTo": "barra-app",
-      "description": "Logotipo Umbra em serifa à esquerda, contexto à direita.",
-      "html": "<header class=\"ds-barra\"><a href=\"#\" class=\"ds-logo\">Umbra</a><span class=\"ds-ctx\">O Grupo</span></header>",
-      "css": ".ds-barra{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px}.ds-logo{font:400 24px/32px 'Alegreya SC',ui-serif,Georgia,serif;color:var(--foreground);text-decoration:none;border-radius:4px}.ds-logo:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}.ds-ctx{font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;color:var(--muted-foreground)}"
+      "description": "Vitæ em sans-serif com o V inicial em vinho à esquerda, contexto à direita.",
+      "html": "<header class=\"ds-barra\"><a href=\"#\" class=\"ds-logo\"><span class=\"vinho\">V</span>itæ</a><span class=\"ds-ctx\">O Grupo</span></header>",
+      "css": ".ds-barra{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px}.ds-logo{font:500 20px/28px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.025em;color:var(--foreground);text-decoration:none;border-radius:4px}.ds-logo .vinho{color:var(--vinho)}.ds-logo:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}.ds-ctx{font:400 14px/20px 'Jost Variable',ui-sans-serif,system-ui,sans-serif;color:var(--muted-foreground)}"
     },
     {
       "name": "Abas sublinhadas",
@@ -384,7 +384,7 @@
   ],
   "narrative": {
     "northStar": "A Ficha à Meia-Luz",
-    "overview": "Umbra é a ficha oficial de Vampiro: A Máscara 5ª Edição passada a limpo para uma mesa presencial com luz baixa. A página é escura, grafite tingido de ameixa, com tinta clara e uma única cor de estado, o vinho. A estrutura é literária: o nome do Personagem e os títulos de seção em serifa, todo o resto em uma sans neutra, e linhas finas no lugar de cartões. Os marcadores são os da ficha de papel (caixas, \"/\", X, bolinhas, trilha de Humanidade), para que ninguém reaprenda a ler.\n\nO movimento-assinatura é o calor: o topo da Ficha aquece em vinho conforme a Fome sobe de 0 a 5, e a faixa de estado (horizonte de Humanidade, Vitalidade, Força de Vontade, Fome) fica presa no topo ao rolar. A profundidade vem desse calor e da tonalidade, não de sombras.\n\nA densidade é de ferramenta de mesa: linhas de 48px tocáveis com o polegar, rótulo à esquerda e marcadores à direita, uma coluna central de no máximo 768px. A voz visual carrega o clima; os textos ficam neutros, em PT-BR, com os termos oficiais do V5.",
+    "overview": "Vitae é a ficha oficial de Vampiro: A Máscara 5ª Edição passada a limpo para uma mesa presencial com luz baixa. A página é escura, grafite tingido de ameixa, com tinta clara e uma única cor de estado, o vinho. A estrutura é literária: o nome do Personagem e os títulos de seção em serifa, todo o resto em uma sans neutra, e linhas finas no lugar de cartões. Os marcadores são os da ficha de papel (caixas, \"/\", X, bolinhas, trilha de Humanidade), para que ninguém reaprenda a ler.\n\nO movimento-assinatura é o calor: o topo da Ficha aquece em vinho conforme a Fome sobe de 0 a 5, e a faixa de estado (horizonte de Humanidade, Vitalidade, Força de Vontade, Fome) fica presa no topo ao rolar. A profundidade vem desse calor e da tonalidade, não de sombras.\n\nA densidade é de ferramenta de mesa: linhas de 48px tocáveis com o polegar, rótulo à esquerda e marcadores à direita, uma coluna central de no máximo 768px. A voz visual carrega o clima; os textos ficam neutros, em PT-BR, com os termos oficiais do V5.",
     "keyCharacteristics": [
       "Escuro de propósito: grafite ameixa, nunca superfícies claras.",
       "Vinho é a única cor de estado; o rosa-fome aparece só no numeral da Fome.",

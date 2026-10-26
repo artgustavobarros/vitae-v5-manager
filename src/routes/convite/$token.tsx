@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
+import { MarcaVitae } from '#/components/marca-vitae'
 import { Input } from '#/components/ui/input'
 import { InputSenha } from '#/components/ui/input-senha'
 import { Label } from '#/components/ui/label'
@@ -15,16 +16,27 @@ import { mensagemErroAuth } from '#/lib/erros-auth'
 import { prepararCadastro, verConvite } from '#/server/convites'
 
 export const Route = createFileRoute('/convite/$token')({
+  head: ({ params }) => ({
+    meta: [
+      { title: 'Convite para uma Crônica | Vitae' },
+      { name: 'description', content: 'Você recebeu um convite para uma Crônica de Vampiro: A Máscara.' },
+      { property: 'og:title', content: 'Você foi convidado para uma Crônica' },
+      { property: 'og:description', content: 'Entre na mesa de Vampiro: A Máscara com seu convite Vitae.' },
+      { property: 'og:url', content: `https://vitae.artbarros.tech/convite/${params.token}` },
+      { name: 'twitter:title', content: 'Você foi convidado para uma Crônica' },
+      { name: 'twitter:description', content: 'Entre na mesa de Vampiro: A Máscara com seu convite Vitae.' },
+    ],
+  }),
   validateSearch: z.object({ error: z.string().optional() }),
-  beforeLoad: ({ context }) => {
+  loader: async ({ params, context }) => {
     if (context.usuario) throw redirect({ to: '/' })
+    return await verConvite({ data: { token: params.token } })
   },
-  loader: ({ params }) => verConvite({ data: { token: params.token } }),
   component: Convite,
 })
 
 function Convite() {
-  const { estado } = Route.useLoaderData()
+  const { estado } = Route.useLoaderData() as Awaited<ReturnType<typeof verConvite>>
   const { token } = Route.useParams()
   const { error } = Route.useSearch()
 
@@ -35,7 +47,7 @@ function Convite() {
     >
       <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
         <div>
-          <h1 className="font-serif text-display">Umbra</h1>
+          <h1 aria-label="Vitae"><MarcaVitae tamanho="grande" /></h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {estado === 'valido' ? 'Você foi convidado para a Crônica.' : 'Fichas da Crônica'}
           </p>

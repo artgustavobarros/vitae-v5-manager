@@ -228,7 +228,7 @@ function PaginaSorteios() {
           <TabsContent value="ressonancia" className="flex flex-col gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="font-serif text-xl flex items-center gap-2">
+                <CardTitle className="font-serif text-xl flex items-start gap-2 sm:items-center">
                   <Sparkles className="size-5 text-vinho" />
                   Rolagem de Ressonância
                 </CardTitle>
@@ -363,7 +363,7 @@ function PaginaSorteios() {
           <TabsContent value="discrasia" className="flex flex-col gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="font-serif text-xl flex items-center gap-2">
+                <CardTitle className="font-serif text-xl flex items-start gap-2 sm:items-center">
                   <Sparkles className="size-5 text-vinho" />
                   Rolagem de Discrasia Avulsa
                 </CardTitle>
@@ -372,8 +372,8 @@ function PaginaSorteios() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex flex-col gap-1.5 min-w-[200px]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex w-full flex-col gap-1.5 sm:w-56">
                     <Label htmlFor="filtro-tipo-discrasia">Tipo de Ressonância</Label>
                     <Combobox
                       id="filtro-tipo-discrasia"
@@ -387,6 +387,7 @@ function PaginaSorteios() {
                       valor={tipoFiltroDiscrasia}
                       onChange={(val) => setTipoFiltroDiscrasia(val as TipoRessonancia | 'qualquer')}
                       placeholder="Qualquer Tipo"
+                      className="w-full"
                     />
                   </div>
 
@@ -428,7 +429,7 @@ function PaginaSorteios() {
           <TabsContent value="compulsao" className="flex flex-col gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="font-serif text-xl flex items-center gap-2">
+                <CardTitle className="font-serif text-xl flex items-start gap-2 sm:items-center">
                   <AlertOctagon className="size-5 text-vinho" />
                   Rolagem de Compulsão
                 </CardTitle>
@@ -437,23 +438,24 @@ function PaginaSorteios() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex flex-col gap-1.5 min-w-[160px]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex w-full flex-col gap-1.5 sm:w-40">
                     <Label htmlFor="tipo-compulsao">Categoria</Label>
                     <Combobox
                       id="tipo-compulsao"
                       opcoes={[
-                        { valor: 'geral', rotulo: 'Geral (4 V5)' },
+                        { valor: 'geral', rotulo: 'Geral' },
                         { valor: 'cla', rotulo: 'Compulsão de Clã' },
                       ]}
                       valor={tipoCompulsao}
                       onChange={(val) => setTipoCompulsao(val as 'geral' | 'cla')}
                       placeholder="Categoria"
+                      className="w-full"
                     />
                   </div>
 
                   {tipoCompulsao === 'cla' && (
-                    <div className="flex flex-col gap-1.5 min-w-[200px]">
+                    <div className="flex w-full flex-col gap-1.5 sm:w-56">
                       <Label htmlFor="cla-compulsao">Clã Específico</Label>
                       <Combobox
                         id="cla-compulsao"
@@ -467,6 +469,7 @@ function PaginaSorteios() {
                         valor={claSelecionadoCompulsao}
                         onChange={setClaSelecionadoCompulsao}
                         placeholder="Qualquer Clã"
+                        className="w-full"
                       />
                     </div>
                   )}

@@ -1,5 +1,5 @@
 ---
-name: Umbra
+name: Vitae
 description: A Ficha oficial do V5 em uma página escura e literária, cujo topo aquece em vinho com a Fome.
 colors:
   background: "#141215"
@@ -142,7 +142,7 @@ components:
     padding: "12px 16px"
 ---
 
-# Design System: Umbra
+# Design System: Vitae
 
 Exceção aprovada para o Combate: dano superficial usa amarelo e dano agravado usa vermelho/vinho, tanto nos cards minimizados quanto nos abertos. As tags mantêm a gradação de saúde. Essas cores usam tokens semânticos do tema; a estrutura e a densidade dos cards seguem o layout aprovado em `docs/fatia-6-combate-sorteios.md`.
 
@@ -150,7 +150,7 @@ Exceção aprovada para o Combate: dano superficial usa amarelo e dano agravado 
 
 **Creative North Star: "A Ficha à Meia-Luz"**
 
-Umbra é a ficha oficial de Vampiro: A Máscara 5ª Edição passada a limpo para uma mesa presencial com luz baixa. A página é escura, grafite tingido de ameixa, com tinta clara e uma única cor de estado, o vinho. A estrutura é literária: o nome do Personagem e os títulos de seção em serifa, todo o resto em uma sans neutra, e linhas finas no lugar de cartões. Os marcadores são os da ficha de papel (caixas, "/", X, bolinhas, trilha de Humanidade), para que ninguém reaprenda a ler.
+Vitae é a ficha oficial de Vampiro: A Máscara 5ª Edição passada a limpo para uma mesa presencial com luz baixa. A página é escura, grafite tingido de ameixa, com tinta clara e uma única cor de estado, o vinho. A estrutura é literária: o nome do Personagem e os títulos de seção em serifa, todo o resto em uma sans neutra, e linhas finas no lugar de cartões. Os marcadores são os da ficha de papel (caixas, "/", X, bolinhas, trilha de Humanidade), para que ninguém reaprenda a ler.
 
 O movimento-assinatura é o calor: o topo da Ficha aquece em vinho conforme a Fome sobe de 0 a 5, e a faixa de estado (horizonte de Humanidade, Vitalidade, Força de Vontade, Fome) fica presa no topo ao rolar. A profundidade vem desse calor e da tonalidade, não de sombras.
 
@@ -199,7 +199,7 @@ Grafite tingido de ameixa em quatro degraus, tinta clara em dois, e vinho como a
 
 ### Hierarchy
 - **Display** (Alegreya SC 500, 40px/44px, token `text-display`): nome do Personagem, título de página ("Olá, …", "Convites para a Crônica") e o logotipo na tela de entrada. Com `text-balance`.
-- **Headline** (Alegreya SC 500, 24/32, `text-2xl`): títulos de seção e de grupo (Físicos, Sociais, nome da Disciplina) e o logotipo "Umbra" na barra do topo.
+- **Headline** (Alegreya SC 500, 24/32, `text-2xl`): títulos de seção e de grupo (Físicos, Sociais, nome da Disciplina). A marca "Vitæ" usa sans-serif, com o V inicial em vinho.
 - **Numeral** (Jost 600, 24/32, `text-2xl`, algarismos tabulares): o número da Fome.
 - **Body** (Jost 400, 16/24, `text-base`): nomes de traços e poderes, itens de navegação.
 - **Body-sm** (Jost 400–500, 14/20, `text-sm`): rótulos das trilhas, descrições, botões, abas, alertas. Contadores com `tabular-nums`.
@@ -257,7 +257,7 @@ Contidos e funcionais, direto do shadcn.
 - **Error:** borda vinho (destructive).
 
 ### Navigation
-- **Barra do topo:** 56px, logotipo "Umbra" em serifa 24/32 à esquerda, contexto em `text-sm` tinta secundária à direita.
+- **Barra do topo:** 56px, "Vitæ" em sans-serif com o V inicial em vinho à esquerda, contexto em `text-sm` tinta secundária à direita.
 - **Abas da Ficha:** variante "linha" do shadcn, alinhadas à esquerda com 16px entre elas, sobre uma linha de 1px; aba ativa em tinta clara com sublinhado vinho de 2px; inativas em tinta secundária.
 - **Lista de navegação:** linhas de 48px entre linhas de 1px, com chevron em tinta secundária.
 

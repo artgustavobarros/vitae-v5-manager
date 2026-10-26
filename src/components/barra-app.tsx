@@ -1,12 +1,13 @@
 import { Link, useRouteContext } from '@tanstack/react-router'
 
+import { MarcaVitae } from './marca-vitae'
 import { MenuUsuario } from './menu-usuario'
 import { NavegacaoInline, NavegacaoMenu, type AcaoTela } from './navegacao'
 import { SinoConectado } from './notificacoes/sino-conectado'
 import { Button } from './ui/button'
 
 /**
- * Barra do topo: marca Umbra e a navegação por papel à esquerda;
+ * Barra do topo: marca Vitae e a navegação por papel à esquerda;
  * à direita, as ações da tela, o sino e o menu de quem está logado.
  * Abaixo de `lg` para o Jogador ou `xl` para o Narrador, navegação e ações vão para o hambúrguer.
  */
@@ -16,8 +17,8 @@ export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
   return (
     <header className="flex h-14 items-center justify-between gap-2">
       <div className="flex items-center gap-4">
-        <Link to="/" className="rounded-sm font-serif text-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          Umbra
+        <Link to="/" aria-label="Vitae" className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <MarcaVitae />
         </Link>
         {usuario && <NavegacaoInline papel={usuario.papel} />}
       </div>

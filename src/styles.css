@@ -6,7 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Umbra: grafite tingido de ameixa, tinta clara, vinho como única cor de estado.
+ * Vitae: grafite tingido de ameixa, tinta clara, vinho como única cor de estado.
  * Régua: espaçamento e tamanhos em múltiplos de 4 (passos inteiros do Tailwind);
  * fontes text-xs, text-sm, text-base, text-xl, text-2xl, text-4xl e text-display.
  */
@@ -34,7 +34,7 @@
   --ring: #c0304e;
   --radius: 0.5rem;
 
-  /* Mundo do Umbra */
+  /* Mundo de Vitae */
   --vinho: #c0304e;
   --vinho-escuro: #5a1a29;
   --fome: #ff7d95;
@@ -128,7 +128,10 @@
   }
   html {
     caret-color: var(--vinho);
-    scrollbar-color: var(--marcador) var(--background);
+    scrollbar-width: none;
+  }
+  html::-webkit-scrollbar {
+    display: none;
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;

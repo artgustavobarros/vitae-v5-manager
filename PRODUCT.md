@@ -36,7 +36,8 @@ Feito para uma mesa só, presencial, com o Narrador no controle: a evolução ac
 
 ## Brand Commitments
 
-- Nome: **Umbra**.
+- Nome escrito: **Vitæ**; em texto simples e metadados: **Vitae**.
+- Marca gráfica: **Vitæ**, com o V inicial em vinho e as demais letras em tinta clara.
 - Voz: **neutra e clara**. Rótulos e mensagens diretos com os termos oficiais do V5; o clima do jogo fica no visual, não nas frases.
 - Não usar "Vampiro: A Máscara" nem "Masquerade" como marca do produto.
 

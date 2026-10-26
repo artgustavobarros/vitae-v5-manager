@@ -50,7 +50,7 @@ export const ETAPAS = [
 ] as const
 
 /**
- * Criação guiada do Rascunho em 8 etapas (V5).
+ * Criação guiada do Rascunho em 8 etapas.
  * Para o Jogador (`regrasCriacao = true`), valida travas de Atributos, Habilidades, Disciplinas 2/1,
  * Predador, 7/2 Vantagens e Defeitos e Convicções.
  * Para o Narrador (`regrasCriacao = false`), exibe avisos informativos sem bloquear avanço.

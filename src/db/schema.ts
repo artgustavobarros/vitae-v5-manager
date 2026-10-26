@@ -194,8 +194,7 @@ export const notificacao = pgTable(
 export const statusRevisao = pgEnum('status_revisao', ['aprovado', 'sugerido'])
 
 /**
- * Revisão de tradução do Catálogo (`/catalogo/revisao`), só do Narrador.
- * "aprovado" tira o item da fila; "sugerido" guarda a sugestão, que é aplicada no código.
+ * Histórico da revisão de tradução do Catálogo, mantido para preservar decisões já gravadas.
  */
 export const revisaoTraducao = pgTable(
   'revisao_traducao',

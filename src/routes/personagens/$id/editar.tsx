@@ -11,7 +11,7 @@ import { listarJogadores } from '#/server/conta'
 import { obterOpcoesCriacaoCronica } from '#/server/cronica'
 import { buscarFicha, concluir, salvarFicha } from '#/server/personagens'
 
-// Rascunho: wizard guiado em 8 etapas (V5). Ficha concluída: formulário da Ficha.
+// Rascunho: wizard guiado em 8 etapas. Ficha concluída: formulário da Ficha.
 export const Route = createFileRoute('/personagens/$id/editar')({
   validateSearch: z.object({ etapa: z.int().min(1).max(ETAPAS.length).optional().catch(undefined) }),
   beforeLoad: ({ context }) => {
@@ -80,7 +80,7 @@ function EditarFicha() {
       <div className="pt-2">
         <h1 className="font-serif text-display text-balance">{personagem.nome || 'Novo Personagem'}</h1>
         <p className="mt-1 mb-8 text-sm text-muted-foreground">
-          {rascunho ? 'Criação guiada de Personagem (V5)' : 'Editando a Ficha'}
+          {rascunho ? 'Criação guiada de Personagem' : 'Editando a Ficha'}
         </p>
         {personagem.podeCancelarAtribuicao && personagem.atribuidoA && (
           <AvisoAtribuicao id={id} jogador={personagem.atribuidoA.nome} onCancelado={() => router.invalidate()} />
