@@ -57,16 +57,10 @@ Decisões confirmadas no grill de 2026-10-24. Os termos seguem o `GLOSSARY.md`, 
   - cada item mostra a descrição curta no próprio seletor.
 - **Notificações**: nenhum evento novo nesta fatia. Mudanças no Tipo e nas Vantagens e Defeitos da Coterie não avisam ninguém.
 
-## Página de revisão de tradução
+## Revisão de tradução
 
-- Rota `/catalogo/revisao`, só para o Narrador. Fica no ar depois da v1, com um link no menu do Narrador que mostra quantos itens estão pendentes.
-- Chips por confiança: Dúvida, Em inglês e Certo. A página abre em Dúvida. Há filtro por tipo de item e busca.
-- Cada item mostra: tipo, nível, página, nome original, nome proposto e descrição.
-- O Narrador sugere nome e/ou descrição, ou aprova:
-  - "Aprovar" marca o item como revisado e o tira da fila;
-  - "Enviar sugestão" grava em `revisao_traducao`. A sugestão é aplicada no código, e o item passa a "Certo".
-
-Para aplicar as sugestões pendentes no código, execute `pnpm catalogo:aplicar-sugestoes`, revise o diff e publique a nova versão. A revisão sai da fila quando o texto publicado corresponde à sugestão.
+- A rota `/catalogo/revisao` e o painel do Narrador foram removidos.
+- O histórico de sugestões já gravadas continua no banco; o utilitário `pnpm catalogo:aplicar-sugestoes` permanece para aplicá-las ao Catálogo.
 
 ## Pesquisa do conteúdo
 

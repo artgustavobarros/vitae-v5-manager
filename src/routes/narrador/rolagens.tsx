@@ -373,7 +373,7 @@ function PaginaSorteios() {
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <div className="flex w-full flex-col gap-1.5 sm:min-w-[200px] sm:w-auto">
+                  <div className="flex w-full flex-col gap-1.5 sm:w-56">
                     <Label htmlFor="filtro-tipo-discrasia">Tipo de Ressonância</Label>
                     <Combobox
                       id="filtro-tipo-discrasia"
@@ -439,7 +439,7 @@ function PaginaSorteios() {
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <div className="flex w-full flex-col gap-1.5 sm:min-w-[160px] sm:w-auto">
+                  <div className="flex w-full flex-col gap-1.5 sm:w-40">
                     <Label htmlFor="tipo-compulsao">Categoria</Label>
                     <Combobox
                       id="tipo-compulsao"
@@ -455,7 +455,7 @@ function PaginaSorteios() {
                   </div>
 
                   {tipoCompulsao === 'cla' && (
-                    <div className="flex w-full flex-col gap-1.5 sm:min-w-[200px] sm:w-auto">
+                    <div className="flex w-full flex-col gap-1.5 sm:w-56">
                       <Label htmlFor="cla-compulsao">Clã Específico</Label>
                       <Combobox
                         id="cla-compulsao"
