@@ -18,7 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
@@ -772,6 +772,34 @@ function PaginaCombate() {
   return <VisaoJogador combate={dados.combate} />
 }
 
+function BotaoModoCompacto({
+  compacto,
+  onAlternar,
+  className,
+}: {
+  compacto: boolean
+  onAlternar: () => void
+  className?: string
+}) {
+  const [pendente, iniciarTransicao] = useTransition()
+  const rotulo = pendente ? 'Atualizando cards...' : compacto ? 'Expandir Cards' : 'Minimizar Cards'
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => iniciarTransicao(onAlternar)}
+      disabled={pendente}
+      aria-busy={pendente}
+      className={cn('gap-1', className)}
+      title={pendente ? rotulo : compacto ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
+    >
+      {!pendente && (compacto ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />)}
+      <span>{rotulo}</span>
+    </Button>
+  )
+}
+
 // ==========================================
 // VISÃO DO NARRADOR
 // ==========================================
@@ -1294,25 +1322,7 @@ function VisaoNarrador({
                 <Play className="size-4 fill-current" />
                 Próximo Turno
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={alternarModoCompactoGeral}
-                className="gap-1"
-                title={modoCompactoGeral ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
-              >
-                {modoCompactoGeral ? (
-                  <>
-                    <Maximize2 className="size-4" />
-                    <span>Expandir Cards</span>
-                  </>
-                ) : (
-                  <>
-                    <Minimize2 className="size-4" />
-                    <span>Minimizar Cards</span>
-                  </>
-                )}
-              </Button>
+              <BotaoModoCompacto compacto={modoCompactoGeral} onAlternar={alternarModoCompactoGeral} />
               <Button
                 variant="outline"
                 size="sm"
@@ -2728,25 +2738,11 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                     {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={alternarModoCompactoGeral}
-                  className="gap-1 ml-auto sm:ml-0"
-                  title={modoCompactoGeral ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
-                >
-                  {modoCompactoGeral ? (
-                    <>
-                      <Maximize2 className="size-4" />
-                      <span>Expandir Cards</span>
-                    </>
-                  ) : (
-                    <>
-                      <Minimize2 className="size-4" />
-                      <span>Minimizar Cards</span>
-                    </>
-                  )}
-                </Button>
+                <BotaoModoCompacto
+                  compacto={modoCompactoGeral}
+                  onAlternar={alternarModoCompactoGeral}
+                  className="ml-auto sm:ml-0"
+                />
               </div>
             )}
           </div>

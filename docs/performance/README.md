@@ -37,9 +37,11 @@ Parar quando as telas críticas estiverem dentro das metas ou quando o próximo 
 - [x] Confirmar inline CSS do manifesto TanStack e compressão real do HTML no Traefik: `/entrar` respondeu `Content-Encoding: gzip` e `Vary: Accept-Encoding`. O trace CSS separado continua sendo apenas simulação local.
 - [x] Investigar LCP de `/combate`: o elemento é texto; 97,6% do LCP ficou em atraso de renderização. CSS bloqueou renderização e o trace estimou 426–515 ms, mas preload não reduziu o LCP. Um forced reflow apareceu sem função identificada e sem economia estimada; sem alvo seguro para correção agora.
 - [x] Medir busca de Paradas com 17 itens: interação de digitação teve INP de 85 ms e CLS 0. A amostra não representa listas maiores.
+- [x] Tornar não bloqueante a alternância global de cards em `/combate`: em uma cena de teste com 12 inimigos, CPU 4× e Slow 4G, o trace registrou INP de 54 ms e CLS 0; os 12 cards terminaram no modo compacto. É uma amostra exploratória, sem comparação pareada com a implementação anterior.
 - [x] Adicionar smoke de produção no CI: verificar HTML público, preload da fonte, CSS e JavaScript com Brotli/cache imutável e gzip fallback. O smoke valida contratos de entrega; não garante CLS nem fixa um LCP sintético.
 - [x] Repetir baseline de `/entrar` com várias amostras no domínio após deploy.
 - [ ] Medir TTFB e interações da Ficha após paralelizar as consultas, com uma sessão autenticada representativa.
+- [ ] Repetir a alternância global de `/combate` em amostras pareadas antes/depois para confirmar o ganho de INP e a atualização visual.
 - [ ] Medir uma sessão de Jogador além da sessão de Narrador.
 - [ ] Confirmar que eventos `text/event-stream` seguem sem compressão no Traefik.
 - [x] Investigar assets de Ficha/schemas/popover em `/entrar`; o grafo confirmou que vinham do import eager de `ETAPAS` no wizard.
