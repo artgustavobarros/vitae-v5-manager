@@ -16,7 +16,7 @@ O app local usa `http://localhost:3005`; o PostgreSQL do Compose local fica na p
 
 ## Produção na Hostinger
 
-O `docker-compose.prod.yml` executa o app e o PostgreSQL no VPS. O app não publica porta: o Traefik já instalado no Docker Manager roteia o domínio para a porta interna `3000` e termina HTTPS. O compose usa o mesmo padrão do projeto `vampire`, em que o Traefik do host acessa os containers pela rede Docker.
+O `docker-compose.prod.yml` executa o app e o PostgreSQL no VPS. O app não publica porta: o Traefik já instalado no Docker Manager roteia o domínio para a porta interna `3000` e termina HTTPS.
 
 O nome do repositório e do pacote é `vitae-v5-manager`. O identificador da stack existente no Hostinger Docker Manager continua `v5-manager` para que o deploy atualize os containers no lugar e preserve o banco persistido.
 
@@ -27,7 +27,7 @@ O nome do repositório e do pacote é `vitae-v5-manager`. O identificador da sta
 
    - `HOSTINGER_API_KEY`: chave da API da Hostinger.
    - `HOSTINGER_VM_ID`: ID da máquina virtual.
-   - `APP_HOST`: domínio sem protocolo, por exemplo `umbra.exemplo.com`.
+   - `APP_HOST`: domínio sem protocolo. O domínio atual é `vitae.artbarros.tech`.
    - `POSTGRES_PASSWORD`: senha só com letras e números; gere com `openssl rand -hex 32`.
    - `BETTER_AUTH_SECRET`: segredo Better Auth; gere com `openssl rand -base64 32`.
    - `NARRADOR_EMAIL`: e-mail do Narrador.
@@ -39,7 +39,7 @@ O workflow usa `hostinger/deploy-on-vps@v2` para enviar o `docker-compose.prod.y
 
 ### Hostinger MCP
 
-As configurações do servidor MCP Hostinger estão em `.mcp.json`, `.codex/config.toml` e `.agents/mcp_config.json`, seguindo a configuração do projeto `vampire`. Elas registram o endpoint oficial (`https://mcp.hostinger.com`), sem armazenar chaves ou tokens locais. A autenticação/conexão MCP é feita pelo cliente que carregar a configuração.
+As configurações do servidor MCP Hostinger estão em `.mcp.json`, `.codex/config.toml` e `.agents/mcp_config.json`. Elas registram o endpoint oficial (`https://mcp.hostinger.com`), sem armazenar chaves ou tokens locais. A autenticação/conexão MCP é feita pelo cliente que carregar a configuração.
 
 ### Operação
 
