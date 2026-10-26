@@ -14,3 +14,7 @@ todos.json
 
 # Configuração local do Claude Code
 .claude/settings.local.json
+
+# Skills de agentes: instale com `pnpm skills:install` (skills-lock.json)
+.agents/skills/
+.claude/skills/
