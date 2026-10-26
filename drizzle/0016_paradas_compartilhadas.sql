@@ -27,10 +27,14 @@ ORDER BY (entrada->>'id')::uuid, p."atualizado_em" DESC, p."id";
 --> statement-breakpoint
 -- Se houver mais de uma ordem por dono, preserva a do Personagem atualizado mais recentemente.
 INSERT INTO "preferencia_paradas" ("usuario_id", "ordem")
-SELECT DISTINCT ON ("dono_id") "dono_id", "ordem_paradas"
-FROM "personagem"
-WHERE jsonb_array_length("ordem_paradas") > 0
-ORDER BY "dono_id", "atualizado_em" DESC, "id";
+WITH ordens_mais_recentes AS (
+  SELECT DISTINCT ON ("dono_id") "dono_id", "ordem_paradas"
+  FROM "personagem"
+  ORDER BY "dono_id", "atualizado_em" DESC, "id"
+)
+SELECT "dono_id", "ordem_paradas"
+FROM ordens_mais_recentes
+WHERE jsonb_array_length("ordem_paradas") > 0;
 --> statement-breakpoint
 ALTER TABLE "personagem" DROP COLUMN "paradas_personalizadas";--> statement-breakpoint
 ALTER TABLE "personagem" DROP COLUMN "ordem_paradas";
