@@ -10,6 +10,22 @@ on:
 jobs:
   verificacoes:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://v5:v5@localhost:5432/v5_manager
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: v5
+          POSTGRES_PASSWORD: v5
+          POSTGRES_DB: v5_manager
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U v5 -d v5_manager"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
 
@@ -24,6 +40,9 @@ jobs:
 
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
+
+      - name: Aplicar migrations
+        run: pnpm db:migrate
 
       - name: Testes
         run: pnpm test
