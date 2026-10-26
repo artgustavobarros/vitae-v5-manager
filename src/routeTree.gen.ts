@@ -15,7 +15,6 @@ import { Route as ContaRouteImport } from './routes/conta'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ParadasRouteImport } from './routes/paradas'
 import { Route as ApiTempoRealRouteImport } from './routes/api/tempo-real'
-import { Route as CatalogoRevisaoRouteImport } from './routes/catalogo/revisao'
 import { Route as ConviteTokenRouteImport } from './routes/convite/$token'
 import { Route as CoteriesIndexRouteImport } from './routes/coteries/index'
 import { Route as CoteriesIdRouteImport } from './routes/coteries/$id'
@@ -58,11 +57,6 @@ const ParadasRoute = ParadasRouteImport.update({
 const ApiTempoRealRoute = ApiTempoRealRouteImport.update({
   id: '/api/tempo-real',
   path: '/api/tempo-real',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CatalogoRevisaoRoute = CatalogoRevisaoRouteImport.update({
-  id: '/catalogo/revisao',
-  path: '/catalogo/revisao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConviteTokenRoute = ConviteTokenRouteImport.update({
@@ -138,7 +132,6 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/paradas': typeof ParadasRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
-  '/catalogo/revisao': typeof CatalogoRevisaoRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/bestiario': typeof NarradorBestiarioRoute
@@ -160,7 +153,6 @@ export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
   '/paradas': typeof ParadasRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
-  '/catalogo/revisao': typeof CatalogoRevisaoRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/bestiario': typeof NarradorBestiarioRoute
@@ -183,7 +175,6 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/paradas': typeof ParadasRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
-  '/catalogo/revisao': typeof CatalogoRevisaoRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
   '/narrador/bestiario': typeof NarradorBestiarioRoute
@@ -207,7 +198,6 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/paradas'
     | '/api/tempo-real'
-    | '/catalogo/revisao'
     | '/convite/$token'
     | '/coteries/$id'
     | '/narrador/bestiario'
@@ -229,7 +219,6 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/paradas'
     | '/api/tempo-real'
-    | '/catalogo/revisao'
     | '/convite/$token'
     | '/coteries/$id'
     | '/narrador/bestiario'
@@ -251,7 +240,6 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/paradas'
     | '/api/tempo-real'
-    | '/catalogo/revisao'
     | '/convite/$token'
     | '/coteries/$id'
     | '/narrador/bestiario'
@@ -274,7 +262,6 @@ export interface RootRouteChildren {
   EntrarRoute: typeof EntrarRoute
   ParadasRoute: typeof ParadasRoute
   ApiTempoRealRoute: typeof ApiTempoRealRoute
-  CatalogoRevisaoRoute: typeof CatalogoRevisaoRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   CoteriesIdRoute: typeof CoteriesIdRoute
   NarradorBestiarioRoute: typeof NarradorBestiarioRoute
@@ -332,13 +319,6 @@ declare module '@tanstack/react-router' {
       path: '/api/tempo-real'
       fullPath: '/api/tempo-real'
       preLoaderRoute: typeof ApiTempoRealRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/catalogo/revisao': {
-      id: '/catalogo/revisao'
-      path: '/catalogo/revisao'
-      fullPath: '/catalogo/revisao'
-      preLoaderRoute: typeof CatalogoRevisaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/convite/$token': {
@@ -442,7 +422,6 @@ const rootRouteChildren: RootRouteChildren = {
   EntrarRoute: EntrarRoute,
   ParadasRoute: ParadasRoute,
   ApiTempoRealRoute: ApiTempoRealRoute,
-  CatalogoRevisaoRoute: CatalogoRevisaoRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   CoteriesIdRoute: CoteriesIdRoute,
   NarradorBestiarioRoute: NarradorBestiarioRoute,

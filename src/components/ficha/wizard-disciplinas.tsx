@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Info } from 'lucide-react'
 import { Combobox } from '#/components/combobox'
 import { TermoRegra } from '#/components/consulta-regra'
 import { Badge } from '#/components/ui/badge'
@@ -315,18 +315,31 @@ export function CamposDisciplinasCriacao({
                           <Label className="text-xs text-muted-foreground">
                             Poder {slotIndex + 1} (Nível {slotIndex === 0 ? '1' : '1 ou 2'}):
                           </Label>
-                          <Combobox
-                            opcoes={opcoesPoder.map((p) => ({
-                              valor: p.id,
-                              rotulo: `${p.nome} (Nível ${p.nivel})`,
-                              original: p.nomeOriginal,
-                              descricao: p.descricao,
-                            }))}
-                            valor={poderAtual || null}
-                            onChange={(pId) => escolherPoder(discId, slotIndex, pId)}
-                            placeholder="Selecionar poder..."
-                            busca="Buscar poder"
-                          />
+                          <div className="flex items-center gap-2">
+                            <Combobox
+                              opcoes={opcoesPoder.map((p) => ({
+                                valor: p.id,
+                                rotulo: `${p.nome} (Nível ${p.nivel})`,
+                                original: p.nomeOriginal,
+                                descricao: p.descricao,
+                              }))}
+                              valor={poderAtual || null}
+                              onChange={(pId) => escolherPoder(discId, slotIndex, pId)}
+                              placeholder="Selecionar poder..."
+                              busca="Buscar poder"
+                              className="min-w-0 flex-1"
+                            />
+                            {itemCatalogo(poderAtual)?.tipo === 'poder' && (
+                              <TermoRegra
+                                tipo="catalogo"
+                                id={poderAtual}
+                                icone
+                                className="shrink-0 text-muted-foreground"
+                              >
+                                <Info className="size-4" />
+                              </TermoRegra>
+                            )}
+                          </div>
                         </div>
                       )
                     })}

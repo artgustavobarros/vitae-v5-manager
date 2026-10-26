@@ -25,7 +25,7 @@ export function CamposAtributosCriacao({
       {/* Painel de slots de Atributos */}
       <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">Distribuição de Atributos (V5)</span>
+          <span className="text-sm font-semibold">Distribuição de Atributos</span>
           <span className="text-xs text-muted-foreground">Todos começam em 1</span>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -70,17 +70,19 @@ export function CamposAtributosCriacao({
           <h4 className="text-base font-semibold">{g.atributos}</h4>
           <ul className="flex flex-col divide-y rounded-lg border">
             {atributosDoGrupo(g.id).map((a) => (
-              <li key={a.id} className="flex min-h-12 items-center justify-between gap-4 px-4 py-2">
-                <TermoRegra tipo="atributo" id={a.id}>
+              <li key={a.id} className="flex min-h-12 items-center gap-4 px-4 py-2">
+                <TermoRegra tipo="atributo" id={a.id} className="min-w-0 flex-1">
                   {a.nome}
                 </TermoRegra>
-                <SeletorPontos
-                  rotulo={a.nome}
-                  valor={ficha.atributos[a.id]}
-                  min={1}
-                  max={regrasCriacao ? 4 : 5}
-                  onChange={(valor) => alterarAtributo(a.id, valor)}
-                />
+                <div className="shrink-0">
+                  <SeletorPontos
+                    rotulo={a.nome}
+                    valor={ficha.atributos[a.id]}
+                    min={1}
+                    max={regrasCriacao ? 4 : 5}
+                    onChange={(valor) => alterarAtributo(a.id, valor)}
+                  />
+                </div>
               </li>
             ))}
           </ul>

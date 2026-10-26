@@ -1,22 +1,50 @@
-# Deploya na Hostinger depois do push na main. Configure os secrets descritos no README.
-name: Deploy
+# Valida toda mudança e publica na Hostinger depois do push na main.
+name: CI e deploy
 
 on:
+  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
-
 jobs:
-  deploy:
+  verificacoes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
-      - name: Conferir secrets obrigatórios
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Testes
+        run: pnpm test
+
+      - name: Verificar tipos
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+  deploy:
+    needs: verificacoes
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Conferir variáveis obrigatórias para deploy
         env:
           HOSTINGER_API_KEY: ${{ secrets.HOSTINGER_API_KEY }}
           HOSTINGER_VM_ID: ${{ secrets.HOSTINGER_VM_ID }}
@@ -24,9 +52,11 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           NARRADOR_EMAIL: ${{ secrets.NARRADOR_EMAIL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           missing=0
-          for name in HOSTINGER_API_KEY HOSTINGER_VM_ID APP_HOST POSTGRES_PASSWORD BETTER_AUTH_SECRET NARRADOR_EMAIL; do
+          for name in HOSTINGER_API_KEY HOSTINGER_VM_ID APP_HOST POSTGRES_PASSWORD BETTER_AUTH_SECRET NARRADOR_EMAIL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
             if [ -z "${!name}" ]; then
               echo "::error::Falta o secret $name em Settings → Secrets and variables → Actions"
               missing=1

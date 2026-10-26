@@ -87,7 +87,7 @@ export function CamposHabilidadesCriacao({
     <div className="flex flex-col gap-6">
       {/* Seletor de Perfil de Habilidades */}
       <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4">
-        <span className="text-sm font-semibold">Perfil de Habilidades (V5)</span>
+        <span className="text-sm font-semibold">Perfil de Habilidades</span>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {PERFIS.map((p) => {
             const ativo = perfil === p.id
@@ -155,17 +155,19 @@ export function CamposHabilidadesCriacao({
               const habilidade = ficha.habilidades[h.id]
               return (
                 <li key={h.id} className="flex flex-col gap-2 p-3 sm:px-4">
-                  <div className="flex min-h-11 items-center justify-between gap-4">
-                    <TermoRegra tipo="habilidade" id={h.id}>
+                  <div className="flex min-h-11 items-center gap-4">
+                    <TermoRegra tipo="habilidade" id={h.id} className="min-w-0 flex-1">
                       {h.nome}
                     </TermoRegra>
-                    <SeletorPontos
-                      rotulo={h.nome}
-                      valor={habilidade.valor}
-                      min={0}
-                      max={regrasCriacao ? 4 : 5}
-                      onChange={(valor) => alterarHabilidade(h.id, valor)}
-                    />
+                    <div className="shrink-0">
+                      <SeletorPontos
+                        rotulo={h.nome}
+                        valor={habilidade.valor}
+                        min={0}
+                        max={regrasCriacao ? 4 : 5}
+                        onChange={(valor) => alterarHabilidade(h.id, valor)}
+                      />
+                    </div>
                   </div>
                   {habilidade.valor > 0 && (
                     <div className="flex flex-col gap-1 pt-1">

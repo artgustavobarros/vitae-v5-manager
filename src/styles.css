@@ -128,7 +128,10 @@
   }
   html {
     caret-color: var(--vinho);
-    scrollbar-color: var(--marcador) var(--background);
+    scrollbar-width: none;
+  }
+  html::-webkit-scrollbar {
+    display: none;
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;

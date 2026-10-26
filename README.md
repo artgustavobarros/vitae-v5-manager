@@ -31,9 +31,10 @@ O nome do repositório e do pacote é `vitae-v5-manager`. O identificador da sta
    - `POSTGRES_PASSWORD`: senha só com letras e números; gere com `openssl rand -hex 32`.
    - `BETTER_AUTH_SECRET`: segredo Better Auth; gere com `openssl rand -base64 32`.
    - `NARRADOR_EMAIL`: e-mail do Narrador.
-   - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`: opcionais, para login Google.
+   - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`: credenciais obrigatórias para login Google. O redirect URI é `https://<APP_HOST>/api/auth/callback/google`.
 
-3. Faça push para `main` ou execute manualmente **Actions → Deploy → Run workflow**.
+3. Pull requests e pushes em `main` rodam testes, verificação de tipos e build. O deploy só começa depois que essas etapas passam e os secrets obrigatórios existem.
+4. Faça push para `main` ou execute manualmente **Actions → CI e deploy → Run workflow**.
 
 O workflow usa `hostinger/deploy-on-vps@v2` para enviar o `docker-compose.prod.yml`. O container aplica as migrations Drizzle antes de iniciar o servidor. O volume `pgdata` mantém os dados do PostgreSQL entre deploys.
 

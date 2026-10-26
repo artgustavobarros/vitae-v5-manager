@@ -28,15 +28,15 @@ export const Route = createFileRoute('/convite/$token')({
     ],
   }),
   validateSearch: z.object({ error: z.string().optional() }),
-  beforeLoad: ({ context }) => {
+  loader: async ({ params, context }) => {
     if (context.usuario) throw redirect({ to: '/' })
+    return await verConvite({ data: { token: params.token } })
   },
-  loader: ({ params }) => verConvite({ data: { token: params.token } }),
   component: Convite,
 })
 
 function Convite() {
-  const { estado } = Route.useLoaderData()
+  const { estado } = Route.useLoaderData() as Awaited<ReturnType<typeof verConvite>>
   const { token } = Route.useParams()
   const { error } = Route.useSearch()
 
