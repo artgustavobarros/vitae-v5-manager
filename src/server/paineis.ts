@@ -8,6 +8,19 @@ import { condicaoDe, podeVerCondicao, type Condicao } from '#/domain/condicao'
 import { ehPdN, nomeJogador } from '#/domain/permissoes-ficha'
 import { exigirNarrador, exigirUsuario } from './sessao'
 
+// Colunas de cada Personagem listado no Painel do Narrador (Jogadores ativos e PdNs fixados).
+const colunasPersonagemNoPainel = {
+  id: personagem.id,
+  nome: personagem.nome,
+  status: personagem.status,
+  donoId: personagem.donoId,
+  nomeDono: user.name,
+  papelDono: user.papel,
+  ficha: personagem.ficha,
+  ressonanciaAtual: personagem.ressonanciaAtual,
+  compulsaoAtiva: personagem.compulsaoAtiva,
+}
+
 export const carregarPainelNarrador = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
   .handler(async () => {
@@ -22,33 +35,13 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
         .from(membroCoterie)
         .innerJoin(coterie, eq(membroCoterie.coterieId, coterie.id)),
       db
-        .select({
-          id: personagem.id,
-          nome: personagem.nome,
-          status: personagem.status,
-          donoId: personagem.donoId,
-          nomeDono: user.name,
-          papelDono: user.papel,
-          ficha: personagem.ficha,
-          ressonanciaAtual: personagem.ressonanciaAtual,
-          compulsaoAtiva: personagem.compulsaoAtiva,
-        })
+        .select(colunasPersonagemNoPainel)
         .from(personagem)
         .innerJoin(user, eq(personagem.donoId, user.id))
         .where(and(eq(personagem.status, 'ativo'), eq(user.papel, 'jogador')))
         .orderBy(asc(personagem.nome)),
       db
-        .select({
-          id: personagem.id,
-          nome: personagem.nome,
-          status: personagem.status,
-          donoId: personagem.donoId,
-          nomeDono: user.name,
-          papelDono: user.papel,
-          ficha: personagem.ficha,
-          ressonanciaAtual: personagem.ressonanciaAtual,
-          compulsaoAtiva: personagem.compulsaoAtiva,
-        })
+        .select(colunasPersonagemNoPainel)
         .from(personagem)
         .innerJoin(user, eq(personagem.donoId, user.id))
         .where(and(eq(personagem.fixado, true), eq(user.papel, 'narrador')))

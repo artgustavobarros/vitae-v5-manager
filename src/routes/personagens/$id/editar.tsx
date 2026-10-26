@@ -8,6 +8,7 @@ import { BarraApp } from '#/components/barra-app'
 import { FormularioFicha, type ValoresFormulario } from '#/components/ficha/formulario'
 import { ETAPAS } from '#/components/ficha/etapas-wizard'
 import { WizardCriacao } from '#/components/ficha/wizard'
+import { carregarEdicao } from '#/lib/carregar-edicao'
 import { listarJogadores } from '#/server/conta'
 import { obterOpcoesCriacaoCronica } from '#/server/cronica'
 import { buscarFicha, concluir, salvarFicha } from '#/server/personagens'
@@ -19,12 +20,13 @@ export const Route = createFileRoute('/personagens/$id/editar')({
     if (!context.usuario) throw redirect({ to: '/entrar' })
   },
   loader: async ({ params }) => {
-    const [personagem, opcoesCronica] = await Promise.all([
-      buscarFicha({ data: { id: params.id } }).catch(() => null),
-      obterOpcoesCriacaoCronica(),
-    ])
-    if (!personagem) throw redirect({ to: '/' })
-    if (personagem.acesso !== 'editar') throw redirect({ to: '/personagens/$id', params })
+    const carregamento = await carregarEdicao(
+      () => buscarFicha({ data: { id: params.id } }),
+      () => obterOpcoesCriacaoCronica(),
+    )
+    if (carregamento.tipo === 'inexistente') throw redirect({ to: '/' })
+    if (carregamento.tipo === 'semEdicao') throw redirect({ to: '/personagens/$id', params })
+    const { personagem, opcoesCronica } = carregamento
     // Rascunho do Narrador: ele pode atribuí-lo a um Jogador na Revisão.
     const jogadores = personagem.podeAtribuir ? await listarJogadores() : []
     return { personagem, jogadores, opcoesCronica }

@@ -19,8 +19,8 @@
     "catalogo:aplicar-sugestoes": "tsx scripts/aplicar-sugestoes.ts",
     "test": "vitest run",
     "check:production-assets": "tsx scripts/check-production-assets.ts",
-    "react-doctor:routes": "react-doctor --yes --no-score --no-supply-chain --blocking error 'src/routes/convite/$token.tsx' src/routes/paradas.tsx",
-    "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit && pnpm react-doctor:routes"
+    "lint": "react-doctor --yes --no-score --no-supply-chain --blocking error 'src/routes/convite/$token.tsx' src/routes/paradas.tsx",
+    "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",

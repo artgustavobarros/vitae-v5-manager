@@ -50,6 +50,9 @@ jobs:
       - name: Verificar tipos
         run: pnpm typecheck
 
+      - name: Lint React
+        run: pnpm lint
+
       - name: Build
         run: pnpm build
 
