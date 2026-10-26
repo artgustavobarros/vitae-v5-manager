@@ -16,6 +16,11 @@ import { mensagemErroAuth } from '#/lib/erros-auth'
 import { prepararCadastro, verConvite } from '#/server/convites'
 
 export const Route = createFileRoute('/convite/$token')({
+  validateSearch: z.object({ error: z.string().optional() }),
+  loader: async ({ params, context }) => {
+    if (context.usuario) throw redirect({ to: '/' })
+    return await verConvite({ data: { token: params.token } })
+  },
   head: ({ params }) => ({
     meta: [
       { title: 'Convite para uma Crônica | Vitae' },
@@ -27,11 +32,6 @@ export const Route = createFileRoute('/convite/$token')({
       { name: 'twitter:description', content: 'Entre na mesa de Vampiro: A Máscara com seu convite Vitae.' },
     ],
   }),
-  validateSearch: z.object({ error: z.string().optional() }),
-  loader: async ({ params, context }) => {
-    if (context.usuario) throw redirect({ to: '/' })
-    return await verConvite({ data: { token: params.token } })
-  },
   component: Convite,
 })
 

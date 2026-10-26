@@ -19,7 +19,8 @@
     "catalogo:aplicar-sugestoes": "tsx scripts/aplicar-sugestoes.ts",
     "test": "vitest run",
     "check:production-assets": "tsx scripts/check-production-assets.ts",
-    "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit"
+    "react-doctor:routes": "react-doctor --yes --no-score --no-supply-chain --blocking error 'src/routes/convite/$token.tsx' src/routes/paradas.tsx",
+    "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit && pnpm react-doctor:routes"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",
@@ -61,6 +62,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.3.1",
+    "react-doctor": "0.9.18",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",

@@ -23,11 +23,11 @@ import { carregarParadas, excluirParadaCompartilhada, salvarParadaCompartilhada 
 
 export const Route = createFileRoute('/paradas')({
   validateSearch: z.object({ personagemId: z.string().uuid().optional() }),
+  loaderDeps: ({ search }) => ({ personagemId: search.personagemId }),
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
     return { usuario: context.usuario }
   },
-  loaderDeps: ({ search }) => ({ personagemId: search.personagemId }),
   loader: async ({ deps }) => {
     try {
       return await carregarParadas({ data: deps })
