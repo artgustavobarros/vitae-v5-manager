@@ -1,59 +1,40 @@
-# Vitae V5 Manager
+# Vitae
 
-Vitæ (Vitae), gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Aplicação TanStack Start com PostgreSQL e Drizzle.
+O Vitae é um gerenciador de fichas para **Vampiro: A Máscara 5ª Edição**. Ele organiza uma única Crônica presencial: o Narrador administra o jogo e os Jogadores consultam e atualizam seus Personagens pelo celular.
 
-## Desenvolvimento local
+## Para a mesa
 
-```bash
-pnpm install
-cp .env.example .env.local
-docker compose up -d postgres
-pnpm db:migrate
-pnpm dev
-```
+- **Narrador:** administra Personagens e Fichas, organiza Coteries, acompanha Condições em tempo real e conduz Combates.
+- **Jogador:** mantém as Fichas dos próprios Personagens, acompanha as Coteries de que participa e recebe Convites para a Crônica e para Coteries.
 
-O app local usa `http://localhost:3005`; o PostgreSQL do Compose local fica na porta `5434`.
+O Vitae apoia a mesa durante a sessão. Ele não substitui a conversa presencial nem automatiza a rolagem de dados.
 
-## Produção na Hostinger
+## O que o Vitae reúne
 
-O `docker-compose.prod.yml` executa o app e o PostgreSQL no VPS. O app não publica porta: o Traefik já instalado no Docker Manager roteia o domínio para a porta interna `3000` e termina HTTPS.
+- **Fichas de Personagem:** atributos, habilidades, Disciplinas, recursos e informações narrativas. O Narrador controla a edição; a Ficha Liberada permite evolução pelo Jogador.
+- **Coteries e painéis:** organização de Personagens, convites e acompanhamento de Condição. O compartilhamento de Vitalidade, Força de Vontade e Fome é controlado por Personagem.
+- **Paradas:** combinações padrão e personalizadas de Atributos e Habilidades, calculadas a partir da Ficha. A página consulta dados, mas não rola os dados.
+- **Combate:** ordem de turnos manual, Rodadas, Personagens, PdNs e Inimigos criados a partir de Modelos do Bestiário.
+- **Bestiário e Sorteios:** ferramentas privadas do Narrador para preparar antagonistas e consultar Ressonâncias, Discrasias e Compulsões.
+- **Atualizações e notificações:** painéis acompanham mudanças em tempo real enquanto o site está aberto; notificações ficam no próprio site.
 
-O nome do repositório e do pacote é `vitae-v5-manager`. O identificador da stack existente no Hostinger Docker Manager continua `v5-manager` para que o deploy atualize os containers no lugar e preserve o banco persistido.
+## Modelo de uso
 
-### Primeira configuração
+Cada instalação atende uma Crônica e um Narrador. O Narrador convida Jogadores por um link da Crônica. Cada Personagem pertence a um Jogador ou é um PdN controlado pelo Narrador. Uma Ficha pode ficar bloqueada para proteger os valores definidos na mesa; o Jogador continua atualizando dano, Fome e Manchas.
 
-1. Aponte o DNS do domínio para o IP do VPS e adicione o domínio ao Traefik com entrypoint `websecure` e certresolver `letsencrypt`.
-2. No repositório GitHub, configure estes secrets em **Settings → Secrets and variables → Actions**:
+O uso principal é em celular, com interface em português brasileiro. O Vitae requer conexão: não oferece modo offline nem notificações push quando o site está fechado.
 
-   - `HOSTINGER_API_KEY`: chave da API da Hostinger.
-   - `HOSTINGER_VM_ID`: ID da máquina virtual.
-   - `APP_HOST`: domínio sem protocolo. O domínio atual é `vitae.artbarros.tech`.
-   - `POSTGRES_PASSWORD`: senha só com letras e números; gere com `openssl rand -hex 32`.
-   - `BETTER_AUTH_SECRET`: segredo Better Auth; gere com `openssl rand -base64 32`.
-   - `NARRADOR_EMAIL`: e-mail do Narrador.
-   - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`: credenciais obrigatórias para login Google. O redirect URI é `https://<APP_HOST>/api/auth/callback/google`.
+## Escopo
 
-3. Pull requests e pushes em `main` rodam testes, verificação de tipos e build. O deploy só começa depois que essas etapas passam e os secrets obrigatórios existem.
-4. Faça push para `main` ou execute manualmente **Actions → CI e deploy → Run workflow**.
+O projeto segue o escopo da v1. Entre as escolhas de produto estão a evolução por Ficha Liberada, em vez de XP, e o Combate com ordem de turnos manual. Rolagens de dados para Jogadores, Loresheets e retratos de Personagem não fazem parte da v1.
 
-O workflow usa `hostinger/deploy-on-vps@v2` para enviar o `docker-compose.prod.yml`. O container aplica as migrations Drizzle antes de iniciar o servidor. O volume `pgdata` mantém os dados do PostgreSQL entre deploys.
+## Projeto
 
-### Hostinger MCP
+O app é um monólito em TypeScript: interface e backend usam TanStack Start; PostgreSQL persiste os dados; Drizzle gerencia o esquema e as migrations. Regras do domínio ficam em `src/domain/`, separadas das funções de servidor em `src/server/`. Os painéis recebem atualizações em tempo real via SSE.
 
-As configurações do servidor MCP Hostinger estão em `.mcp.json`, `.codex/config.toml` e `.agents/mcp_config.json`. Elas registram o endpoint oficial (`https://mcp.hostinger.com`), sem armazenar chaves ou tokens locais. A autenticação/conexão MCP é feita pelo cliente que carregar a configuração.
+## Documentação
 
-### Operação
-
-Para iniciar ou atualizar manualmente no VPS:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-Para acompanhar logs:
-
-```bash
-docker compose -f docker-compose.prod.yml logs -f app
-```
-
-Não rode `docker compose down -v` em produção: isso remove o volume do banco.
+- [Glossário do domínio](GLOSSARY.md): termos usados pela interface e pelo código.
+- [Escopo da v1](docs/escopo-v1.md): decisões de produto e limites do projeto.
+- [Documentos das fatias](docs/): detalhes de fichas, Coteries, catálogo, criação, combate e Sorteios.
+- [Decisões de arquitetura](docs/adr/): registros das decisões técnicas.
