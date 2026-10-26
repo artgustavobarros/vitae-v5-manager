@@ -1,6 +1,6 @@
-# Umbra
+# Vitae V5 Manager
 
-Gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Aplicação TanStack Start com PostgreSQL e Drizzle.
+Umbra, gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Aplicação TanStack Start com PostgreSQL e Drizzle.
 
 ## Desenvolvimento local
 
@@ -17,6 +17,8 @@ O app local usa `http://localhost:3005`; o PostgreSQL do Compose local fica na p
 ## Produção na Hostinger
 
 O `docker-compose.prod.yml` executa o app e o PostgreSQL no VPS. O app não publica porta: o Traefik já instalado no Docker Manager roteia o domínio para a porta interna `3000` e termina HTTPS. O compose usa o mesmo padrão do projeto `vampire`, em que o Traefik do host acessa os containers pela rede Docker.
+
+O nome do repositório e do pacote é `vitae-v5-manager`. O identificador da stack existente no Hostinger Docker Manager continua `v5-manager` para que o deploy atualize os containers no lugar e preserve o banco persistido.
 
 ### Primeira configuração
 

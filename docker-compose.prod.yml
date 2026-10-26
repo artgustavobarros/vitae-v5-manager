@@ -1,5 +1,6 @@
 # Produção no VPS Hostinger, atrás do Traefik do Docker Manager.
 # O Traefik existente usa network_mode: host e alcança o app pela rede Docker.
+# Nome do projeto Docker Manager existente: mantido para atualizar a stack e o volume do banco no lugar.
 name: v5-manager
 
 services:
@@ -43,11 +44,11 @@ services:
       start_period: 30s
     labels:
       - traefik.enable=true
-      - traefik.http.routers.v5-manager.rule=Host(`${APP_HOST:?defina APP_HOST}`)
-      - traefik.http.routers.v5-manager.entrypoints=websecure
-      - traefik.http.routers.v5-manager.tls=true
-      - traefik.http.routers.v5-manager.tls.certresolver=letsencrypt
-      - traefik.http.services.v5-manager.loadbalancer.server.port=3000
+      - traefik.http.routers.vitae-v5-manager.rule=Host(`${APP_HOST:?defina APP_HOST}`)
+      - traefik.http.routers.vitae-v5-manager.entrypoints=websecure
+      - traefik.http.routers.vitae-v5-manager.tls=true
+      - traefik.http.routers.vitae-v5-manager.tls.certresolver=letsencrypt
+      - traefik.http.services.vitae-v5-manager.loadbalancer.server.port=3000
 
 volumes:
   pgdata:

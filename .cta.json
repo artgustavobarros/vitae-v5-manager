@@ -1,5 +1,5 @@
 {
-  "projectName": "v5-manager",
+  "projectName": "vitae-v5-manager",
   "mode": "file-router",
   "bundler": "vite",
   "typescript": true,
