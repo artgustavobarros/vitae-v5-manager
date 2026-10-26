@@ -6,8 +6,9 @@ import { useSyncExternalStore } from 'react'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { useTempoReal } from '#/lib/use-tempo-real'
+import jostFonte from '@fontsource-variable/jost/files/jost-latin-wght-normal.woff2?url'
 import { buscarUsuario } from '#/server/sessao'
-import appCss from '../styles.css?url'
+import '../styles.css'
 
 const SITE_URL = 'https://vitae.artbarros.tech'
 const OG_IMAGE_URL = `${SITE_URL}/og-vitae.png`
@@ -47,12 +48,9 @@ export const Route = createRootRoute({
       { name: 'twitter:image', content: OG_IMAGE_URL },
     ],
     links: [
+      { rel: 'preload', href: jostFonte, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
     ],
   }),
   shellComponent: RootDocument,

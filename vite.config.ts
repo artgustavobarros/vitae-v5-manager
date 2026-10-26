@@ -11,9 +11,17 @@ const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
     devtools(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+    nitro({
+      rollupConfig: { external: [/^@sentry\//] },
+      compressPublicAssets: { gzip: true, brotli: true, zstd: false },
+      routeRules: {
+        '/assets/**': {
+          headers: { 'cache-control': 'public, max-age=31536000, immutable' },
+        },
+      },
+    }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({ server: { build: { inlineCss: true } } }),
     viteReact(),
   ],
 })

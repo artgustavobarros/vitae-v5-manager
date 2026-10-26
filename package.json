@@ -18,6 +18,7 @@
     "db:studio": "drizzle-kit studio",
     "catalogo:aplicar-sugestoes": "tsx scripts/aplicar-sugestoes.ts",
     "test": "vitest run",
+    "check:production-assets": "tsx scripts/check-production-assets.ts",
     "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit"
   },
   "dependencies": {

@@ -48,6 +48,9 @@ services:
       - traefik.http.routers.vitae-v5-manager.entrypoints=websecure
       - traefik.http.routers.vitae-v5-manager.tls=true
       - traefik.http.routers.vitae-v5-manager.tls.certresolver=letsencrypt
+      - traefik.http.middlewares.vitae-compress.compress=true
+      - traefik.http.middlewares.vitae-compress.compress.excludedContentTypes=text/event-stream
+      - traefik.http.routers.vitae-v5-manager.middlewares=vitae-compress
       - traefik.http.services.vitae-v5-manager.loadbalancer.server.port=3000
 
 volumes:

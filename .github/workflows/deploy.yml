@@ -53,6 +53,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verificar assets de produção
+        run: pnpm check:production-assets
+
   deploy:
     needs: verificacoes
     if: github.event_name != 'pull_request'
