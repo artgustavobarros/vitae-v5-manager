@@ -19,14 +19,14 @@ export const Route = createFileRoute('/personagens/$id/editar')({
     if (!context.usuario) throw redirect({ to: '/entrar' })
   },
   loader: async ({ params }) => {
-    const personagem = await buscarFicha({ data: { id: params.id } }).catch(() => null)
+    const [personagem, opcoesCronica] = await Promise.all([
+      buscarFicha({ data: { id: params.id } }).catch(() => null),
+      obterOpcoesCriacaoCronica(),
+    ])
     if (!personagem) throw redirect({ to: '/' })
     if (personagem.acesso !== 'editar') throw redirect({ to: '/personagens/$id', params })
     // Rascunho do Narrador: ele pode atribuí-lo a um Jogador na Revisão.
-    const [jogadores, opcoesCronica] = await Promise.all([
-      personagem.podeAtribuir ? listarJogadores() : [],
-      obterOpcoesCriacaoCronica(),
-    ])
+    const jogadores = personagem.podeAtribuir ? await listarJogadores() : []
     return { personagem, jogadores, opcoesCronica }
   },
   component: EditarFicha,

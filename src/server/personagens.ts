@@ -108,20 +108,18 @@ export const buscarFicha = createServerFn({ method: 'GET' })
   .validator(comId)
   .handler(async ({ data, context }) => {
     const p = await carregar(context.usuario, data.id, ['editar', 'marcar', 'ler'])
-    const [jogador] = p.atribuidoA
-      ? await db.select({ id: user.id, nome: user.name }).from(user).where(eq(user.id, p.atribuidoA))
-      : []
-    const pdn = await ehPdNNoBanco(p)
-
-    const coteriesDoPersonagem = await db
-      .select({
-        id: coterie.id,
-        nome: coterie.nome,
-      })
-      .from(membroCoterie)
-      .innerJoin(coterie, eq(membroCoterie.coterieId, coterie.id))
-      .where(eq(membroCoterie.personagemId, p.id))
-      .orderBy(asc(coterie.nome))
+    const [[jogador], pdn, coteriesDoPersonagem] = await Promise.all([
+      p.atribuidoA
+        ? db.select({ id: user.id, nome: user.name }).from(user).where(eq(user.id, p.atribuidoA))
+        : Promise.resolve([]),
+      ehPdNNoBanco(p),
+      db
+        .select({ id: coterie.id, nome: coterie.nome })
+        .from(membroCoterie)
+        .innerJoin(coterie, eq(membroCoterie.coterieId, coterie.id))
+        .where(eq(membroCoterie.personagemId, p.id))
+        .orderBy(asc(coterie.nome)),
+    ])
 
     return {
       id: p.id,

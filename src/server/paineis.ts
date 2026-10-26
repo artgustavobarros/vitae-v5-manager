@@ -11,20 +11,49 @@ import { exigirNarrador, exigirUsuario } from './sessao'
 export const carregarPainelNarrador = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
   .handler(async () => {
-    const todasCoteries = await db
-      .select({ id: coterie.id, nome: coterie.nome })
-      .from(coterie)
-      .orderBy(asc(coterie.nome))
-
-    // Membresias
-    const associacoes = await db
-      .select({
-        personagemId: membroCoterie.personagemId,
-        coterieId: coterie.id,
-        nomeCoterie: coterie.nome,
-      })
-      .from(membroCoterie)
-      .innerJoin(coterie, eq(membroCoterie.coterieId, coterie.id))
+    const [todasCoteries, associacoes, ativos, pdns] = await Promise.all([
+      db.select({ id: coterie.id, nome: coterie.nome }).from(coterie).orderBy(asc(coterie.nome)),
+      db
+        .select({
+          personagemId: membroCoterie.personagemId,
+          coterieId: coterie.id,
+          nomeCoterie: coterie.nome,
+        })
+        .from(membroCoterie)
+        .innerJoin(coterie, eq(membroCoterie.coterieId, coterie.id)),
+      db
+        .select({
+          id: personagem.id,
+          nome: personagem.nome,
+          status: personagem.status,
+          donoId: personagem.donoId,
+          nomeDono: user.name,
+          papelDono: user.papel,
+          ficha: personagem.ficha,
+          ressonanciaAtual: personagem.ressonanciaAtual,
+          compulsaoAtiva: personagem.compulsaoAtiva,
+        })
+        .from(personagem)
+        .innerJoin(user, eq(personagem.donoId, user.id))
+        .where(and(eq(personagem.status, 'ativo'), eq(user.papel, 'jogador')))
+        .orderBy(asc(personagem.nome)),
+      db
+        .select({
+          id: personagem.id,
+          nome: personagem.nome,
+          status: personagem.status,
+          donoId: personagem.donoId,
+          nomeDono: user.name,
+          papelDono: user.papel,
+          ficha: personagem.ficha,
+          ressonanciaAtual: personagem.ressonanciaAtual,
+          compulsaoAtiva: personagem.compulsaoAtiva,
+        })
+        .from(personagem)
+        .innerJoin(user, eq(personagem.donoId, user.id))
+        .where(and(eq(personagem.fixado, true), eq(user.papel, 'narrador')))
+        .orderBy(asc(personagem.nome)),
+    ])
 
     const coteriesPorPersonagem = new Map<string, { id: string; nome: string }[]>()
     for (const a of associacoes) {
@@ -32,42 +61,6 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
       lista.push({ id: a.coterieId, nome: a.nomeCoterie })
       coteriesPorPersonagem.set(a.personagemId, lista)
     }
-
-    // Personagens ativos de jogadores
-    const ativos = await db
-      .select({
-        id: personagem.id,
-        nome: personagem.nome,
-        status: personagem.status,
-        donoId: personagem.donoId,
-        nomeDono: user.name,
-        papelDono: user.papel,
-        ficha: personagem.ficha,
-        ressonanciaAtual: personagem.ressonanciaAtual,
-        compulsaoAtiva: personagem.compulsaoAtiva,
-      })
-      .from(personagem)
-      .innerJoin(user, eq(personagem.donoId, user.id))
-      .where(and(eq(personagem.status, 'ativo'), eq(user.papel, 'jogador')))
-      .orderBy(asc(personagem.nome))
-
-    // PdNs fixados
-    const pdns = await db
-      .select({
-        id: personagem.id,
-        nome: personagem.nome,
-        status: personagem.status,
-        donoId: personagem.donoId,
-        nomeDono: user.name,
-        papelDono: user.papel,
-        ficha: personagem.ficha,
-        ressonanciaAtual: personagem.ressonanciaAtual,
-        compulsaoAtiva: personagem.compulsaoAtiva,
-      })
-      .from(personagem)
-      .innerJoin(user, eq(personagem.donoId, user.id))
-      .where(and(eq(personagem.fixado, true), eq(user.papel, 'narrador')))
-      .orderBy(asc(personagem.nome))
 
     function mapear(p: (typeof ativos)[number]) {
       const cots = coteriesPorPersonagem.get(p.id) ?? []

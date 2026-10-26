@@ -27,6 +27,8 @@ Parar quando as telas críticas estiverem dentro das metas ou quando o próximo 
 - [x] Corrigir CLS de `/combate`: o trace atribuiu 0,27 à troca tardia da fonte Jost. Preload da fonte levou CLS a 0; LCP permaneceu em ~1,58 s no mesmo perfil.
 - [x] Perfil autenticado de Narrador: `/personagens/:id` LCP 1,48 s / CLS 0; `/paradas` 1,70 s / CLS 0,02; `/` teve LCP entre 1,41–1,82 s / CLS 0. `/combate` teve INP de 173 ms ao minimizar cards. Amostras locais únicas, sem CrUX.
 - [x] Repetir `/` três vezes: TTFB 375 ms na primeira carga e 15–21 ms nas duas seguintes; tratar o primeiro valor como inicialização fria, não como gargalo estável.
+- [x] Paralelizar as quatro leituras independentes do Painel do Narrador e medir 11 pares alternados no banco local: mediana caiu de 1,94 ms para 0,73 ms (−62,7%). É tempo das consultas, com a base local pequena; não representa TTFB nem carga de produção.
+- [x] Paralelizar consultas independentes ao abrir Ficha e iniciar a leitura das opções da Crônica junto da Ficha no loader de edição. A rota autenticada ainda precisa de medição de ponta a ponta.
 - [x] Repetir `/combate` em build de produção: sem preload de CSS, LCP 1,47 / 1,51 / 1,65 s (mediana 1,51 s), CLS 0. Com preload, mediana 1,50 s. Diferença de 5 ms não supera o ruído; preload extra removido.
 - [x] Simular compressão do HTML no proxy local: com CSS separado, LCP frio mediano 1,60 s e quente 0,72 s. Inline + Brotli: frio 0,78 s e quente 0,73 s; inline + gzip: frio 0,80 s e quente 0,74 s. CLS 0 em todos. HTML inline caiu de 100.973 para 17.966 bytes com Brotli.
 - [x] Reduzir JS inicial de `/entrar`: `validateSearch` importava `ETAPAS` de `wizard.tsx`, puxando o wizard e catálogos para o chunk global. Separar a constante deixou os preloads do root em 3 assets (eram 9); o chunk principal caiu de 704,26 KB para 372,64 KB, gzip de 188,79 KB para 114,30 KB e Brotli de ~156 KB para ~96 KB.
@@ -37,7 +39,7 @@ Parar quando as telas críticas estiverem dentro das metas ou quando o próximo 
 - [x] Medir busca de Paradas com 17 itens: interação de digitação teve INP de 85 ms e CLS 0. A amostra não representa listas maiores.
 - [x] Adicionar smoke de produção no CI: verificar HTML público, preload da fonte, CSS e JavaScript com Brotli/cache imutável e gzip fallback. O smoke valida contratos de entrega; não garante CLS nem fixa um LCP sintético.
 - [x] Repetir baseline de `/entrar` com várias amostras no domínio após deploy.
-- [ ] Medir edição de Ficha e interações de Jogador com uma sessão autenticada representativa.
+- [ ] Medir TTFB e interações da Ficha após paralelizar as consultas, com uma sessão autenticada representativa.
 - [ ] Medir uma sessão de Jogador além da sessão de Narrador.
 - [ ] Confirmar que eventos `text/event-stream` seguem sem compressão no Traefik.
 - [x] Investigar assets de Ficha/schemas/popover em `/entrar`; o grafo confirmou que vinham do import eager de `ETAPAS` no wizard.
