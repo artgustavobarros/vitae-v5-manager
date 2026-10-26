@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated", "--no-usage-statistics"]
+    },
     "hostinger": {
       "type": "http",
       "url": "https://mcp.hostinger.com"
