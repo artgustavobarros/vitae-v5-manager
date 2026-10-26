@@ -1,0 +1,56 @@
+# Deploya na Hostinger depois do push na main. Configure os secrets descritos no README.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Conferir secrets obrigatórios
+        env:
+          HOSTINGER_API_KEY: ${{ secrets.HOSTINGER_API_KEY }}
+          HOSTINGER_VM_ID: ${{ secrets.HOSTINGER_VM_ID }}
+          APP_HOST: ${{ secrets.APP_HOST }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          NARRADOR_EMAIL: ${{ secrets.NARRADOR_EMAIL }}
+        run: |
+          missing=0
+          for name in HOSTINGER_API_KEY HOSTINGER_VM_ID APP_HOST POSTGRES_PASSWORD BETTER_AUTH_SECRET NARRADOR_EMAIL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Falta o secret $name em Settings → Secrets and variables → Actions"
+              missing=1
+            fi
+          done
+          for name in POSTGRES_PASSWORD; do
+            if [ -n "${!name}" ] && ! [[ "${!name}" =~ ^[A-Za-z0-9]+$ ]]; then
+              echo "::error::$name deve conter só letras e números (gere com: openssl rand -hex 32)"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Deploy no VPS
+        uses: hostinger/deploy-on-vps@v2
+        with:
+          api-key: ${{ secrets.HOSTINGER_API_KEY }}
+          virtual-machine: ${{ secrets.HOSTINGER_VM_ID }}
+          project-name: v5-manager
+          docker-compose-path: docker-compose.prod.yml
+          environment-variables: |
+            APP_HOST=${{ secrets.APP_HOST }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+            NARRADOR_EMAIL=${{ secrets.NARRADOR_EMAIL }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}

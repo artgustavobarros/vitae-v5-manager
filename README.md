@@ -1,240 +1,56 @@
-Welcome to your new TanStack Start app!
+# Umbra
 
-# Getting Started
+Gerenciador de fichas de Vampiro: A Máscara 5ª Edição. Aplicação TanStack Start com PostgreSQL e Drizzle.
 
-To run this application:
+## Desenvolvimento local
 
 ```bash
 pnpm install
+cp .env.example .env.local
+docker compose up -d postgres
+pnpm db:migrate
 pnpm dev
 ```
 
-# Building For Production
+O app local usa `http://localhost:3005`; o PostgreSQL do Compose local fica na porta `5434`.
 
-To build this application for production:
+## Produção na Hostinger
 
-```bash
-pnpm build
-```
+O `docker-compose.prod.yml` executa o app e o PostgreSQL no VPS. O app não publica porta: o Traefik já instalado no Docker Manager roteia o domínio para a porta interna `3000` e termina HTTPS. O compose usa o mesmo padrão do projeto `vampire`, em que o Traefik do host acessa os containers pela rede Docker.
 
-## Styling
+### Primeira configuração
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+1. Aponte o DNS do domínio para o IP do VPS e adicione o domínio ao Traefik com entrypoint `websecure` e certresolver `letsencrypt`.
+2. No repositório GitHub, configure estes secrets em **Settings → Secrets and variables → Actions**:
 
-### Removing Tailwind CSS
+   - `HOSTINGER_API_KEY`: chave da API da Hostinger.
+   - `HOSTINGER_VM_ID`: ID da máquina virtual.
+   - `APP_HOST`: domínio sem protocolo, por exemplo `umbra.exemplo.com`.
+   - `POSTGRES_PASSWORD`: senha só com letras e números; gere com `openssl rand -hex 32`.
+   - `BETTER_AUTH_SECRET`: segredo Better Auth; gere com `openssl rand -base64 32`.
+   - `NARRADOR_EMAIL`: e-mail do Narrador.
+   - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`: opcionais, para login Google.
 
-If you prefer not to use Tailwind CSS:
+3. Faça push para `main` ou execute manualmente **Actions → Deploy → Run workflow**.
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+O workflow usa `hostinger/deploy-on-vps@v2` para enviar o `docker-compose.prod.yml`. O container aplica as migrations Drizzle antes de iniciar o servidor. O volume `pgdata` mantém os dados do PostgreSQL entre deploys.
 
+### Hostinger MCP
 
-## Setting up Better Auth
+As configurações do servidor MCP Hostinger estão em `.mcp.json`, `.codex/config.toml` e `.agents/mcp_config.json`, seguindo a configuração do projeto `vampire`. Elas registram o endpoint oficial (`https://mcp.hostinger.com`), sem armazenar chaves ou tokens locais. A autenticação/conexão MCP é feita pelo cliente que carregar a configuração.
 
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
+### Operação
 
-   ```bash
-   pnpm dlx @better-auth/cli secret
-   ```
-
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
-
-### Adding a Database (Optional)
-
-Better Auth can work in stateless mode, but to persist user data, add a database:
-
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
-```
-
-Then run migrations:
+Para iniciar ou atualizar manualmente no VPS:
 
 ```bash
-pnpm dlx @better-auth/cli migrate
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+Para acompanhar logs:
 
 ```bash
-pnpm dlx shadcn@latest add button
+docker compose -f docker-compose.prod.yml logs -f app
 ```
 
-
-## Deploy with Nitro
-
-This project uses Nitro as a generic server adapter, so it can run on any Node-compatible host.
-
-```bash
-npm run build
-node dist/server/index.mjs
-```
-
-The build output is a self-contained Node server. To deploy, push the `dist/` directory to your host (Render, Fly.io, your own VPS, etc.) and run the server command above.
-
-For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Não rode `docker compose down -v` em produção: isso remove o volume do banco.

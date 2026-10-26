@@ -1,0 +1,53 @@
+# Produção no VPS Hostinger, atrás do Traefik do Docker Manager.
+# O Traefik existente usa network_mode: host e alcança o app pela rede Docker.
+name: v5-manager
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: v5_manager
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      POSTGRES_DB: v5_manager
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U v5_manager -d v5_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://v5_manager:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@db:5432/v5_manager
+      BETTER_AUTH_URL: https://${APP_HOST:?defina APP_HOST}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?defina BETTER_AUTH_SECRET}
+      NARRADOR_EMAIL: ${NARRADOR_EMAIL:?defina NARRADOR_EMAIL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.v5-manager.rule=Host(`${APP_HOST:?defina APP_HOST}`)
+      - traefik.http.routers.v5-manager.entrypoints=websecure
+      - traefik.http.routers.v5-manager.tls=true
+      - traefik.http.routers.v5-manager.tls.certresolver=letsencrypt
+      - traefik.http.services.v5-manager.loadbalancer.server.port=3000
+
+volumes:
+  pgdata:
