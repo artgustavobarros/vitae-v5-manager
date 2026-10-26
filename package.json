@@ -10,6 +10,7 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
+    "skills:install": "npx skills experimental_install && npx skills experimental_sync -a antigravity -a claude-code -a gemini-cli -a codex -y",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -17,7 +18,7 @@
     "db:studio": "drizzle-kit studio",
     "catalogo:aplicar-sugestoes": "tsx scripts/aplicar-sugestoes.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",
