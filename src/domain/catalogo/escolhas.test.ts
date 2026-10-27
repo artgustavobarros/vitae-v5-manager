@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { fichaNeofito, type Ficha } from '../ficha'
+import { fichaNeofito, type Cla, type Ficha } from '../ficha'
 import {
+  avisoVantagem,
+  contadoresVantagens,
   escolhasInvalidas,
   itensSoltos,
   motivosPoder,
   opcoesPoderes,
   opcoesRituais,
-  avisoVantagem,
   opcoesVantagens,
   pontos,
   situacaoItem,
@@ -168,37 +169,44 @@ describe('Vantagens e Defeitos', () => {
     expect(opcoesVantagens([], 'defeito', VANTAGENS).map((v) => v.id)).toEqual([inimigo.id])
   })
 
-  it('itens de Sangue-Ralo e Caitiff só aparecem para o próprio Clã; Sangue-Ralo só vê os seus', () => {
+  // Seletor de Vantagens para o Clã; `criacao` é o wizard do Jogador.
+  const idsPara = (catalogo: Vantagem[], cla: Cla | null, criacao = false) =>
+    opcoesVantagens([], 'vantagem', catalogo, cla, criacao).map((v) => v.id)
+
+  it('itens de Sangue-Ralo e Caitiff só aparecem para o próprio Clã', () => {
     const ralo = vantagem('vantagem-ralo', { grupo: 'Sangue-Ralo' })
     const caitiff = vantagem('vantagem-caitiff', { grupo: 'Caitiff' })
     const catalogo = [recursos, ralo, caitiff]
-    const ids = (cla: Parameters<typeof opcoesVantagens>[3]) =>
-      opcoesVantagens([], 'vantagem', catalogo, cla).map((v) => v.id)
 
-    expect(ids('brujah')).toEqual([recursos.id])
-    expect(ids(null)).toEqual([recursos.id])
-    expect(ids('sangue-ralo')).toEqual([ralo.id])
-    expect(ids('caitiff')).toEqual([recursos.id, caitiff.id])
+    expect(idsPara(catalogo, 'brujah')).toEqual([recursos.id])
+    expect(idsPara(catalogo, null)).toEqual([recursos.id])
+    expect(idsPara(catalogo, 'sangue-ralo')).toEqual([recursos.id, ralo.id])
+    expect(idsPara(catalogo, 'caitiff')).toEqual([recursos.id, caitiff.id])
+  })
+
+  it('na criação, o Sangue-Ralo só vê os de Sangue-Ralo', () => {
+    const ralo = vantagem('vantagem-ralo', { grupo: 'Sangue-Ralo' })
+    const memorias = vantagem('vantagem-memorias', { grupo: 'Culto: Ashfinders', clas: { so: ['sangue-ralo'] } })
+    const catalogo = [recursos, ralo, memorias]
+
+    expect(idsPara(catalogo, 'sangue-ralo', true)).toEqual([ralo.id])
+    expect(idsPara(catalogo, 'brujah', true)).toEqual([recursos.id])
   })
 
   it('restrição de Clã do item: "só" e "exceto"', () => {
     const cisma = vantagem('defeito-cisma', { clas: { so: ['lasombra'] } })
     const fazendeiro = vantagem('defeito-fazendeiro', { clas: { exceto: ['ventrue'] } })
-    const memorias = vantagem('vantagem-memorias', { grupo: 'Culto: Ashfinders', clas: { so: ['sangue-ralo'] } })
-    const catalogo = [recursos, cisma, fazendeiro, memorias]
-    const ids = (cla: Parameters<typeof opcoesVantagens>[3]) =>
-      opcoesVantagens([], 'vantagem', catalogo, cla).map((v) => v.id)
+    const catalogo = [recursos, cisma, fazendeiro]
 
-    expect(ids('lasombra')).toEqual([recursos.id, cisma.id, fazendeiro.id])
-    expect(ids('ventrue')).toEqual([recursos.id])
-    expect(ids(null)).toEqual([recursos.id, fazendeiro.id])
-    expect(ids('sangue-ralo')).toEqual([memorias.id])
+    expect(idsPara(catalogo, 'lasombra')).toEqual([recursos.id, cisma.id, fazendeiro.id])
+    expect(idsPara(catalogo, 'ventrue')).toEqual([recursos.id])
+    expect(idsPara(catalogo, null)).toEqual([recursos.id, fazendeiro.id])
     expect(avisoVantagem(cisma)).toBeUndefined()
   })
 
   it('itens de Carniçal não aparecem para nenhum Clã', () => {
     const carnical = vantagem('vantagem-carnical', { grupo: 'Carniçal' })
-    expect(opcoesVantagens([], 'vantagem', [recursos, carnical], 'brujah').map((v) => v.id)).toEqual([recursos.id])
+    expect(idsPara([recursos, carnical], 'brujah')).toEqual([recursos.id])
   })
 
   it('aviso do seletor tira o "Só <Clã>" e mantém o resto', () => {
@@ -208,6 +216,28 @@ describe('Vantagens e Defeitos', () => {
       'Não combina com Aparência Viva',
     )
     expect(avisoVantagem(vantagem('v', { preRequisito: 'Só Tremere' }))).toBe('Só Tremere')
+  })
+
+  it('contadores: pontos no padrão; quantidade de itens de Sangue-Ralo no Sangue-Ralo', () => {
+    const ralo = vantagem('vantagem-ralo', { grupo: 'Sangue-Ralo', niveis: [1] })
+    const raloDefeito = vantagem('defeito-ralo', { tipo: 'defeito', grupo: 'Sangue-Ralo', niveis: [1] })
+    const memorias = vantagem('vantagem-memorias', { grupo: 'Culto: Ashfinders', niveis: [2] })
+    const catalogoSR: ItemCatalogo[] = [recursos, ralo, raloDefeito, memorias]
+    const buscarSR = (id: string) => catalogoSR.find((i) => i.id === id) ?? null
+    const vantagens = [
+      { id: ralo.id, nivel: 1 },
+      { id: memorias.id, nivel: 2 },
+    ]
+    const defeitos = [{ id: raloDefeito.id, nivel: 1 }]
+
+    expect(contadoresVantagens({ cla: 'brujah', vantagens, defeitos }, buscarSR)).toEqual({
+      vantagens: { atual: 3, total: 7 },
+      defeitos: { atual: 1, total: 2 },
+    })
+    expect(contadoresVantagens({ cla: 'sangue-ralo', vantagens, defeitos }, buscarSR)).toEqual({
+      vantagens: { atual: 1, total: 3 },
+      defeitos: { atual: 1, total: 1 },
+    })
   })
 
   it('soma os pontos', () => {

@@ -188,16 +188,21 @@ const GRUPO_DO_CLA: Record<string, Cla> = {
 const GRUPOS_SEM_PERSONAGEM = new Set(['Carniçal'])
 
 /**
- * Fora do próprio Clã, o grupo dele some; o Sangue-Ralo só vê os de Sangue-Ralo.
- * Essa última parte é regra da criação: com XP (fora da v1), o Sangue-Ralo compra as demais.
+ * Regras do livro, valem sempre: grupo de outro Clã some, `clas` restringe, Carniçal não aparece.
+ * Regra da criação (só com `regrasCriacao`): o Sangue-Ralo vê só os de Sangue-Ralo; depois, com XP
+ * (fora da v1), compra as demais.
  */
-function disponivelParaCla(v: Vantagem, cla: Cla | null): boolean {
+function disponivelParaCla(v: Vantagem, cla: Cla | null, regrasCriacao: boolean): boolean {
   if (GRUPOS_SEM_PERSONAGEM.has(v.grupo)) return false
   const { so, exceto } = v.clas ?? {}
   if (so && (!cla || !so.includes(cla))) return false
   if (cla && exceto?.includes(cla)) return false
-  if (cla === 'sangue-ralo') return v.grupo === 'Sangue-Ralo' || Boolean(so)
+  if (regrasCriacao && cla === 'sangue-ralo') return ehDeSangueRalo(v)
   return !(v.grupo in GRUPO_DO_CLA) || GRUPO_DO_CLA[v.grupo] === cla
+}
+
+function ehDeSangueRalo(v: Vantagem): boolean {
+  return GRUPO_DO_CLA[v.grupo] === 'sangue-ralo'
 }
 
 /** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos e os de outro Clã. */
@@ -206,13 +211,14 @@ export function opcoesVantagens(
   tipo: Vantagem['tipo'],
   catalogo: readonly Vantagem[] = VANTAGENS_PERSONAGEM,
   cla: Cla | null = null,
+  regrasCriacao = false,
 ): Vantagem[] {
   const ids = new Set(escolhidas.map((e) => e.id))
   return catalogo.filter(
     (v) =>
       v.tipo === tipo &&
       (v.repetivel || !ids.has(v.id)) &&
-      disponivelParaCla(v, cla),
+      disponivelParaCla(v, cla, regrasCriacao),
   )
 }
 
@@ -234,6 +240,34 @@ export const PONTOS_CRIACAO = { vantagens: 7, defeitos: 2 } as const
 
 /** Sangue-Ralo: até 3 Méritos de Sangue-Ralo e a mesma quantidade de Defeitos de Sangue-Ralo. */
 export const MAXIMO_MERITOS_SANGUE_RALO = 3
+
+export type Contador = { atual: number; total: number }
+
+/**
+ * Contadores da criação. Padrão: pontos, "x / 7" e "x / 2". Sangue-Ralo: quantidade de itens
+ * de Sangue-Ralo, "x / 3" Méritos e Defeitos espelhando os Méritos, como `validarVantagensDefeitosCriacao`.
+ */
+export function contadoresVantagens(
+  ficha: Pick<Ficha, 'cla' | 'vantagens' | 'defeitos'>,
+  buscar: Buscar = itemCatalogo,
+): { vantagens: Contador; defeitos: Contador } {
+  if (ficha.cla !== 'sangue-ralo') {
+    return {
+      vantagens: { atual: pontos(ficha.vantagens), total: PONTOS_CRIACAO.vantagens },
+      defeitos: { atual: pontos(ficha.defeitos), total: PONTOS_CRIACAO.defeitos },
+    }
+  }
+  const deSangueRalo = (escolhidas: readonly EscolhaVantagem[]) =>
+    escolhidas.filter((e) => {
+      const item = buscar(e.id)
+      return (item?.tipo === 'vantagem' || item?.tipo === 'defeito') && ehDeSangueRalo(item)
+    }).length
+  const meritos = deSangueRalo(ficha.vantagens)
+  return {
+    vantagens: { atual: meritos, total: MAXIMO_MERITOS_SANGUE_RALO },
+    defeitos: { atual: deSangueRalo(ficha.defeitos), total: meritos },
+  }
+}
 
 /**
  * Para o Jogador, o servidor confere só o que entrou agora: poderes e Rituais que já estavam

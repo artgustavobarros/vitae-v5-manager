@@ -10,20 +10,19 @@ import type { Papel } from '#/domain/acesso'
 import {
   avisoVantagem,
   CAMPO_DO_RITUAL,
+  contadoresVantagens,
   itensSoltos,
-  MAXIMO_MERITOS_SANGUE_RALO,
   nivelDisciplina,
   opcoesPoderes,
   opcoesRituais,
   opcoesVantagens,
   poderesDaDisciplina,
-  pontos,
-  PONTOS_CRIACAO,
   situacaoItem,
   TEXTO_MOTIVO,
   temVagaDePoder,
   temPoderes,
   tipoRitualDa,
+  type Contador,
   type Opcao,
   type TipoRitual,
 } from '#/domain/catalogo/escolhas'
@@ -220,14 +219,14 @@ export function CamposVantagens({
   tipo: Vantagem['tipo']
   catalogo?: readonly Vantagem[]
   regras: boolean
-  /** Itens de Sangue-Ralo e Caitiff só aparecem para o próprio Clã. */
+  /** Filtra os itens pelo Clã; com `regras`, o Sangue-Ralo vê só os de Sangue-Ralo. */
   cla?: Cla | null
-  /** Ex.: 7 para "x / 7"; só informa. */
-  contador?: number
+  /** Ex.: "x / 7"; só informa. */
+  contador?: Contador
   onChange: (escolhidas: EscolhaVantagem[]) => void
 }) {
   const titulo = tipo === 'vantagem' ? 'Vantagens' : 'Defeitos'
-  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo, cla).map((v) => ({
+  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo, cla, regras).map((v) => ({
     valor: v.id,
     rotulo: v.nome,
     original: v.nomeOriginal,
@@ -244,7 +243,7 @@ export function CamposVantagens({
         <h3 className="text-base font-semibold">{titulo}</h3>
         {contador !== undefined && (
           <span className="text-sm text-muted-foreground tabular-nums">
-            {pontos(escolhidas)} / {contador}
+            {contador.atual} / {contador.total}
           </span>
         )}
       </div>
@@ -316,8 +315,7 @@ export function CamposVantagensPersonagem({
   regras: boolean
   mudar: (parcial: Partial<Ficha>) => void
 }) {
-  // Sangue-Ralo: Defeitos espelham os Méritos escolhidos.
-  const sangueRalo = ficha.cla === 'sangue-ralo'
+  const contadores = contadoresVantagens(ficha)
   return (
     <>
       <CamposVantagens
@@ -325,7 +323,7 @@ export function CamposVantagensPersonagem({
         tipo="vantagem"
         regras={regras}
         cla={ficha.cla}
-        contador={sangueRalo ? MAXIMO_MERITOS_SANGUE_RALO : PONTOS_CRIACAO.vantagens}
+        contador={contadores.vantagens}
         onChange={(vantagens) => mudar({ vantagens })}
       />
       <CamposVantagens
@@ -333,7 +331,7 @@ export function CamposVantagensPersonagem({
         tipo="defeito"
         regras={regras}
         cla={ficha.cla}
-        contador={sangueRalo ? pontos(ficha.vantagens) : PONTOS_CRIACAO.defeitos}
+        contador={contadores.defeitos}
         onChange={(defeitos) => mudar({ defeitos })}
       />
     </>

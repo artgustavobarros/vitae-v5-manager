@@ -1,5 +1,6 @@
 import { ATRIBUTOS, HABILIDADES, type Atributo, type Cla, type Disciplina, type Habilidade } from '../ficha'
 import { itemCatalogo, poder } from '../catalogo'
+import { MAXIMO_MERITOS_SANGUE_RALO } from '../catalogo/escolhas'
 import type { TipoPredador } from '../catalogo/tipos'
 import type {
   DadosCriacao,
@@ -377,7 +378,7 @@ export function validarVantagensDefeitosCriacao(
     const pontosVantagens = meritosSR.reduce((acc, v) => acc + v.nivel, 0)
     const pontosDefeitos = defeitosSR.reduce((acc, v) => acc + v.nivel, 0)
 
-    if (meritosSR.length < 1 || meritosSR.length > 3) {
+    if (meritosSR.length < 1 || meritosSR.length > MAXIMO_MERITOS_SANGUE_RALO) {
       erros.push(`Sangue-Ralo deve escolher entre 1 e 3 Méritos de Sangue-Ralo (atual: ${meritosSR.length}).`)
     }
 
