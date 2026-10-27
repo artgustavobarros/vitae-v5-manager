@@ -159,3 +159,4 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - Retrato do Personagem.
 - Resumo dos Personagens dos outros Jogadores fora das Coteries.
 - Loresheets.
+- Carniçal como Personagem. Até lá, as Vantagens e Defeitos de Carniçal ficam fora do seletor.

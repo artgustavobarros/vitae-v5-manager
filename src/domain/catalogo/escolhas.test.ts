@@ -7,6 +7,7 @@ import {
   motivosPoder,
   opcoesPoderes,
   opcoesRituais,
+  avisoVantagem,
   opcoesVantagens,
   pontos,
   situacaoItem,
@@ -165,6 +166,48 @@ describe('Vantagens e Defeitos', () => {
     ]
     expect(opcoesVantagens(escolhidas, 'vantagem', VANTAGENS).map((v) => v.id)).toEqual([contatos.id])
     expect(opcoesVantagens([], 'defeito', VANTAGENS).map((v) => v.id)).toEqual([inimigo.id])
+  })
+
+  it('itens de Sangue-Ralo e Caitiff só aparecem para o próprio Clã; Sangue-Ralo só vê os seus', () => {
+    const ralo = vantagem('vantagem-ralo', { grupo: 'Sangue-Ralo' })
+    const caitiff = vantagem('vantagem-caitiff', { grupo: 'Caitiff' })
+    const catalogo = [recursos, ralo, caitiff]
+    const ids = (cla: Parameters<typeof opcoesVantagens>[3]) =>
+      opcoesVantagens([], 'vantagem', catalogo, cla).map((v) => v.id)
+
+    expect(ids('brujah')).toEqual([recursos.id])
+    expect(ids(null)).toEqual([recursos.id])
+    expect(ids('sangue-ralo')).toEqual([ralo.id])
+    expect(ids('caitiff')).toEqual([recursos.id, caitiff.id])
+  })
+
+  it('restrição de Clã do item: "só" e "exceto"', () => {
+    const cisma = vantagem('defeito-cisma', { clas: { so: ['lasombra'] } })
+    const fazendeiro = vantagem('defeito-fazendeiro', { clas: { exceto: ['ventrue'] } })
+    const memorias = vantagem('vantagem-memorias', { grupo: 'Culto: Ashfinders', clas: { so: ['sangue-ralo'] } })
+    const catalogo = [recursos, cisma, fazendeiro, memorias]
+    const ids = (cla: Parameters<typeof opcoesVantagens>[3]) =>
+      opcoesVantagens([], 'vantagem', catalogo, cla).map((v) => v.id)
+
+    expect(ids('lasombra')).toEqual([recursos.id, cisma.id, fazendeiro.id])
+    expect(ids('ventrue')).toEqual([recursos.id])
+    expect(ids(null)).toEqual([recursos.id, fazendeiro.id])
+    expect(ids('sangue-ralo')).toEqual([memorias.id])
+    expect(avisoVantagem(cisma)).toBeUndefined()
+  })
+
+  it('itens de Carniçal não aparecem para nenhum Clã', () => {
+    const carnical = vantagem('vantagem-carnical', { grupo: 'Carniçal' })
+    expect(opcoesVantagens([], 'vantagem', [recursos, carnical], 'brujah').map((v) => v.id)).toEqual([recursos.id])
+  })
+
+  it('aviso do seletor tira o "Só <Clã>" e mantém o resto', () => {
+    const ralo = (preRequisito: string) => vantagem('vantagem-ralo', { grupo: 'Sangue-Ralo', preRequisito })
+    expect(avisoVantagem(ralo('Só Sangue-Ralo'))).toBeUndefined()
+    expect(avisoVantagem(ralo('Só Sangue-Ralo; não combina com Aparência Viva'))).toBe(
+      'Não combina com Aparência Viva',
+    )
+    expect(avisoVantagem(vantagem('v', { preRequisito: 'Só Tremere' }))).toBe('Só Tremere')
   })
 
   it('soma os pontos', () => {

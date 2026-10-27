@@ -7,7 +7,7 @@
  */
 
 import type { Papel } from '../acesso'
-import type { Disciplina, EscolhaVantagem, Ficha } from '../ficha'
+import type { Cla, Disciplina, EscolhaVantagem, Ficha } from '../ficha'
 import { itemCatalogo, PODERES, RITUAIS_TODOS, VANTAGENS_PERSONAGEM } from './index'
 import type { DisciplinaComPoderes, ItemCatalogo, Poder, Ritual, Vantagem } from './tipos'
 
@@ -178,14 +178,51 @@ export function semItem(ficha: Ficha, id: string): Partial<Ficha> {
   }
 }
 
-/** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos. */
+/** Grupos de Vantagens e Defeitos que só existem para um Clã. */
+const GRUPO_DO_CLA: Record<string, Cla> = {
+  'Sangue-Ralo': 'sangue-ralo',
+  Caitiff: 'caitiff',
+}
+
+/** Só para carniçais, que a v1 não cria. */
+const GRUPOS_SEM_PERSONAGEM = new Set(['Carniçal'])
+
+/**
+ * Fora do próprio Clã, o grupo dele some; o Sangue-Ralo só vê os de Sangue-Ralo.
+ * Essa última parte é regra da criação: com XP (fora da v1), o Sangue-Ralo compra as demais.
+ */
+function disponivelParaCla(v: Vantagem, cla: Cla | null): boolean {
+  if (GRUPOS_SEM_PERSONAGEM.has(v.grupo)) return false
+  const { so, exceto } = v.clas ?? {}
+  if (so && (!cla || !so.includes(cla))) return false
+  if (cla && exceto?.includes(cla)) return false
+  if (cla === 'sangue-ralo') return v.grupo === 'Sangue-Ralo' || Boolean(so)
+  return !(v.grupo in GRUPO_DO_CLA) || GRUPO_DO_CLA[v.grupo] === cla
+}
+
+/** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos e os de outro Clã. */
 export function opcoesVantagens(
   escolhidas: readonly EscolhaVantagem[],
   tipo: Vantagem['tipo'],
   catalogo: readonly Vantagem[] = VANTAGENS_PERSONAGEM,
+  cla: Cla | null = null,
 ): Vantagem[] {
   const ids = new Set(escolhidas.map((e) => e.id))
-  return catalogo.filter((v) => v.tipo === tipo && (v.repetivel || !ids.has(v.id)))
+  return catalogo.filter(
+    (v) =>
+      v.tipo === tipo &&
+      (v.repetivel || !ids.has(v.id)) &&
+      disponivelParaCla(v, cla),
+  )
+}
+
+/** Aviso no seletor: sem o "Só <Clã>", já garantido pelo filtro de `opcoesVantagens`. */
+export function avisoVantagem(v: Vantagem): string | undefined {
+  // Nos itens com `clas`, o pré-requisito é só a restrição de Clã.
+  if (v.clas) return undefined
+  if (!v.preRequisito || !(v.grupo in GRUPO_DO_CLA)) return v.preRequisito
+  const resto = v.preRequisito.replace(new RegExp(`^Só ${v.grupo}(; )?`), '')
+  return resto ? resto[0].toUpperCase() + resto.slice(1) : undefined
 }
 
 /** Soma dos níveis, para os contadores "x / 7" e "x / 2" (só informativos até a fatia 5). */
@@ -194,6 +231,9 @@ export function pontos(escolhidas: readonly EscolhaVantagem[]): number {
 }
 
 export const PONTOS_CRIACAO = { vantagens: 7, defeitos: 2 } as const
+
+/** Sangue-Ralo: até 3 Méritos de Sangue-Ralo e a mesma quantidade de Defeitos de Sangue-Ralo. */
+export const MAXIMO_MERITOS_SANGUE_RALO = 3
 
 /**
  * Para o Jogador, o servidor confere só o que entrou agora: poderes e Rituais que já estavam

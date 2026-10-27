@@ -515,6 +515,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Só se sente bem bebendo de animais; beber de humanos custa Força de Vontade.',
     fonte: { livro: 'Corebook', pagina: 181 },
     preRequisito: 'Não para Ventrue',
+    clas: { exceto: ['ventrue'] },
     confianca: 'certo',
   },
   {
@@ -1198,7 +1199,7 @@ export const VANTAGENS: Vantagem[] = [
     nomeOriginal: 'Inherited Bane',
     descricao: 'Ganha a Perdição do clã da vítima da diablerie, além da própria.',
     fonte: { livro: 'Gehenna War', pagina: 45 },
-    preRequisito: 'Ter cometido diablerie; Tremere não pegam a Perdição Salubri',
+    preRequisito: 'Ter cometido diablerie; Tremere pode pegar a Perdição Salubri sem diablerie',
     confianca: 'certo',
   },
   {
@@ -2064,6 +2065,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Em testes ligados ao Ashe, cada 10 conta em dobro.',
     fonte: { livro: 'Children of the Blood', pagina: 95 },
     preRequisito: 'Só Sangue-Ralo',
+    clas: { so: ['sangue-ralo'] },
     confianca: 'certo',
   },
   {
@@ -2144,6 +2146,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Perde dados Sociais com o próprio culto.',
     fonte: { livro: 'Children of the Blood', pagina: 95 },
     preRequisito: 'Lasombra',
+    clas: { so: ['lasombra'] },
     confianca: 'certo',
   },
   {

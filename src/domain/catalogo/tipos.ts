@@ -9,7 +9,7 @@
  * - da Coterie: `coterie-vantagem-<nome>`, `coterie-defeito-<nome>`, `tipo-coterie-<nome>`.
  */
 
-import type { Disciplina, Habilidade } from '../ficha'
+import type { Cla, Disciplina, Habilidade } from '../ficha'
 import type { Livro } from './livros'
 
 /** certo: nome da edição brasileira ou tradução óbvia; duvida: tradução livre a revisar; ingles: mantido em inglês. */
@@ -77,6 +77,8 @@ export type Vantagem = ItemBase & {
   niveis: Nivel[]
   /** Pode aparecer mais de uma vez na mesma Ficha (ex.: dois Contatos). */
   repetivel: boolean
+  /** Restrição de Clã fora dos grupos Caitiff e Sangue-Ralo (ex.: Fazendeiro, exceto Ventrue). */
+  clas?: { so?: Cla[]; exceto?: Cla[] }
 }
 
 /** Tipo de Coterie: descritivo, não aplica nada. */

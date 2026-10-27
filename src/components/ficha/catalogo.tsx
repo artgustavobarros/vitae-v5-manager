@@ -8,8 +8,10 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import type { Papel } from '#/domain/acesso'
 import {
+  avisoVantagem,
   CAMPO_DO_RITUAL,
   itensSoltos,
+  MAXIMO_MERITOS_SANGUE_RALO,
   nivelDisciplina,
   opcoesPoderes,
   opcoesRituais,
@@ -27,7 +29,7 @@ import {
 } from '#/domain/catalogo/escolhas'
 import { itemCatalogo, vantagem, VANTAGENS_PERSONAGEM } from '#/domain/catalogo/index'
 import type { DisciplinaComPoderes, Nivel, Poder, Ritual, Vantagem } from '#/domain/catalogo/tipos'
-import type { Disciplina, EscolhaVantagem, Ficha } from '#/domain/ficha'
+import type { Cla, Disciplina, EscolhaVantagem, Ficha } from '#/domain/ficha'
 
 // Poderes, Rituais, Cerimônias, Fórmulas, Vantagens e Defeitos na Ficha: leitura e edição.
 
@@ -210,6 +212,7 @@ export function CamposVantagens({
   tipo,
   catalogo = VANTAGENS_PERSONAGEM,
   regras,
+  cla = null,
   contador,
   onChange,
 }: {
@@ -217,18 +220,20 @@ export function CamposVantagens({
   tipo: Vantagem['tipo']
   catalogo?: readonly Vantagem[]
   regras: boolean
+  /** Itens de Sangue-Ralo e Caitiff só aparecem para o próprio Clã. */
+  cla?: Cla | null
   /** Ex.: 7 para "x / 7"; só informa. */
   contador?: number
   onChange: (escolhidas: EscolhaVantagem[]) => void
 }) {
   const titulo = tipo === 'vantagem' ? 'Vantagens' : 'Defeitos'
-  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo).map((v) => ({
+  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo, cla).map((v) => ({
     valor: v.id,
     rotulo: v.nome,
     original: v.nomeOriginal,
     descricao: v.descricao,
     grupo: v.grupo,
-    aviso: v.preRequisito,
+    aviso: avisoVantagem(v),
   }))
   const trocar = (i: number, parcial: Partial<EscolhaVantagem>) =>
     onChange(escolhidas.map((e, j) => (j === i ? { ...e, ...parcial } : e)))
@@ -311,20 +316,24 @@ export function CamposVantagensPersonagem({
   regras: boolean
   mudar: (parcial: Partial<Ficha>) => void
 }) {
+  // Sangue-Ralo: Defeitos espelham os Méritos escolhidos.
+  const sangueRalo = ficha.cla === 'sangue-ralo'
   return (
     <>
       <CamposVantagens
         escolhidas={ficha.vantagens}
         tipo="vantagem"
         regras={regras}
-        contador={PONTOS_CRIACAO.vantagens}
+        cla={ficha.cla}
+        contador={sangueRalo ? MAXIMO_MERITOS_SANGUE_RALO : PONTOS_CRIACAO.vantagens}
         onChange={(vantagens) => mudar({ vantagens })}
       />
       <CamposVantagens
         escolhidas={ficha.defeitos}
         tipo="defeito"
         regras={regras}
-        contador={PONTOS_CRIACAO.defeitos}
+        cla={ficha.cla}
+        contador={sangueRalo ? pontos(ficha.vantagens) : PONTOS_CRIACAO.defeitos}
         onChange={(defeitos) => mudar({ defeitos })}
       />
     </>
