@@ -9,6 +9,7 @@
  * - da Coterie: `coterie-vantagem-<nome>`, `coterie-defeito-<nome>`, `tipo-coterie-<nome>`.
  */
 
+import type { IdadeCriacao } from '../cronica'
 import type { Cla, Disciplina, Habilidade } from '../ficha'
 import type { Livro } from './livros'
 
@@ -79,6 +80,10 @@ export type Vantagem = ItemBase & {
   repetivel: boolean
   /** Restrição de Clã fora dos grupos Caitiff e Sangue-Ralo (ex.: Fazendeiro, exceto Ventrue). */
   clas?: { so?: Cla[]; exceto?: Cla[] }
+  /** Idade mínima do Personagem (ex.: "Só Ancillae ou mais velhos"). */
+  idadeMinima?: IdadeCriacao
+  /** Potência do Sangue máxima (ex.: Modo Nuit, 1 ou menos). */
+  potenciaSangueMaxima?: number
 }
 
 /** Tipo de Coterie: descritivo, não aplica nada. */

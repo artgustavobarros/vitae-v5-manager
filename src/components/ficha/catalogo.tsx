@@ -23,12 +23,14 @@ import {
   temPoderes,
   tipoRitualDa,
   type Contador,
+  type ContextoVantagens,
   type Opcao,
   type TipoRitual,
 } from '#/domain/catalogo/escolhas'
 import { itemCatalogo, vantagem, VANTAGENS_PERSONAGEM } from '#/domain/catalogo/index'
 import type { DisciplinaComPoderes, Nivel, Poder, Ritual, Vantagem } from '#/domain/catalogo/tipos'
-import type { Cla, Disciplina, EscolhaVantagem, Ficha } from '#/domain/ficha'
+import type { IdadeCriacao } from '#/domain/cronica'
+import type { Disciplina, EscolhaVantagem, Ficha } from '#/domain/ficha'
 
 // Poderes, Rituais, Cerimônias, Fórmulas, Vantagens e Defeitos na Ficha: leitura e edição.
 
@@ -211,7 +213,7 @@ export function CamposVantagens({
   tipo,
   catalogo = VANTAGENS_PERSONAGEM,
   regras,
-  cla = null,
+  contexto = {},
   contador,
   onChange,
 }: {
@@ -219,20 +221,20 @@ export function CamposVantagens({
   tipo: Vantagem['tipo']
   catalogo?: readonly Vantagem[]
   regras: boolean
-  /** Filtra os itens pelo Clã; com `regras`, o Sangue-Ralo vê só os de Sangue-Ralo. */
-  cla?: Cla | null
+  /** O que se sabe do Personagem para filtrar as opções (Clã, idade, Potência do Sangue). */
+  contexto?: ContextoVantagens
   /** Ex.: "x / 7"; só informa. */
   contador?: Contador
   onChange: (escolhidas: EscolhaVantagem[]) => void
 }) {
   const titulo = tipo === 'vantagem' ? 'Vantagens' : 'Defeitos'
-  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo, cla, regras).map((v) => ({
+  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo, contexto).map((v) => ({
     valor: v.id,
     rotulo: v.nome,
     original: v.nomeOriginal,
     descricao: v.descricao,
     grupo: v.grupo,
-    aviso: avisoVantagem(v),
+    aviso: avisoVantagem(v, contexto),
   }))
   const trocar = (i: number, parcial: Partial<EscolhaVantagem>) =>
     onChange(escolhidas.map((e, j) => (j === i ? { ...e, ...parcial } : e)))
@@ -309,20 +311,29 @@ export function CamposVantagens({
 export function CamposVantagensPersonagem({
   ficha,
   regras,
+  idade,
   mudar,
 }: {
   ficha: Ficha
   regras: boolean
+  /** Idade da criação, da Crônica; só filtra com `regras` (wizard do Jogador). */
+  idade?: IdadeCriacao
   mudar: (parcial: Partial<Ficha>) => void
 }) {
   const contadores = contadoresVantagens(ficha)
+  const contexto: ContextoVantagens = {
+    cla: ficha.cla,
+    potenciaSangue: ficha.potenciaSangue,
+    idade: regras ? idade : undefined,
+    regrasCriacao: regras,
+  }
   return (
     <>
       <CamposVantagens
         escolhidas={ficha.vantagens}
         tipo="vantagem"
         regras={regras}
-        cla={ficha.cla}
+        contexto={contexto}
         contador={contadores.vantagens}
         onChange={(vantagens) => mudar({ vantagens })}
       />
@@ -330,7 +341,7 @@ export function CamposVantagensPersonagem({
         escolhidas={ficha.defeitos}
         tipo="defeito"
         regras={regras}
-        cla={ficha.cla}
+        contexto={contexto}
         contador={contadores.defeitos}
         onChange={(defeitos) => mudar({ defeitos })}
       />

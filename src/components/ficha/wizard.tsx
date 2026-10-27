@@ -208,6 +208,7 @@ export function WizardCriacao({
           <CamposVantagensPersonagem
             ficha={edicao.ficha}
             regras={regrasCriacao}
+            idade={opcoesCronica?.idadePadrao}
             mudar={edicao.mudar}
           />
         )}

@@ -171,7 +171,7 @@ describe('Vantagens e Defeitos', () => {
 
   // Seletor de Vantagens para o Clã; `criacao` é o wizard do Jogador.
   const idsPara = (catalogo: Vantagem[], cla: Cla | null, criacao = false) =>
-    opcoesVantagens([], 'vantagem', catalogo, cla, criacao).map((v) => v.id)
+    opcoesVantagens([], 'vantagem', catalogo, { cla, regrasCriacao: criacao }).map((v) => v.id)
 
   it('itens de Sangue-Ralo e Caitiff só aparecem para o próprio Clã', () => {
     const ralo = vantagem('vantagem-ralo', { grupo: 'Sangue-Ralo' })
@@ -202,6 +202,28 @@ describe('Vantagens e Defeitos', () => {
     expect(idsPara(catalogo, 'ventrue')).toEqual([recursos.id])
     expect(idsPara(catalogo, null)).toEqual([recursos.id, fazendeiro.id])
     expect(avisoVantagem(cisma)).toBeUndefined()
+  })
+
+  it('idade mínima filtra só quando a idade é conhecida', () => {
+    const arcaico = vantagem('vantagem-arcaico', { idadeMinima: 'ancillae', preRequisito: 'Só Ancillae ou mais velhos' })
+    const ids = (idade?: 'neofito' | 'ancillae') =>
+      opcoesVantagens([], 'vantagem', [recursos, arcaico], { idade }).map((v) => v.id)
+
+    expect(ids('neofito')).toEqual([recursos.id])
+    expect(ids('ancillae')).toEqual([recursos.id, arcaico.id])
+    expect(ids()).toEqual([recursos.id, arcaico.id])
+    expect(avisoVantagem(arcaico, { idade: 'ancillae' })).toBeUndefined()
+    expect(avisoVantagem(arcaico)).toBe('Só Ancillae ou mais velhos')
+  })
+
+  it('Potência do Sangue máxima', () => {
+    const nuit = vantagem('vantagem-nuit', { potenciaSangueMaxima: 1, preRequisito: 'Potência do Sangue 1 ou menos' })
+    const ids = (potenciaSangue: number) =>
+      opcoesVantagens([], 'vantagem', [recursos, nuit], { potenciaSangue }).map((v) => v.id)
+
+    expect(ids(1)).toEqual([recursos.id, nuit.id])
+    expect(ids(2)).toEqual([recursos.id])
+    expect(avisoVantagem(nuit, { potenciaSangue: 1 })).toBeUndefined()
   })
 
   it('itens de Carniçal não aparecem para nenhum Clã', () => {

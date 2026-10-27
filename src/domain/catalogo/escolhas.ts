@@ -7,6 +7,7 @@
  */
 
 import type { Papel } from '../acesso'
+import { IDADES_CRIACAO, type IdadeCriacao } from '../cronica'
 import type { Cla, Disciplina, EscolhaVantagem, Ficha } from '../ficha'
 import { itemCatalogo, PODERES, RITUAIS_TODOS, VANTAGENS_PERSONAGEM } from './index'
 import type { DisciplinaComPoderes, ItemCatalogo, Poder, Ritual, Vantagem } from './tipos'
@@ -187,16 +188,32 @@ const GRUPO_DO_CLA: Record<string, Cla> = {
 /** Só para carniçais, que a v1 não cria. */
 const GRUPOS_SEM_PERSONAGEM = new Set(['Carniçal'])
 
+/** O que se sabe do Personagem para filtrar Vantagens e Defeitos. */
+export type ContextoVantagens = {
+  cla?: Cla | null
+  potenciaSangue?: number
+  /** Idade da criação, da Crônica; sem ela (fora do wizard do Jogador), a idade não filtra. */
+  idade?: IdadeCriacao
+  /** Wizard do Jogador: o Sangue-Ralo vê só os de Sangue-Ralo. */
+  regrasCriacao?: boolean
+}
+
 /**
- * Regras do livro, valem sempre: grupo de outro Clã some, `clas` restringe, Carniçal não aparece.
+ * Regras do livro, valem sempre que o dado existe: grupo de outro Clã some, `clas` restringe,
+ * idade e Potência do Sangue limitam, Carniçal não aparece.
  * Regra da criação (só com `regrasCriacao`): o Sangue-Ralo vê só os de Sangue-Ralo; depois, com XP
  * (fora da v1), compra as demais.
  */
-function disponivelParaCla(v: Vantagem, cla: Cla | null, regrasCriacao: boolean): boolean {
+function disponivel(v: Vantagem, contexto: ContextoVantagens): boolean {
+  const { cla = null, potenciaSangue, idade, regrasCriacao = false } = contexto
   if (GRUPOS_SEM_PERSONAGEM.has(v.grupo)) return false
   const { so, exceto } = v.clas ?? {}
   if (so && (!cla || !so.includes(cla))) return false
   if (cla && exceto?.includes(cla)) return false
+  if (idade && v.idadeMinima && IDADES_CRIACAO.indexOf(idade) < IDADES_CRIACAO.indexOf(v.idadeMinima)) return false
+  if (potenciaSangue !== undefined && v.potenciaSangueMaxima !== undefined && potenciaSangue > v.potenciaSangueMaxima) {
+    return false
+  }
   if (regrasCriacao && cla === 'sangue-ralo') return ehDeSangueRalo(v)
   return !(v.grupo in GRUPO_DO_CLA) || GRUPO_DO_CLA[v.grupo] === cla
 }
@@ -205,27 +222,25 @@ function ehDeSangueRalo(v: Vantagem): boolean {
   return GRUPO_DO_CLA[v.grupo] === 'sangue-ralo'
 }
 
-/** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos e os de outro Clã. */
+/** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos e os que o Personagem não pode ter. */
 export function opcoesVantagens(
   escolhidas: readonly EscolhaVantagem[],
   tipo: Vantagem['tipo'],
   catalogo: readonly Vantagem[] = VANTAGENS_PERSONAGEM,
-  cla: Cla | null = null,
-  regrasCriacao = false,
+  contexto: ContextoVantagens = {},
 ): Vantagem[] {
   const ids = new Set(escolhidas.map((e) => e.id))
-  return catalogo.filter(
-    (v) =>
-      v.tipo === tipo &&
-      (v.repetivel || !ids.has(v.id)) &&
-      disponivelParaCla(v, cla, regrasCriacao),
-  )
+  return catalogo.filter((v) => v.tipo === tipo && (v.repetivel || !ids.has(v.id)) && disponivel(v, contexto))
 }
 
-/** Aviso no seletor: sem o "Só <Clã>", já garantido pelo filtro de `opcoesVantagens`. */
-export function avisoVantagem(v: Vantagem): string | undefined {
-  // Nos itens com `clas`, o pré-requisito é só a restrição de Clã.
+/**
+ * Aviso no seletor, sem o que o filtro de `opcoesVantagens` já garantiu: "Só <Clã>", e a idade
+ * ou a Potência do Sangue quando o contexto as conhece. Nesses itens, o pré-requisito é só a restrição.
+ */
+export function avisoVantagem(v: Vantagem, contexto: ContextoVantagens = {}): string | undefined {
   if (v.clas) return undefined
+  if (v.idadeMinima && contexto.idade) return undefined
+  if (v.potenciaSangueMaxima !== undefined && contexto.potenciaSangue !== undefined) return undefined
   if (!v.preRequisito || !(v.grupo in GRUPO_DO_CLA)) return v.preRequisito
   const resto = v.preRequisito.replace(new RegExp(`^Só ${v.grupo}(; )?`), '')
   return resto ? resto[0].toUpperCase() + resto.slice(1) : undefined

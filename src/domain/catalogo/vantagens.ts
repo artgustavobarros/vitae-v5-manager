@@ -249,6 +249,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Conhece a fundo uma época escolhida e soma um dado em testes de Habilidade sobre ela.',
     fonte: { livro: 'In Memoriam', pagina: 20 },
     preRequisito: 'Só Ancillae ou mais velhos',
+    idadeMinima: 'ancillae',
     confianca: 'certo',
   },
   {
@@ -263,6 +264,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Carrega valores e preconceitos de outra época, que entram como Convicções ultrapassadas.',
     fonte: { livro: 'Corebook', pagina: 180 },
     preRequisito: 'Só Ancillae ou mais velhos',
+    idadeMinima: 'ancillae',
     confianca: 'certo',
   },
   {
@@ -277,6 +279,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Não consegue lidar com tecnologia moderna; Tecnologia fica sempre em zero.',
     fonte: { livro: 'Corebook', pagina: 180 },
     preRequisito: 'Só Ancillae ou mais velhos',
+    idadeMinima: 'ancillae',
     confianca: 'certo',
   },
   {
@@ -291,6 +294,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Algo ligado a uma Pedra de Toque perdida o abala e tira um dado enquanto estiver por perto.',
     fonte: { livro: 'In Memoriam', pagina: 21 },
     preRequisito: 'Só Ancillae ou mais velhos',
+    idadeMinima: 'ancillae',
     confianca: 'certo',
   },
   {
@@ -305,6 +309,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Todas as Especializações precisam ser de práticas de outra época.',
     fonte: { livro: 'In Memoriam', pagina: 21 },
     preRequisito: 'Só Ancillae ou mais velhos',
+    idadeMinima: 'ancillae',
     confianca: 'certo',
   },
   {
@@ -660,6 +665,7 @@ export const VANTAGENS: Vantagem[] = [
     descricao: 'Tatuagens, piercings e outras modificações no corpo não somem quando ele volta ao estado da morte.',
     fonte: { livro: 'Players Guide', pagina: 119 },
     preRequisito: 'Potência do Sangue 1 ou menos',
+    potenciaSangueMaxima: 1,
     confianca: 'certo',
   },
   {
