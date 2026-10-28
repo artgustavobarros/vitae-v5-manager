@@ -10,6 +10,7 @@ import { podeAlternarCompartilharCondicao } from '#/domain/condicao'
 import { escolhasInvalidas } from '#/domain/catalogo/escolhas'
 import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasDe, marcasSchema, normalizarFicha } from '#/domain/ficha'
 import { detectarMudancasCondicao, notificacoesEventos } from '#/domain/notificacoes'
+import { alteracaoMarcasSchema } from '#/domain/sincronizacao-marcas'
 import {
   aplicarRespostaAtribuicao,
   ehPdN,
@@ -27,6 +28,7 @@ import { carregar, ehPdNNoBanco } from '#/server/carregar-personagem'
 import { barramento } from '#/server/eventos'
 import { enviarNotificacao, notificarNarradores } from '#/server/enviar-notificacao'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
+import { aplicarMarcacao } from '#/server/sincronizar-marcas'
 
 const comId = z.object({ id: z.string().uuid() })
 
@@ -126,6 +128,7 @@ export const buscarFicha = createServerFn({ method: 'GET' })
       nome: p.nome,
       status: p.status,
       ficha: p.ficha,
+      revisaoMarcas: p.revisaoMarcas,
       compartilhaCondicao: p.compartilhaCondicao,
       fixado: p.fixado,
       ressonanciaAtual: p.ressonanciaAtual,
@@ -208,6 +211,12 @@ export const marcar = createServerFn({ method: 'POST' })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })
     return marcasDe(ficha)
   })
+
+/** Sincroniza uma marcação pendente sem repetir gravações ou notificações no reenvio. */
+export const sincronizarMarcas = createServerFn({ method: 'POST' })
+  .middleware([exigirUsuario])
+  .validator(alteracaoMarcasSchema)
+  .handler(({ data, context }) => aplicarMarcacao(context.usuario, data))
 
 export const concluir = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])

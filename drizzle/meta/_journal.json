@@ -120,6 +120,13 @@
       "when": 1792964172136,
       "tag": "0016_paradas_compartilhadas",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793123363860,
+      "tag": "0017_sincronizacao_marcas",
+      "breakpoints": true
     }
   ]
 }

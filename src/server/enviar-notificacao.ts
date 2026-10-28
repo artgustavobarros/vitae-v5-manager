@@ -25,9 +25,14 @@ export async function enviarNotificacao({
     })
     .returning()
 
+  publicarNotificacao(salva)
+}
+
+/** Publica uma notificação já persistida; execute depois de confirmar a transação. */
+export function publicarNotificacao(salva: typeof notificacao.$inferSelect) {
   barramento.emitir({
     tipo: 'notificacao',
-    paraUsuarioId: usuarioId,
+    paraUsuarioId: salva.usuarioId,
     notificacao: {
       id: salva.id,
       texto: salva.texto,
@@ -40,7 +45,7 @@ export async function enviarNotificacao({
   barramento.emitir({
     tipo: 'mudanca',
     escopo: 'notificacao',
-    paraUsuarioId: usuarioId,
+    paraUsuarioId: salva.usuarioId,
   })
 }
 

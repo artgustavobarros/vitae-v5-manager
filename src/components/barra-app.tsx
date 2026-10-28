@@ -1,5 +1,9 @@
 import { Link, useRouteContext } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
+import { useTempoReal } from '#/lib/use-tempo-real'
+
+import { useSincronizacaoMarcas } from './provedor-marcas'
 import { MarcaVitae } from './marca-vitae'
 import { MenuUsuario } from './menu-usuario'
 import { NavegacaoInline, NavegacaoMenu, type AcaoTela } from './navegacao'
@@ -13,6 +17,11 @@ import { Button } from './ui/button'
  */
 export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
   const { usuario } = useRouteContext({ from: '__root__' })
+  const sincronizacao = useSincronizacaoMarcas()
+
+  // A barra hidrata junto da tela. A shell pode montar antes de uma rota suspensa.
+  useEffect(() => { void sincronizacao?.iniciar() }, [sincronizacao])
+  useTempoReal(Boolean(usuario))
 
   return (
     <header className="flex h-14 items-center justify-between gap-2">
