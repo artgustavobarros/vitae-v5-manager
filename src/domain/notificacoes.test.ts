@@ -47,6 +47,15 @@ describe('detectarMudancasCondicao', () => {
 })
 
 describe('notificacoesEventos', () => {
+  it('avisa qual Vantagem foi perdida e o requisito que deixou de ser atendido', () => {
+    const aviso = notificacoesEventos.vantagemPerdida('Helena', 'id-1', {
+      id: 'vantagem-modo-nuit', nome: 'Modo Nuit', motivo: 'Potência do Sangue 1 ou menos',
+    })
+    expect(aviso.texto).toContain('Helena perdeu Modo Nuit')
+    expect(aviso.texto).toContain('Potência do Sangue 1 ou menos')
+    expect(aviso.destino).toEqual({ to: '/personagens/$id', params: { id: 'id-1' } })
+  })
+
   it('formata notificações do Jogador conforme acordado', () => {
     expect(notificacoesEventos.atribuicao('Helena').texto).toBe('O Narrador atribuiu Helena a você')
     expect(notificacoesEventos.conviteCoterie('Helena', 'O Grupo').texto).toBe(

@@ -7,7 +7,8 @@
  */
 
 import type { Papel } from '../acesso'
-import type { Disciplina, EscolhaVantagem, Ficha } from '../ficha'
+import { IDADES_CRIACAO, type IdadeCriacao } from '../cronica'
+import type { Cla, Disciplina, EscolhaVantagem, Ficha } from '../ficha'
 import { itemCatalogo, PODERES, RITUAIS_TODOS, VANTAGENS_PERSONAGEM } from './index'
 import type { DisciplinaComPoderes, ItemCatalogo, Poder, Ritual, Vantagem } from './tipos'
 
@@ -178,14 +179,99 @@ export function semItem(ficha: Ficha, id: string): Partial<Ficha> {
   }
 }
 
-/** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos. */
+/** Grupos de Vantagens e Defeitos que só existem para um Clã. */
+const GRUPO_DO_CLA: Record<string, Cla> = {
+  'Sangue-Ralo': 'sangue-ralo',
+  Caitiff: 'caitiff',
+}
+
+/** Só para carniçais, que a v1 não cria. */
+const GRUPOS_SEM_PERSONAGEM = new Set(['Carniçal'])
+
+/** O que se sabe do Personagem para filtrar Vantagens e Defeitos. */
+export type ContextoVantagens = {
+  cla?: Cla | null
+  potenciaSangue?: number
+  /** Idade da criação, da Crônica; sem ela (fora do wizard do Jogador), a idade não filtra. */
+  idade?: IdadeCriacao
+  /** Wizard do Jogador: o Sangue-Ralo vê só os de Sangue-Ralo. */
+  regrasCriacao?: boolean
+}
+
+/**
+ * Regras do livro, valem sempre que o dado existe: grupo de outro Clã some, `clas` restringe,
+ * Potência do Sangue limita, Carniçal não aparece. Idade só limita na criação do Jogador.
+ * Regra da criação (só com `regrasCriacao`): o Sangue-Ralo vê só os de Sangue-Ralo; depois, com XP
+ * (fora da v1), compra as demais.
+ */
+function motivoIndisponibilidade(v: Vantagem, contexto: ContextoVantagens): string | undefined {
+  const { cla = null, potenciaSangue, idade, regrasCriacao = false } = contexto
+  if (GRUPOS_SEM_PERSONAGEM.has(v.grupo)) return 'Só Carniçal, fora da v1'
+  const { so, exceto } = v.clas ?? {}
+  if (so && (!cla || !so.includes(cla))) return v.preRequisito ?? 'Exige outro Clã'
+  if (cla && exceto?.includes(cla)) return v.preRequisito ?? 'Não permitido para este Clã'
+  if (regrasCriacao && idade && v.idadeMinima && IDADES_CRIACAO.indexOf(idade) < IDADES_CRIACAO.indexOf(v.idadeMinima)) {
+    return v.preRequisito ?? 'Idade inferior à exigida na criação'
+  }
+  if (potenciaSangue !== undefined && v.potenciaSangueMaxima !== undefined && potenciaSangue > v.potenciaSangueMaxima) {
+    return `Potência do Sangue ${v.potenciaSangueMaxima} ou menos`
+  }
+  if (regrasCriacao && cla === 'sangue-ralo' && !ehDeSangueRalo(v)) {
+    return 'Na criação, Sangue-Ralo só escolhe Méritos e Defeitos de Sangue-Ralo'
+  }
+  if (v.grupo in GRUPO_DO_CLA && GRUPO_DO_CLA[v.grupo] !== cla) return `Só ${v.grupo}`
+  return undefined
+}
+
+export function ehDeSangueRalo(item: ItemCatalogo | null): boolean {
+  return (item?.tipo === 'vantagem' || item?.tipo === 'defeito') && item.grupo === 'Sangue-Ralo'
+}
+
+/** Seletor de Vantagens ou Defeitos: tira os não repetíveis já escolhidos e os que o Personagem não pode ter. */
 export function opcoesVantagens(
   escolhidas: readonly EscolhaVantagem[],
   tipo: Vantagem['tipo'],
   catalogo: readonly Vantagem[] = VANTAGENS_PERSONAGEM,
+  contexto: ContextoVantagens = {},
 ): Vantagem[] {
   const ids = new Set(escolhidas.map((e) => e.id))
-  return catalogo.filter((v) => v.tipo === tipo && (v.repetivel || !ids.has(v.id)))
+  return catalogo.filter((v) => v.tipo === tipo && (v.repetivel || !ids.has(v.id)) && !motivoIndisponibilidade(v, contexto))
+}
+
+/**
+ * Aviso no seletor, sem o que o filtro de `opcoesVantagens` já garantiu: "Só <Clã>", e a idade
+ * ou a Potência do Sangue quando o contexto as conhece. Nesses itens, o pré-requisito é só a restrição.
+ */
+export function avisoVantagem(v: Vantagem, contexto: ContextoVantagens = {}): string | undefined {
+  if (v.clas && contexto.cla) return undefined
+  if (v.idadeMinima && contexto.regrasCriacao && contexto.idade) return undefined
+  if (v.potenciaSangueMaxima !== undefined && contexto.potenciaSangue !== undefined) return undefined
+  if (!v.preRequisito || !(v.grupo in GRUPO_DO_CLA)) return v.preRequisito
+  const resto = v.preRequisito.replace(new RegExp(`^Só ${v.grupo}(; )?`), '')
+  return resto ? resto[0].toUpperCase() + resto.slice(1) : undefined
+}
+
+export type PerdaVantagem = { id: string; nome: string; motivo: string }
+
+/** Retira escolhas que perderam os requisitos conhecidos; itens fora do Catálogo são preservados. */
+export function removerVantagensIndisponiveis(
+  ficha: Ficha,
+  contexto: ContextoVantagens,
+  buscar: Buscar = itemCatalogo,
+): { ficha: Ficha; perdas: PerdaVantagem[] } {
+  const perdas: PerdaVantagem[] = []
+  const manter = (escolha: EscolhaVantagem) => {
+    const item = buscar(escolha.id)
+    if (item?.tipo !== 'vantagem' && item?.tipo !== 'defeito') return true
+    const motivo = motivoIndisponibilidade(item, contexto)
+    if (!motivo) return true
+    perdas.push({ id: item.id, nome: item.nome, motivo })
+    return false
+  }
+  return {
+    ficha: { ...ficha, vantagens: ficha.vantagens.filter(manter), defeitos: ficha.defeitos.filter(manter) },
+    perdas,
+  }
 }
 
 /** Soma dos níveis, para os contadores "x / 7" e "x / 2" (só informativos até a fatia 5). */
@@ -195,11 +281,47 @@ export function pontos(escolhidas: readonly EscolhaVantagem[]): number {
 
 export const PONTOS_CRIACAO = { vantagens: 7, defeitos: 2 } as const
 
+/** Sangue-Ralo: até 3 Méritos de Sangue-Ralo e a mesma quantidade de Defeitos de Sangue-Ralo. */
+export const MAXIMO_MERITOS_SANGUE_RALO = 3
+
+export type Contador = { atual: number; total: number }
+
+/**
+ * Contadores da criação. Padrão: pontos, "x / 7" e "x / 2". Sangue-Ralo: quantidade de itens
+ * de Sangue-Ralo, "x / 3" Méritos e Defeitos espelhando os Méritos, como `validarVantagensDefeitosCriacao`.
+ */
+export function contadoresVantagens(
+  ficha: Pick<Ficha, 'cla' | 'vantagens' | 'defeitos'>,
+  buscar: Buscar = itemCatalogo,
+): { vantagens: Contador; defeitos: Contador } {
+  if (ficha.cla !== 'sangue-ralo') {
+    return {
+      vantagens: { atual: pontos(ficha.vantagens), total: PONTOS_CRIACAO.vantagens },
+      defeitos: { atual: pontos(ficha.defeitos), total: PONTOS_CRIACAO.defeitos },
+    }
+  }
+  const deSangueRalo = (escolhidas: readonly EscolhaVantagem[]) =>
+    escolhidas.filter((e) => {
+      const item = buscar(e.id)
+      return (item?.tipo === 'vantagem' || item?.tipo === 'defeito') && ehDeSangueRalo(item)
+    }).length
+  const meritos = deSangueRalo(ficha.vantagens)
+  return {
+    vantagens: { atual: meritos, total: MAXIMO_MERITOS_SANGUE_RALO },
+    defeitos: { atual: deSangueRalo(ficha.defeitos), total: meritos },
+  }
+}
+
 /**
  * Para o Jogador, o servidor confere só o que entrou agora: poderes e Rituais que já estavam
  * na Ficha continuam lá mesmo acima do nível (ficam em vermelho). Devolve os ids que quebram regra.
  */
-export function escolhasInvalidas(antes: Ficha, depois: Ficha, buscar: Buscar = itemCatalogo): string[] {
+export function escolhasInvalidas(
+  antes: Ficha,
+  depois: Ficha,
+  buscar: Buscar = itemCatalogo,
+  contexto: ContextoVantagens = { cla: depois.cla, potenciaSangue: depois.potenciaSangue },
+): string[] {
   const novos = (campo: 'poderes' | 'rituais' | 'cerimonias' | 'formulas') =>
     depois[campo].filter((id) => !antes[campo].includes(id))
 
@@ -230,6 +352,7 @@ export function escolhasInvalidas(antes: Ficha, depois: Ficha, buscar: Buscar = 
       const valida =
         item?.tipo === tipo &&
         item.escopo === 'personagem' &&
+        !motivoIndisponibilidade(item, contexto) &&
         (item.niveis as number[]).includes(escolha.nivel) &&
         (item.repetivel || !repetida)
       if (!valida) invalidos.push(escolha.id)

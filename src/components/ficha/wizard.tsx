@@ -16,6 +16,7 @@ import {
 } from './formulario'
 import {
   aplicarPredador,
+  potenciaSangueCriacao,
   validarAtributosCriacao,
   validarConviccoes,
   validarDisciplinasCriacao,
@@ -62,8 +63,8 @@ export function WizardCriacao({
   etapa: number
   salvando: boolean
   onIrPara: (etapa: number) => void
-  /** Devolve false quando o salvamento falhou e o wizard deve ficar onde está. */
-  onSalvar: (valores: ValoresFormulario) => Promise<boolean>
+  /** Devolve a Ficha salva, ou false quando o wizard deve ficar onde está. */
+  onSalvar: (valores: ValoresFormulario) => Promise<Ficha | false>
   onConcluir: (valores: ValoresFormulario) => void
   /** Ex.: Rascunho atribuído a um Jogador, que não pode ser concluído. */
   concluirBloqueado?: boolean
@@ -80,6 +81,11 @@ export function WizardCriacao({
   const titulo = ETAPAS[etapa - 1]
   const revisao = etapa === ETAPAS.length
   const semNome = edicao.nome.trim() === ''
+  const potenciaCriacao = potenciaSangueCriacao(
+    edicao.ficha.cla,
+    opcoesCronica?.idadePadrao,
+    edicao.ficha.tipoPredador ? tipoPredador(edicao.ficha.tipoPredador) : null,
+  )
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -125,9 +131,9 @@ export function WizardCriacao({
         )
       case 6: {
         if (!ficha.cla) return false
-        const pred = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
-        const vantagensFormatadas = ficha.vantagens.map((v) => ({ id: v.id, nivel: v.nivel }))
-        return validarVantagensDefeitosCriacao(ficha.cla, vantagensFormatadas, pred).valido
+        const vantagensFormatadas = [...ficha.vantagens, ...ficha.defeitos]
+        // Os bônus do Predador só entram ao concluir; aqui todas as escolhas são pessoais.
+        return validarVantagensDefeitosCriacao(ficha.cla, vantagensFormatadas, null).valido
       }
       case 7:
         return validarConviccoes(ficha.conviccoes).valido
@@ -137,9 +143,14 @@ export function WizardCriacao({
   }
 
   const bloqueadoAvanco = !podeAvancarEtapa(etapa)
+  const vantagensIncompletas = !podeAvancarEtapa(6)
 
   async function irPara(destino: number) {
-    if (await onSalvar(edicao.valores())) onIrPara(destino)
+    const fichaSalva = await onSalvar(edicao.valores())
+    if (fichaSalva) {
+      edicao.mudar(fichaSalva)
+      onIrPara(destino)
+    }
   }
 
   function handleConcluir() {
@@ -153,6 +164,7 @@ export function WizardCriacao({
         fichaFinal = aplicarPredador(fichaFinal, pred, escolhasPredador)
       }
     }
+    fichaFinal = { ...fichaFinal, potenciaSangue: potenciaCriacao }
 
     onConcluir({
       nome: valoresAtuais.nome,
@@ -206,8 +218,9 @@ export function WizardCriacao({
         )}
         {etapa === 6 && (
           <CamposVantagensPersonagem
-            ficha={edicao.ficha}
+            ficha={{ ...edicao.ficha, potenciaSangue: potenciaCriacao }}
             regras={regrasCriacao}
+            idade={opcoesCronica?.idadePadrao}
             mudar={edicao.mudar}
           />
         )}
@@ -225,6 +238,11 @@ export function WizardCriacao({
             escolhasPredador={escolhasPredador}
             onAlterar={irPara}
           />
+        )}
+        {revisao && vantagensIncompletas && (
+          <Alert variant="destructive">
+            <AlertDescription>Revise as Vantagens e Defeitos na etapa 6 antes de concluir a criação.</AlertDescription>
+          </Alert>
         )}
         {revisao && extraRevisao}
       </Secao>
@@ -247,7 +265,7 @@ export function WizardCriacao({
           </Button>
           {revisao ? (
             <Button
-              disabled={salvando || semNome || concluirBloqueado}
+              disabled={salvando || semNome || concluirBloqueado || vantagensIncompletas}
               onClick={handleConcluir}
             >
               Concluir Criação

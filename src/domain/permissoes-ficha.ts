@@ -94,6 +94,11 @@ export function permissoesPersonagem(usuario: Usuario, personagem: Personagem) {
   const acesso = acessoFicha(usuario, personagem)
   return {
     acesso,
+    /** Clã só muda na criação ou nos PdNs do próprio Narrador. */
+    podeAlterarCla:
+      acesso === 'editar' &&
+      (personagem.status === 'rascunho' ||
+        (usuario.papel === 'narrador' && personagem.donoId === usuario.id)),
     /** Rascunho editável abre no wizard de criação; o resto abre na Ficha. */
     abreNoWizard: acesso === 'editar' && personagem.status === 'rascunho',
     podeApagar: podeApagar(usuario, personagem),

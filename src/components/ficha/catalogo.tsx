@@ -8,25 +8,28 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import type { Papel } from '#/domain/acesso'
 import {
+  avisoVantagem,
   CAMPO_DO_RITUAL,
+  contadoresVantagens,
   itensSoltos,
   nivelDisciplina,
   opcoesPoderes,
   opcoesRituais,
   opcoesVantagens,
   poderesDaDisciplina,
-  pontos,
-  PONTOS_CRIACAO,
   situacaoItem,
   TEXTO_MOTIVO,
   temVagaDePoder,
   temPoderes,
   tipoRitualDa,
+  type Contador,
+  type ContextoVantagens,
   type Opcao,
   type TipoRitual,
 } from '#/domain/catalogo/escolhas'
 import { itemCatalogo, vantagem, VANTAGENS_PERSONAGEM } from '#/domain/catalogo/index'
 import type { DisciplinaComPoderes, Nivel, Poder, Ritual, Vantagem } from '#/domain/catalogo/tipos'
+import type { IdadeCriacao } from '#/domain/cronica'
 import type { Disciplina, EscolhaVantagem, Ficha } from '#/domain/ficha'
 
 // Poderes, Rituais, Cerimônias, Fórmulas, Vantagens e Defeitos na Ficha: leitura e edição.
@@ -210,6 +213,7 @@ export function CamposVantagens({
   tipo,
   catalogo = VANTAGENS_PERSONAGEM,
   regras,
+  contexto = {},
   contador,
   onChange,
 }: {
@@ -217,18 +221,20 @@ export function CamposVantagens({
   tipo: Vantagem['tipo']
   catalogo?: readonly Vantagem[]
   regras: boolean
-  /** Ex.: 7 para "x / 7"; só informa. */
-  contador?: number
+  /** O que se sabe do Personagem para filtrar as opções (Clã, idade, Potência do Sangue). */
+  contexto?: ContextoVantagens
+  /** Ex.: "x / 7"; só informa. */
+  contador?: Contador
   onChange: (escolhidas: EscolhaVantagem[]) => void
 }) {
   const titulo = tipo === 'vantagem' ? 'Vantagens' : 'Defeitos'
-  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo).map((v) => ({
+  const opcoes: OpcaoCombobox[] = opcoesVantagens(escolhidas, tipo, catalogo, contexto).map((v) => ({
     valor: v.id,
     rotulo: v.nome,
     original: v.nomeOriginal,
     descricao: v.descricao,
     grupo: v.grupo,
-    aviso: v.preRequisito,
+    aviso: avisoVantagem(v, contexto),
   }))
   const trocar = (i: number, parcial: Partial<EscolhaVantagem>) =>
     onChange(escolhidas.map((e, j) => (j === i ? { ...e, ...parcial } : e)))
@@ -239,7 +245,7 @@ export function CamposVantagens({
         <h3 className="text-base font-semibold">{titulo}</h3>
         {contador !== undefined && (
           <span className="text-sm text-muted-foreground tabular-nums">
-            {pontos(escolhidas)} / {contador}
+            {contador.atual} / {contador.total}
           </span>
         )}
       </div>
@@ -305,26 +311,38 @@ export function CamposVantagens({
 export function CamposVantagensPersonagem({
   ficha,
   regras,
+  idade,
   mudar,
 }: {
   ficha: Ficha
   regras: boolean
+  /** Idade da criação, da Crônica; só filtra com `regras` (wizard do Jogador). */
+  idade?: IdadeCriacao
   mudar: (parcial: Partial<Ficha>) => void
 }) {
+  const contadores = contadoresVantagens(ficha)
+  const contexto: ContextoVantagens = {
+    cla: ficha.cla,
+    potenciaSangue: ficha.potenciaSangue,
+    idade,
+    regrasCriacao: regras,
+  }
   return (
     <>
       <CamposVantagens
         escolhidas={ficha.vantagens}
         tipo="vantagem"
         regras={regras}
-        contador={PONTOS_CRIACAO.vantagens}
+        contexto={contexto}
+        contador={contadores.vantagens}
         onChange={(vantagens) => mudar({ vantagens })}
       />
       <CamposVantagens
         escolhidas={ficha.defeitos}
         tipo="defeito"
         regras={regras}
-        contador={PONTOS_CRIACAO.defeitos}
+        contexto={contexto}
+        contador={contadores.defeitos}
         onChange={(defeitos) => mudar({ defeitos })}
       />
     </>

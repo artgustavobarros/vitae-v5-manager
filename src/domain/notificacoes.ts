@@ -1,4 +1,5 @@
 import type { DestinoNotificacao } from '#/db/schema'
+import type { PerdaVantagem } from './catalogo/escolhas'
 
 import { vitalidadeMax, vontadeMax, type Ficha } from './ficha'
 
@@ -46,6 +47,15 @@ const DETALHE_MUDANCA: Record<MudancaCondicao, string> = {
 
 export const notificacoesEventos = {
   // Para o Jogador
+  vantagemPerdida: (
+    nomePersonagem: string,
+    personagemId: string,
+    perda: PerdaVantagem,
+  ): { texto: string; destino: DestinoNotificacao } => ({
+    texto: `${nomePersonagem} perdeu ${perda.nome} por não atender ao requisito: ${perda.motivo}.`,
+    destino: { to: '/personagens/$id', params: { id: personagemId } },
+  }),
+
   atribuicao: (nomePersonagem: string): { texto: string; destino: DestinoNotificacao } => ({
     texto: `O Narrador atribuiu ${nomePersonagem} a você`,
     destino: { to: '/' },

@@ -12,6 +12,7 @@ import { carregarEdicao } from '#/lib/carregar-edicao'
 import { listarJogadores } from '#/server/conta'
 import { obterOpcoesCriacaoCronica } from '#/server/cronica'
 import { buscarFicha, concluir, salvarFicha } from '#/server/personagens'
+import type { Ficha } from '#/domain/ficha'
 
 // Rascunho: wizard guiado em 8 etapas. Ficha concluída: formulário da Ficha.
 export const Route = createFileRoute('/personagens/$id/editar')({
@@ -48,13 +49,13 @@ function EditarFicha() {
   const rascunho = personagem.status === 'rascunho'
   const inicial = { nome: personagem.nome, ficha: personagem.ficha }
 
-  async function salvar(valores: ValoresFormulario): Promise<boolean> {
+  async function salvar(valores: ValoresFormulario): Promise<Ficha | false> {
     setSalvando(true)
     try {
-      await salvarFicha({ data: { id, ...valores } })
+      const ficha = await salvarFicha({ data: { id, ...valores } })
       // Recarrega o título com o nome salvo; o estado do wizard continua montado.
       await router.invalidate()
-      return true
+      return ficha
     } catch (erro) {
       erroDoServidor(erro)
       return false
@@ -117,6 +118,7 @@ function EditarFicha() {
             <FormularioFicha
               inicial={inicial}
               salvando={salvando}
+              podeAlterarCla={personagem.podeAlterarCla}
               onSalvar={async (valores) => {
                 if (await salvar(valores)) await navigate({ to: '/personagens/$id', params: { id } })
               }}
