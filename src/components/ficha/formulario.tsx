@@ -102,10 +102,12 @@ export type EdicaoFicha = ReturnType<typeof useEdicaoFicha>
 export function FormularioFicha({
   inicial,
   salvando,
+  podeAlterarCla = false,
   onSalvar,
 }: {
   inicial: ValoresFormulario
   salvando: boolean
+  podeAlterarCla?: boolean
   onSalvar: (valores: ValoresFormulario) => void
 }) {
   const edicao = useEdicaoFicha(inicial)
@@ -119,7 +121,7 @@ export function FormularioFicha({
       }}
     >
       <Secao titulo="Identidade">
-        <CamposIdentidade edicao={edicao} />
+        <CamposIdentidade edicao={edicao} podeAlterarCla={podeAlterarCla} />
         <CamposAmbicaoDesejo edicao={edicao} />
       </Secao>
       <Secao titulo="Atributos">
@@ -149,14 +151,17 @@ export function FormularioFicha({
 /**
  * Com `regrasCriacao`, Clã e Geração só oferecem o que combina: Sangue-Ralo da 14ª Geração em diante.
  * Sem ela (Narrador editando uma Ficha concluída), as listas ficam livres.
+ * Com o Clã travado, a Geração só oferece opções que o preservam.
  */
 export function CamposIdentidade({
   edicao,
   regrasCriacao = false,
+  podeAlterarCla = true,
   opcoesCronica,
 }: {
   edicao: EdicaoFicha
   regrasCriacao?: boolean
+  podeAlterarCla?: boolean
   opcoesCronica?: OpcoesCriacaoCronica
 }) {
   const { nome, setNome, ficha, mudar } = edicao
@@ -175,7 +180,7 @@ export function CamposIdentidade({
         return clasPermitidos(ficha.geracao).includes(c.id)
       })
     : CLAS
-  const geracoes = regrasCriacao ? geracoesPermitidas(ficha.cla) : GERACOES
+  const geracoes = regrasCriacao || !podeAlterarCla ? geracoesPermitidas(ficha.cla) : GERACOES
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -198,6 +203,7 @@ export function CamposIdentidade({
             id="cla"
             opcoes={opcoesDe(clas, 'Sem Clã', false)}
             valor={ficha.cla ?? NENHUM}
+            disabled={!podeAlterarCla}
             onChange={(v) => mudar(escolherCla(ficha, v === NENHUM ? null : (v as Cla)))}
             busca="Buscar Clã"
           />
@@ -210,7 +216,10 @@ export function CamposIdentidade({
               ...geracoes.map((g) => ({ valor: String(g), rotulo: rotuloGeracao(g) })),
             ]}
             valor={ficha.geracao === null ? NENHUM : String(ficha.geracao)}
-            onChange={(v) => mudar(escolherGeracao(ficha, v === NENHUM ? null : Number(v)))}
+            onChange={(v) => {
+              const geracao = v === NENHUM ? null : Number(v)
+              mudar(podeAlterarCla ? escolherGeracao(ficha, geracao) : { geracao })
+            }}
             busca="Buscar Geração"
           />
         </Campo>

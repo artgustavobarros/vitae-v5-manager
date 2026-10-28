@@ -324,7 +324,7 @@ export function CamposVantagensPersonagem({
   const contexto: ContextoVantagens = {
     cla: ficha.cla,
     potenciaSangue: ficha.potenciaSangue,
-    idade: regras ? idade : undefined,
+    idade,
     regrasCriacao: regras,
   }
   return (

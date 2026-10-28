@@ -7,7 +7,9 @@ import { db } from '#/db'
 import { coterie, membroCoterie, personagem, user } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
 import { podeAlternarCompartilharCondicao } from '#/domain/condicao'
-import { escolhasInvalidas } from '#/domain/catalogo/escolhas'
+import { escolhasInvalidas, removerVantagensIndisponiveis } from '#/domain/catalogo/escolhas'
+import { itemCatalogo, tipoPredador } from '#/domain/catalogo'
+import { potenciaSangueCriacao, validarVantagensDefeitosCriacao } from '#/domain/criacao'
 import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasDe, marcasSchema, normalizarFicha } from '#/domain/ficha'
 import { detectarMudancasCondicao, notificacoesEventos } from '#/domain/notificacoes'
 import {
@@ -27,6 +29,7 @@ import { carregar, ehPdNNoBanco } from '#/server/carregar-personagem'
 import { barramento } from '#/server/eventos'
 import { enviarNotificacao, notificarNarradores } from '#/server/enviar-notificacao'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
+import { obterOpcoesCriacaoCronicaDoBanco } from '#/server/cronica-db'
 
 const comId = z.object({ id: z.string().uuid() })
 
@@ -158,20 +161,44 @@ export const salvarFicha = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
   .validator(z.object({ id: z.string().uuid(), nome: z.string().trim().max(120), ficha: fichaSchema }))
   .handler(async ({ data, context }) => {
-    const p = await db.transaction(async (tx) => {
+    const { p, ficha, perdas } = await db.transaction(async (tx) => {
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
+      if (data.ficha.cla !== p.ficha.cla && !permissoesPersonagem(context.usuario, p).podeAlterarCla) {
+        throw new Error('O Clã do Personagem não pode ser alterado após concluir a criação.')
+      }
+      const idade = p.status === 'rascunho'
+        ? (await obterOpcoesCriacaoCronicaDoBanco()).idadePadrao
+        : undefined
+      const proposta = p.status === 'rascunho'
+        ? { ...data.ficha, potenciaSangue: potenciaSangueCriacao(
+            data.ficha.cla, idade, data.ficha.tipoPredador ? tipoPredador(data.ficha.tipoPredador) : null,
+          ) }
+        : data.ficha
+      const contextoVantagens = {
+        cla: proposta.cla,
+        potenciaSangue: proposta.potenciaSangue,
+        idade,
+        regrasCriacao: exigeRegrasCriacao(context.usuario, p),
+      }
       if (exigeRegrasCriacao(context.usuario, p) && !claGeracaoCombinam(data.ficha)) {
         throw new Error('Sangue-Ralo é da 14ª à 16ª Geração; os demais clãs, até a 13ª.')
       }
-      if (exigeRegrasCriacao(context.usuario, p) && escolhasInvalidas(p.ficha, data.ficha).length > 0) {
+      if (exigeRegrasCriacao(context.usuario, p) && escolhasInvalidas(p.ficha, proposta, itemCatalogo, contextoVantagens).length > 0) {
         throw new Error('Há escolhas do Catálogo fora das regras do V5.')
       }
+      const { ficha, perdas } = removerVantagensIndisponiveis(proposta, contextoVantagens)
+      const normalizada = normalizarFicha(ficha)
       await tx
         .update(personagem)
-        .set({ nome: data.nome, ficha: normalizarFicha(data.ficha) })
+        .set({ nome: data.nome, ficha: normalizada })
         .where(eq(personagem.id, data.id))
-      return p
+      return { p, ficha: normalizada, perdas }
     })
+
+    await Promise.all(perdas.map((perda) => {
+      const notif = notificacoesEventos.vantagemPerdida(data.nome, data.id, perda)
+      return enviarNotificacao({ usuarioId: p.donoId, ...notif })
+    }))
 
     // Depois do commit. Se o Narrador editou a Ficha de um Jogador ativo
     if (context.usuario.papel === 'narrador' && p.donoId !== context.usuario.id && p.status === 'ativo') {
@@ -181,6 +208,7 @@ export const salvarFicha = createServerFn({ method: 'POST' })
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'personagem', id: data.id })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })
+    return ficha
   })
 
 /** Salva uma marca no toque e devolve as marcas como ficaram depois do corte. Trilhas omitidas ficam como estão. */
@@ -217,6 +245,25 @@ export const concluir = createServerFn({ method: 'POST' })
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
       const motivo = motivoNaoConcluir(context.usuario, p)
       if (motivo) throw new Error(MENSAGENS_NAO_CONCLUIR[motivo])
+      if (exigeRegrasCriacao(context.usuario, p)) {
+        const predador = p.ficha.tipoPredador ? tipoPredador(p.ficha.tipoPredador) : null
+        const { idadePadrao } = await obterOpcoesCriacaoCronicaDoBanco()
+        const invalidas = escolhasInvalidas(
+          { ...p.ficha, vantagens: [], defeitos: [] }, p.ficha, itemCatalogo,
+          {
+            cla: p.ficha.cla,
+            potenciaSangue: potenciaSangueCriacao(p.ficha.cla, idadePadrao, predador),
+            idade: idadePadrao,
+            regrasCriacao: true,
+          },
+        )
+        const validacao = validarVantagensDefeitosCriacao(
+          p.ficha.cla, [...p.ficha.vantagens, ...p.ficha.defeitos], predador,
+        )
+        if (invalidas.length > 0 || !validacao.valido) {
+          throw new Error('Revise as Vantagens e Defeitos antes de concluir a criação.')
+        }
+      }
       await tx.update(personagem).set({ status: 'ativo' }).where(eq(personagem.id, data.id))
       return p
     })

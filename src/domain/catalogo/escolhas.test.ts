@@ -11,6 +11,7 @@ import {
   opcoesRituais,
   opcoesVantagens,
   pontos,
+  removerVantagensIndisponiveis,
   situacaoItem,
   temVagaDePoder,
 } from './escolhas'
@@ -204,15 +205,26 @@ describe('Vantagens e Defeitos', () => {
     expect(avisoVantagem(cisma)).toBeUndefined()
   })
 
-  it('idade mínima filtra só quando a idade é conhecida', () => {
+  it('mantém o aviso de Clã quando ele ainda não foi escolhido', () => {
+    const fazendeiro = vantagem('defeito-fazendeiro', {
+      clas: { exceto: ['ventrue'] },
+      preRequisito: 'Não para Ventrue',
+    })
+    expect(avisoVantagem(fazendeiro)).toBe('Não para Ventrue')
+    expect(avisoVantagem(fazendeiro, { cla: 'brujah' })).toBeUndefined()
+  })
+
+  it('idade mínima filtra só no wizard do Jogador com idade conhecida', () => {
     const arcaico = vantagem('vantagem-arcaico', { idadeMinima: 'ancillae', preRequisito: 'Só Ancillae ou mais velhos' })
-    const ids = (idade?: 'neofito' | 'ancillae') =>
-      opcoesVantagens([], 'vantagem', [recursos, arcaico], { idade }).map((v) => v.id)
+    const ids = (idade?: 'neofito' | 'ancillae', regrasCriacao = true) =>
+      opcoesVantagens([], 'vantagem', [recursos, arcaico], { idade, regrasCriacao }).map((v) => v.id)
 
     expect(ids('neofito')).toEqual([recursos.id])
     expect(ids('ancillae')).toEqual([recursos.id, arcaico.id])
     expect(ids()).toEqual([recursos.id, arcaico.id])
-    expect(avisoVantagem(arcaico, { idade: 'ancillae' })).toBeUndefined()
+    expect(ids('neofito', false)).toEqual([recursos.id, arcaico.id])
+    expect(avisoVantagem(arcaico, { idade: 'ancillae', regrasCriacao: true })).toBeUndefined()
+    expect(avisoVantagem(arcaico, { idade: 'ancillae' })).toBe('Só Ancillae ou mais velhos')
     expect(avisoVantagem(arcaico)).toBe('Só Ancillae ou mais velhos')
   })
 
@@ -267,7 +279,42 @@ describe('Vantagens e Defeitos', () => {
   })
 })
 
+describe('perda de requisitos de Vantagens e Defeitos', () => {
+  it('explica a regra da criação ao retirar Memórias dos Caídos de Sangue-Ralo', () => {
+    const original = ficha({ cla: 'sangue-ralo', vantagens: [{ id: 'vantagem-memorias-dos-caidos', nivel: 1 }] })
+    const resultado = removerVantagensIndisponiveis(original, { cla: 'sangue-ralo', regrasCriacao: true })
+    expect(resultado.ficha.vantagens).toEqual([])
+    expect(resultado.perdas[0]?.motivo).toContain('Na criação')
+    expect(removerVantagensIndisponiveis(original, { cla: 'sangue-ralo' }).perdas).toEqual([])
+  })
+
+  it('remove Modo Nuit ao ultrapassar Potência 1 e informa o motivo', () => {
+    const original = ficha({
+      cla: 'brujah',
+      potenciaSangue: 2,
+      vantagens: [{ id: 'vantagem-modo-nuit', nivel: 2 }, { id: 'vantagem-recursos', nivel: 3 }],
+      defeitos: [{ id: 'defeito-inimigo', nivel: 2 }],
+    })
+    const resultado = removerVantagensIndisponiveis(original, { cla: original.cla, potenciaSangue: 2 })
+    expect(resultado.ficha.vantagens).toEqual([{ id: 'vantagem-recursos', nivel: 3 }])
+    expect(resultado.ficha.defeitos).toEqual(original.defeitos)
+    expect(resultado.perdas).toEqual([{
+      id: 'vantagem-modo-nuit', nome: 'Modo Nuit', motivo: 'Potência do Sangue 1 ou menos',
+    }])
+    expect(original.vantagens).toHaveLength(2)
+    expect(removerVantagensIndisponiveis(resultado.ficha, { potenciaSangue: 2 }).perdas).toEqual([])
+  })
+})
+
 describe('escolhasInvalidas (servidor, para o Jogador)', () => {
+  it('recusa Vantagem nova que não atende à Potência do Sangue', () => {
+    const antes = ficha({ cla: 'brujah', potenciaSangue: 2 })
+    expect(escolhasInvalidas(antes, {
+      ...antes,
+      vantagens: [{ id: 'vantagem-modo-nuit', nivel: 2 }],
+    })).toContain('vantagem-modo-nuit')
+  })
+
   it('aceita escolhas dentro das regras', () => {
     const depois = { ...dominacao2, poderes: [compelir.id], vantagens: [{ id: recursos.id, nivel: 2 }] }
     expect(escolhasInvalidas(dominacao2, depois, buscar)).toEqual([])

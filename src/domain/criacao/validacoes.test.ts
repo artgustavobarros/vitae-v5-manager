@@ -414,6 +414,15 @@ describe('validarDisciplinasCriacao', () => {
 })
 
 describe('validarVantagensDefeitosCriacao', () => {
+  it('não conta ids desconhecidos como traços de Sangue-Ralo só por conterem o nome', () => {
+    const res = validarVantagensDefeitosCriacao('sangue-ralo', [
+      { id: 'vantagem-inventada-sangue-ralo', nivel: 1 },
+      { id: 'defeito-inventado-sangue-ralo', nivel: 1 },
+    ], null)
+    expect(res.valido).toBe(false)
+    expect(res.pontosVantagens).toBe(0)
+  })
+
   it('rejeita se clã for nulo ou não selecionado', () => {
     const res = validarVantagensDefeitosCriacao(null, [], null)
     expect(res.valido).toBe(false)

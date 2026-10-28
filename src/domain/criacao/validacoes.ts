@@ -1,6 +1,6 @@
 import { ATRIBUTOS, HABILIDADES, type Atributo, type Cla, type Disciplina, type Habilidade } from '../ficha'
 import { itemCatalogo, poder } from '../catalogo'
-import { MAXIMO_MERITOS_SANGUE_RALO } from '../catalogo/escolhas'
+import { ehDeSangueRalo, MAXIMO_MERITOS_SANGUE_RALO } from '../catalogo/escolhas'
 import type { TipoPredador } from '../catalogo/tipos'
 import type {
   DadosCriacao,
@@ -339,23 +339,17 @@ export function validarVantagensDefeitosCriacao(
 
   // Se nenhum item foi explicitamente tagueado com origem 'predador', mas há predador definido,
   // exclui traços fixos concedidos pelo predador se a soma ultrapassar os limites
+  // e uma opção por grupo de escolhas. Os bônus são anexados no fim da lista ao concluir.
   if (predador && !vantagens.some((v) => v.origem === 'predador')) {
-    const predVant = [...predador.vantagens]
-    const predDef = [...predador.defeitos]
-
-    pessoais = pessoais.filter((v) => {
-      const idxV = predVant.findIndex((pv) => pv.id === v.id && pv.nivel === v.nivel)
-      if (idxV !== -1) {
-        predVant.splice(idxV, 1)
-        return false
-      }
-      const idxD = predDef.findIndex((pd) => pd.id === v.id && pd.nivel === v.nivel)
-      if (idxD !== -1) {
-        predDef.splice(idxD, 1)
-        return false
-      }
-      return true
-    })
+    const bonus = [
+      ...predador.vantagens.map((v) => [v]),
+      ...predador.defeitos.map((d) => [d]),
+      ...(predador.escolhasTracos ?? []).map((escolha) => escolha.opcoes),
+    ]
+    for (const opcoes of bonus) {
+      const indice = pessoais.map((v) => opcoes.some((opcao) => opcao.id === v.id && opcao.nivel === v.nivel)).lastIndexOf(true)
+      if (indice !== -1) pessoais.splice(indice, 1)
+    }
   }
 
   const ehDefeito = (id: string) => {
@@ -365,11 +359,7 @@ export function validarVantagensDefeitosCriacao(
     return id.startsWith('defeito-')
   }
 
-  const ehSangueRalo = (id: string) => {
-    const item = itemCatalogo(id)
-    if (item && 'grupo' in item && item.grupo === 'Sangue-Ralo') return true
-    return id.includes('sangue-ralo')
-  }
+  const ehSangueRalo = (id: string) => ehDeSangueRalo(itemCatalogo(id))
 
   if (cla === 'sangue-ralo') {
     const meritosSR = pessoais.filter((v) => ehSangueRalo(v.id) && !ehDefeito(v.id))
@@ -379,7 +369,7 @@ export function validarVantagensDefeitosCriacao(
     const pontosDefeitos = defeitosSR.reduce((acc, v) => acc + v.nivel, 0)
 
     if (meritosSR.length < 1 || meritosSR.length > MAXIMO_MERITOS_SANGUE_RALO) {
-      erros.push(`Sangue-Ralo deve escolher entre 1 e 3 Méritos de Sangue-Ralo (atual: ${meritosSR.length}).`)
+      erros.push(`Sangue-Ralo deve escolher entre 1 e ${MAXIMO_MERITOS_SANGUE_RALO} Méritos de Sangue-Ralo (atual: ${meritosSR.length}).`)
     }
 
     if (defeitosSR.length !== meritosSR.length) {

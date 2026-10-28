@@ -32,6 +32,8 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois de concluída, a Ficha mostra só o valor final.
 - Até a criação guiada existir (fatia 5), Jogador e Narrador criam Personagens por um formulário manual provisório, sem validação do V5.
 - O Tipo de Predador aplica os bônus automaticamente. O Jogador escolhe quando o livro oferece opções.
+- Após concluir a criação, o Clã do Personagem de Jogador fica fixo. Nem o Jogador nem o Narrador podem alterá-lo.
+- Se uma Vantagem ou um Defeito deixar de atender aos requisitos, o item é removido no salvamento. O dono recebe uma notificação com o item e o motivo, inclusive quando o Narrador fez a edição.
 - Não há XP. A evolução acontece pela Ficha Liberada:
   - o Narrador libera a Ficha inteira;
   - o Jogador edita dentro dos limites do V5 (máx. 5 pontos, poder ≤ nível da Disciplina, amálgamas, Potência do Sangue ≤ teto da Geração);

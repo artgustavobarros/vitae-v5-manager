@@ -196,10 +196,25 @@ describe('ehPdN', () => {
 })
 
 describe('permissoesPersonagem', () => {
+  it('trava o Clã do Jogador após concluir e preserva a escolha no Rascunho e nos PdNs', () => {
+    expect(permissoesPersonagem(jogador, personagem('j1', 'ativo')).podeAlterarCla).toBe(false)
+    expect(permissoesPersonagem(narrador, personagem('j1', 'arquivado')).podeAlterarCla).toBe(false)
+    expect(permissoesPersonagem(jogador, personagem('j1', 'rascunho')).podeAlterarCla).toBe(true)
+    expect(permissoesPersonagem(narrador, personagem('n1', 'ativo')).podeAlterarCla).toBe(true)
+  })
+
+  it('o Narrador não pode trocar o Clã de um Personagem Ativo de Jogador', () => {
+    expect(permissoesPersonagem(narrador, personagem('j1', 'ativo'))).toMatchObject({
+      acesso: 'editar',
+      podeAlterarCla: false,
+    })
+  })
+
   it('Rascunho próprio do Jogador abre no wizard, pode ser apagado e segue as regras de criação', () => {
     expect(permissoesPersonagem(jogador, personagem('j1', 'rascunho'))).toEqual({
       acesso: 'editar',
       abreNoWizard: true,
+      podeAlterarCla: true,
       podeApagar: true,
       podeConcluir: true,
       podeAtribuir: false,
