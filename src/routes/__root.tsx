@@ -1,11 +1,12 @@
-import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { useSyncExternalStore } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState, useSyncExternalStore } from 'react'
 
+import { ProvedorMarcas } from '#/components/provedor-marcas'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
-import { useTempoReal } from '#/lib/use-tempo-real'
 import jostFonte from '@fontsource-variable/jost/files/jost-latin-wght-normal.woff2?url'
 import { buscarUsuario } from '#/server/sessao'
 import '../styles.css'
@@ -54,8 +55,17 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  component: ConteudoApp,
   notFoundComponent: NaoEncontrada,
 })
+
+// A shell pode ser enviada antes do beforeLoad; a conta só é conhecida dentro da rota.
+function ConteudoApp() {
+  const { usuario } = Route.useRouteContext()
+  return usuario ? (
+    <ProvedorMarcas key={usuario.id} usuarioId={usuario.id}><Outlet /></ProvedorMarcas>
+  ) : <Outlet />
+}
 
 // Endereço que não existe (inclusive /favicon.ico e o .well-known do Chrome DevTools) cai aqui.
 function NaoEncontrada() {
@@ -85,9 +95,8 @@ function useDesktop() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { usuario } = Route.useRouteContext()
+  const [queryClient] = useState(() => new QueryClient())
   const desktop = useDesktop()
-  useTempoReal(Boolean(usuario))
 
   return (
     <html lang="pt-BR" className="dark">
@@ -95,7 +104,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
         <Toaster position="top-center" />
         {desktop && (
           <TanStackDevtools

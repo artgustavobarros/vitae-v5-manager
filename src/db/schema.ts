@@ -6,6 +6,7 @@ import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import type { ParadaPersonalizada } from '#/domain/paradas'
 import { OPCOES_CRIACAO_CRONICA_PADRAO, type OpcoesCriacaoCronica } from '#/domain/cronica'
 import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
+import type { AlteracaoMarcas, ResultadoMarcacao } from '#/domain/sincronizacao-marcas'
 
 import { user } from './auth-schema.ts'
 
@@ -71,6 +72,8 @@ export const personagem = pgTable(
     atribuidoA: text('atribuido_a').references(() => user.id, { onDelete: 'set null' }),
     nome: text().notNull().default(''),
     ficha: jsonb().$type<Ficha>().notNull(),
+    /** Incrementada pelo banco sempre que a Ficha muda, inclusive nas ações sem fila. */
+    revisaoMarcas: integer('revisao_marcas').notNull().default(0),
     /** Compartilhamento da Condição (Vitalidade + Força de Vontade + Fome) com quem divide Coterie. */
     compartilhaCondicao: boolean('compartilha_condicao').notNull().default(false),
     /** Ressonância Atual aplicada pelo Narrador a partir de um Sorteio. */
@@ -87,6 +90,16 @@ export const personagem = pgTable(
   },
   (t) => [index('personagem_dono_id_idx').on(t.donoId)],
 )
+
+/** Recibo da marcação: uma operação só altera a Ficha e gera notificações uma vez. */
+export const operacaoMarcacao = pgTable('operacao_marcacao', {
+  usuarioId: text('usuario_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  operacaoId: uuid('operacao_id').notNull(),
+  personagemId: uuid('personagem_id').notNull().references(() => personagem.id, { onDelete: 'cascade' }),
+  entrada: jsonb().$type<AlteracaoMarcas>().notNull(),
+  resultado: jsonb().$type<ResultadoMarcacao>().notNull(),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.usuarioId, t.operacaoId] })])
 
 /** Definições de Paradas compartilhadas pela mesa; os valores vêm da Ficha selecionada. */
 export const paradaCompartilhada = pgTable('parada_compartilhada', {

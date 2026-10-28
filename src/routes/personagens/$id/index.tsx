@@ -54,8 +54,8 @@ function TelaFicha() {
 
   return (
     <FichaPersonagem
-      // Recarregar a Ficha (outro Personagem ou dados novos) recomeça as marcas locais.
-      key={`${personagem.id}:${JSON.stringify(personagem.ficha)}`}
+      // Trocar de Personagem reinicia a tela; atualizações remotas preservam as marcas pendentes.
+      key={personagem.id}
       {...personagem}
       papelUsuario={usuario.papel}
       barra={

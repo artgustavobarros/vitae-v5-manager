@@ -1,8 +1,9 @@
 import { Link, useRouter } from '@tanstack/react-router'
-import { useRef, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { TermoRegra } from '#/components/consulta-regra'
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,8 @@ import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/
 import type { AcessoFicha, StatusPersonagem } from '#/domain/permissoes-ficha'
 import { ehSangueFraco } from '#/domain/sorteios'
 import { sairDaCoterie } from '#/server/coteries'
-import { alternarCompartilharCondicao, marcar } from '#/server/personagens'
+import { alternarCompartilharCondicao } from '#/server/personagens'
+import { useMarcasSincronizadas } from '#/lib/use-marcas-sincronizadas'
 import {
   encerrarCompulsaoPersonagemServer,
   encerrarRessonanciaPersonagemServer,
@@ -71,13 +73,14 @@ function LinhaDescricao({ ficha }: { ficha: Ficha }) {
 
 /**
  * Tela da Ficha. Dano, Fome e Manchas são salvos no toque:
- * a marca aparece na hora e volta se o servidor recusar.
+ * a marca aparece na hora; a fila preserva alterações ainda não confirmadas.
  */
 export function FichaPersonagem({
   id,
   nome,
   status,
   ficha,
+  revisaoMarcas,
   acesso,
   compartilhaCondicao = false,
   coteries = [],
@@ -91,6 +94,7 @@ export function FichaPersonagem({
   nome: string
   status: StatusPersonagem
   ficha: Ficha
+  revisaoMarcas: number
   acesso: AcessoFicha
   compartilhaCondicao?: boolean
   coteries?: { id: string; nome: string }[]
@@ -102,27 +106,14 @@ export function FichaPersonagem({
   barra: ReactNode
 }) {
   const router = useRouter()
-  const [marcas, setMarcas] = useState(() => marcasDe(ficha))
+  const marcasRecebidas = useMemo(() => marcasDe(ficha), [ficha])
+  const sincronizacao = useMarcasSincronizadas(id, marcasRecebidas, revisaoMarcas)
+  const { marcas } = sincronizacao
   const [compartilhando, setCompartilhando] = useState(compartilhaCondicao)
   const [salvandoCondicao, setSalvandoCondicao] = useState(false)
   const [coterieSaindo, setCoterieSaindo] = useState<{ id: string; nome: string } | null>(null)
 
-  // Só a resposta do toque mais recente vale; as anteriores chegam desatualizadas.
-  const ultimoToque = useRef(0)
-  const podeMarcar = acesso === 'marcar' || acesso === 'editar'
-
-  async function salvar(novas: Marcas) {
-    const anteriores = marcas
-    const toque = ++ultimoToque.current
-    setMarcas(novas)
-    try {
-      const salvas = await marcar({ data: { id, marcas: novas } })
-      if (toque === ultimoToque.current) setMarcas(salvas)
-    } catch {
-      if (toque === ultimoToque.current) setMarcas(anteriores)
-      toast.error('Não deu para salvar a marca. Tente de novo.')
-    }
-  }
+  const podeMarcar = (acesso === 'marcar' || acesso === 'editar') && !sincronizacao.bloqueado
 
   async function toggleCompartilhar() {
     if (salvandoCondicao) return
@@ -152,8 +143,8 @@ export function FichaPersonagem({
     }
   }
 
-  const aoMarcar = <T,>(aplicar: (valor: T) => Marcas) =>
-    podeMarcar ? (valor: T) => salvar(aplicar(valor)) : undefined
+  const aoMarcar = <T,>(aplicar: (valor: T) => Partial<Marcas>) =>
+    podeMarcar ? (valor: T) => sincronizacao.alterar(aplicar(valor)) : undefined
 
   const fichaAtual = { ...ficha, ...marcas }
   const campos = [
@@ -172,6 +163,11 @@ export function FichaPersonagem({
         fome={marcas.fome}
         selo={
           <div className="flex flex-wrap items-center gap-2">
+            {sincronizacao.pendentes > 0 && !sincronizacao.erro && (
+              <Badge variant="outline" role="status" aria-live="polite">
+                {sincronizacao.persistindo ? 'Salvando neste dispositivo…' : 'Sincronizando alterações…'}
+              </Badge>
+            )}
             {status === 'rascunho' && (
               <Badge variant="outline">{acesso === 'ler' ? 'Rascunho · só leitura' : 'Rascunho'}</Badge>
             )}
@@ -229,7 +225,7 @@ export function FichaPersonagem({
           <HorizonteHumanidade
             trilha={{ humanidade: ficha.humanidade, manchas: marcas.manchas }}
             consulta
-            onChange={aoMarcar((t: { manchas: number }) => ({ ...marcas, manchas: t.manchas }))}
+            onChange={aoMarcar((t: { manchas: number }) => ({ manchas: t.manchas }))}
           />
         }
       >
@@ -238,19 +234,44 @@ export function FichaPersonagem({
           termo="vitalidade"
           dano={marcas.danoVitalidade}
           max={vitalidadeMax(fichaAtual)}
-          onChange={aoMarcar((dano: Marcas['danoVitalidade']) => ({ ...marcas, danoVitalidade: dano }))}
+          onChange={aoMarcar((dano: Marcas['danoVitalidade']) => ({ danoVitalidade: dano }))}
         />
         <TrilhaDano
           rotulo="Força de Vontade"
           termo="forca-de-vontade"
           dano={marcas.danoVontade}
           max={vontadeMax(fichaAtual)}
-          onChange={aoMarcar((dano: Marcas['danoVontade']) => ({ ...marcas, danoVontade: dano }))}
+          onChange={aoMarcar((dano: Marcas['danoVontade']) => ({ danoVontade: dano }))}
         />
-        <TrilhaFome consulta fome={marcas.fome} onChange={aoMarcar((fome: number) => ({ ...marcas, fome }))} />
+        <TrilhaFome consulta fome={marcas.fome} onChange={aoMarcar((fome: number) => ({ fome }))} />
       </CabecalhoFicha>
 
       <div className="mx-auto max-w-[1440px] px-4 min-[1472px]:px-0">
+        {sincronizacao.erro && (
+          <Alert className="mt-4">
+            <AlertDescription>
+              <p>{sincronizacao.erro}</p>
+              {sincronizacao.pendentes > 0 && (
+                <p>Há {sincronizacao.pendentes} alterações pendentes neste dispositivo.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {!sincronizacao.bloqueado && (
+                  <Button variant="outline" size="sm" onClick={sincronizacao.tentarNovamente}>
+                    Tentar novamente
+                  </Button>
+                )}
+                {sincronizacao.pendentes > 0 && (
+                  <Button variant="ghost" size="sm" disabled={sincronizacao.enviando || sincronizacao.persistindo} onClick={async () => {
+                    await sincronizacao.descartar()
+                    await router.invalidate()
+                  }}>
+                    Descartar alterações pendentes
+                  </Button>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         <Tabs defaultValue="atributos" className="mt-4">
           <TabsList variant="line" className="w-full justify-between gap-2 sm:justify-start sm:gap-6 rounded-none border-b p-0">
             <TabsTrigger value="atributos" className="flex-none px-0 after:bg-vinho">Atributos</TabsTrigger>

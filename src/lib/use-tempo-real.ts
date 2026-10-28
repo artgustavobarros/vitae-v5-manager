@@ -16,6 +16,11 @@ export function useTempoReal(usuarioLogado: boolean) {
 
     const fonte = new EventSource('/api/tempo-real')
 
+    // O fluxo não repete eventos perdidos: a reconexão busca o estado confirmado.
+    fonte.onopen = () => {
+      void router.invalidate()
+    }
+
     fonte.onmessage = (event) => {
       try {
         const dados: EventoReal = JSON.parse(event.data)

@@ -41,7 +41,7 @@ Os demais itens da Ficha entram em fatias seguintes da v1: poderes de Disciplina
 - O Jogador cria Rascunhos pelo formulário manual, edita tudo e apaga.
 - O botão "Concluir" passa o Rascunho para Ativo. Só exige nome, sem validação do V5.
 - Com o Personagem Ativo, a Ficha fica bloqueada: o Jogador marca só dano, Fome e Manchas.
-- Cada marca é salva no toque, sem botão "Salvar". Se a rede falhar, a marca volta e aparece um aviso.
+- Cada marca é salva no toque, sem botão "Salvar". Na tela da Ficha, a marca aparece imediatamente e fica pendente durante falhas transitórias, com envio em segundo plano e recuperação das pendências salvas no dispositivo. Conflitos ou rejeições definitivas pedem revisão e permitem descartar explicitamente as pendências. Painéis e Combate mantêm o comportamento anterior: falha de rede reverte a marca e exibe um aviso.
 - O Jogador vê só os próprios Personagens.
 - O Narrador:
   - vê todas as Fichas;
