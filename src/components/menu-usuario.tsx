@@ -12,12 +12,14 @@ import {
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
 import { authClient } from '#/lib/auth-client'
+import { useSincronizacaoMarcas } from '#/components/provedor-marcas'
 import type { Usuario } from '#/server/sessao'
 
 /** Avatar e primeiro nome de quem está logado; o menu mostra o e-mail e "Sair". */
 export function MenuUsuario({ usuario }: { usuario: Usuario }) {
   const router = useRouter()
   const navigate = useNavigate()
+  const sincronizacao = useSincronizacaoMarcas()
   const primeiroNome = usuario.nome.trim().split(/\s+/)[0]
 
   return (
@@ -44,6 +46,7 @@ export function MenuUsuario({ usuario }: { usuario: Usuario }) {
         <DropdownMenuItem
           onSelect={async () => {
             await authClient.signOut()
+            sincronizacao?.dispose()
             await navigate({ to: '/entrar' })
             await router.invalidate()
           }}
