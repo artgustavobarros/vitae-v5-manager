@@ -137,7 +137,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 ## Sorteios
 
 - O Narrador aperta um botão e recebe o resultado na hora, sem dados visíveis. Há três Sorteios:
-  - **Ressonância**: sorteia tipo e intensidade. Se der Aguda, sorteia também a Discrasia.
+  - **Ressonância**: o Narrador pode escolher o tipo ou deixá-lo aleatório; a intensidade é sorteada. Se der Aguda, sorteia também a Discrasia do tipo escolhido.
   - **Discrasia avulsa**: por tipo de Ressonância escolhido ou de qualquer tipo.
   - **Compulsão**: geral ou de clã.
 - O Narrador pode aplicar o resultado a um Personagem, que passa a ter Ressonância Atual ou Compulsão Ativa até o Narrador encerrar. Se não aplicar, só o Narrador vê.

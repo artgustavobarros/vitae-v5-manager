@@ -38,7 +38,7 @@ Decisões de implementação para a **Fatia 6**, seguindo rigorosamente o `GLOSS
 
 ### Rolagens do Narrador (`/narrador/rolagens`)
 - Rolagens para o Narrador:
-  - **Ressonância**: rola Tipo (Colérico, Melancólico, Fleumático, Sanguíneo) e Intensidade com d10 canônico (1-5 Desprezível, 6-8 Fugaz, 9 Intensa, 10 Aguda). Se resultar em Aguda (10), rola automaticamente a Discrasia associada.
+  - **Ressonância**: o Narrador escolhe o Tipo (Colérico, Melancólico, Fleumático, Sanguíneo) ou mantém Aleatório. Rola Intensidade com d10 canônico (1-5 Desprezível, 6-8 Fugaz, 9 Intensa, 10 Aguda). Se resultar em Aguda (10), rola automaticamente a Discrasia associada ao tipo.
   - **Manifestação de Sangue-Fraco**:
     - Se a vítima for Sangue-Fraco (regras V5 p. 114/229), seleciona aleatoriamente 1 das 2 disciplinas associadas ao tipo de ressonância.
     - Se Intensidade Desprezível ou Fugaz (d10 <= 8): manifesta Disciplina Nível 1 com 1 poder Nível 1 sorteado (sem amálgama).

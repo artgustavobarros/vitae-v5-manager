@@ -24,8 +24,13 @@ import { exigirNarrador } from '#/server/sessao'
 
 export const sortearRessonanciaServer = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .handler(async () => {
-    return sortearRessonancia()
+  .validator(
+    z.object({
+      tipoRessonancia: z.enum(['colerico', 'melancolico', 'fleumatico', 'sanguineo']).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    return sortearRessonancia(Math.random, undefined, data.tipoRessonancia)
   })
 
 export const sortearDiscrasiaServer = createServerFn({ method: 'POST' })

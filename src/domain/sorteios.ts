@@ -373,8 +373,11 @@ export function sortearManifestacaoSangueFraco(
 export function sortearRessonancia(
   rng: () => number = Math.random,
   dadoD10Forcado?: number,
+  tipoRessonancia?: TipoRessonancia,
 ): ResultadoRessonancia {
-  const tipo = escolherAleatorio(RESSONANCIAS, rng)
+  const tipo = tipoRessonancia
+    ? RESSONANCIAS.find((r) => r.id === tipoRessonancia)!
+    : escolherAleatorio(RESSONANCIAS, rng)
 
   const dadoD10 =
     dadoD10Forcado !== undefined
