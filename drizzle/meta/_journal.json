@@ -127,6 +127,20 @@
       "when": 1793123363860,
       "tag": "0017_sincronizacao_marcas",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793421487533,
+      "tag": "0018_aprovacao_bestiario",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793423374574,
+      "tag": "0019_ficha_completa_antagonista",
+      "breakpoints": true
     }
   ]
 }

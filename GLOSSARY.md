@@ -66,9 +66,9 @@ _Avoid_: Ficha desbloqueada, modo edição, gastar XP
 Anotação livre que só o Jogador escreve na Ficha do próprio Personagem; o Narrador lê, a menos que o Jogador marque a Nota como privada.
 _Avoid_: Observação, comentário, diário
 
-**Bestiário**:
-Coleção de inimigos criada pelo Narrador; nenhum Jogador tem acesso a ela.
-_Avoid_: Monstruário, lista de NPCs
+**Antagonistas**:
+Coleção de Modelos de inimigos criada pelo Narrador; nenhum Jogador tem acesso a ela.
+_Avoid_: Bestiário, Monstruário, lista de NPCs
 
 ## Combate
 
@@ -77,8 +77,14 @@ Cena de conflito conduzida pelo Narrador, com ordem de turnos manual; só existe
 _Avoid_: Encontro, luta, batalha
 
 **Modelo**:
-Entrada do Bestiário que descreve um tipo de inimigo com a ficha simplificada de antagonista.
+Entrada da lista de Antagonistas que descreve um tipo de antagonista com Ficha Simplificada ou Ficha Completa de Antagonista.
 _Avoid_: Template, monstro, ficha de inimigo
+
+**Ficha Simplificada**:
+Formato de Modelo de antagonista com paradas gerais Físico, Social e Mental, Paradas Excepcionais, Vitalidade, Força de Vontade e Especiais.
+
+**Ficha Completa de Antagonista**:
+Formato de Modelo com Atributos, Habilidades e Disciplinas individuais, além de Vitalidade, Força de Vontade e Especiais; pode informar Humanidade, Potência do Sangue e Fome. Suas ações usam as características individuais, sem substituir valores ausentes por paradas gerais.
 
 **Paradas Excepcionais**:
 Paradas de dados específicas de um Modelo de antagonista fora das paradas gerais Físico, Social e Mental (ex.: Armas de Fogo, Furtividade).

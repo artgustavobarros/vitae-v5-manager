@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+import { modeloAntagonistaSchema, type ModeloAntagonista } from './bestiario'
+import { fichaAntagonistaCompletaSchema } from './ficha-antagonista'
+
 import type { Dano } from './trilhas'
 
 export const danoTrilhaSchema = z.object({
@@ -253,15 +256,16 @@ export const participanteInimigoSchema = z.object({
   tipo: z.literal('inimigo'),
   nome: z.string(),
   modeloId: z.string().uuid().nullable().optional(),
+  fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
   categoria: z.string().optional(),
   vitalidadeMax: z.int().min(1),
   danoVitalidade: danoTrilhaSchema,
   vontadeMax: z.int().min(1),
   danoVontade: danoTrilhaSchema,
   paradas: z.object({
-    fisico: z.int(),
-    social: z.int(),
-    mental: z.int(),
+    fisico: z.int().min(0).nullable(),
+    social: z.int().min(0).nullable(),
+    mental: z.int().min(0).nullable(),
     excepcionais: z.array(paradaExcepcionalCombateSchema).default([]),
     especiais: z.array(paradaExcepcionalCombateSchema).optional(),
   }),
@@ -269,7 +273,21 @@ export const participanteInimigoSchema = z.object({
   notas: z.string().default(''),
   revelarVitalidade: z.boolean().default(false),
   condicoes: z.array(z.string()).default([]),
-})
+}).refine((inimigo) => {
+  const valores = [inimigo.paradas.fisico, inimigo.paradas.social, inimigo.paradas.mental]
+  return inimigo.fichaCompleta ? valores.every((v) => v === null) : valores.every((v) => v !== null)
+}, { message: 'Use paradas gerais na ficha simplificada ou Atributos e Habilidades na ficha completa.', path: ['paradas'] })
+
+export function criarInimigoDeModelo(entrada: ModeloAntagonista, identidade: { id: string; nome: string }): ParticipanteInimigo {
+  const modelo = modeloAntagonistaSchema.parse(entrada)
+  return participanteInimigoSchema.parse(structuredClone({
+    ...identidade, tipo: 'inimigo', modeloId: modelo.id, categoria: modelo.categoria,
+    vitalidadeMax: modelo.vitalidade, vontadeMax: modelo.vontade,
+    danoVitalidade: { superficial: 0, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 },
+    paradas: { fisico: modelo.paradaFisico, social: modelo.paradaSocial, mental: modelo.paradaMental, excepcionais: modelo.paradasExcepcionais },
+    fichaCompleta: modelo.fichaCompleta, especiais: modelo.especiais, notas: modelo.notas,
+  }))
+}
 
 export const participantePersonagemSchema = z.object({
   id: z.string(),
@@ -598,13 +616,14 @@ export const atualizacaoInimigoSchema = z.object({
   vontadeMax: z.int().min(1).optional(),
   paradas: z
     .object({
-      fisico: z.int().min(1),
-      social: z.int().min(1),
-      mental: z.int().min(1),
+      fisico: z.int().min(0).nullable(),
+      social: z.int().min(0).nullable(),
+      mental: z.int().min(0).nullable(),
       excepcionais: z.array(paradaExcepcionalCombateSchema).default([]),
       especiais: z.array(paradaExcepcionalCombateSchema).optional(),
     })
     .optional(),
+  fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
   especiais: z.array(especialCombateSchema).optional(),
   notas: z.string().optional(),
 })
@@ -621,6 +640,7 @@ export function atualizarParticipanteInimigo(
 
     const novo: ParticipanteInimigo = {
       ...p,
+      ...(atualizacao.fichaCompleta !== undefined ? { fichaCompleta: atualizacao.fichaCompleta } : {}),
       ...(atualizacao.nome !== undefined ? { nome: atualizacao.nome } : {}),
       ...(atualizacao.paradas !== undefined ? { paradas: atualizacao.paradas } : {}),
       ...(atualizacao.especiais !== undefined ? { especiais: atualizacao.especiais } : {}),
@@ -636,7 +656,7 @@ export function atualizarParticipanteInimigo(
       novo.danoVontade = cortarDano(novo.danoVontade, novo.vontadeMax)
     }
 
-    return novo
+    return participanteInimigoSchema.parse(novo)
   })
 
   return {

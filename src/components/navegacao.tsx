@@ -19,7 +19,7 @@ const ITENS: Record<Papel, ItemNavegacao[]> = {
     { rotulo: 'Combate', to: '/combate' },
     { rotulo: 'Rolagens', to: '/narrador/rolagens' },
     { rotulo: 'Paradas', to: '/paradas' },
-    { rotulo: 'Bestiário', to: '/narrador/bestiario' },
+    { rotulo: 'Antagonistas', to: '/narrador/antagonistas' },
     { rotulo: 'Personagens', to: '/narrador/personagens' },
     { rotulo: 'Coteries', to: '/narrador/coteries' },
     { rotulo: 'Jogadores', to: '/narrador/convites' },

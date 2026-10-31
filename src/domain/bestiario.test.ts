@@ -9,6 +9,17 @@ import {
 } from './bestiario'
 
 describe('Bestiário - Modelos de Antagonistas', () => {
+  it.each(['paradaFisico', 'paradaSocial', 'paradaMental'] as const)(
+    'permite zero em %s e continua rejeitando negativos',
+    (campo) => {
+      const modelo = { ...criarModeloAntagonistaPadrao(), nome: 'Antagonista' }
+      const resultado = validarModeloAntagonista({ ...modelo, [campo]: 0 })
+      expect(resultado.valido).toBe(true)
+      if (resultado.valido) expect(resultado.dados[campo]).toBe(0)
+      expect(validarModeloAntagonista({ ...modelo, [campo]: -1 }).valido).toBe(false)
+    },
+  )
+
   it('cria modelo padrão com valores válidos', () => {
     const padrao = criarModeloAntagonistaPadrao()
     expect(padrao.nome).toBe('')

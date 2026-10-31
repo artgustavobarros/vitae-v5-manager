@@ -1,6 +1,8 @@
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
 import type { EspecialAntagonista, ParadaExcepcional } from '#/domain/bestiario'
+import { STATUS_REVISAO_BESTIARIO } from '#/domain/revisao-bestiario'
 import type { ParticipanteCombate } from '#/domain/combate'
 import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import type { ParadaPersonalizada } from '#/domain/paradas'
@@ -227,13 +229,15 @@ export const revisaoTraducao = pgTable(
  * Modelos de antagonistas do Bestiário privado do Narrador.
  * Ficha simplificada de V5: paradas, Vitalidade, Força de Vontade, paradas excepcionais, disciplinas e notas.
  */
+export const statusRevisaoBestiario = pgEnum('status_revisao_bestiario', STATUS_REVISAO_BESTIARIO)
+
 export const modeloAntagonista = pgTable('modelo_antagonista', {
   id: uuid().primaryKey().defaultRandom(),
   nome: text().notNull(),
   categoria: text().notNull().default('Geral'),
-  paradaFisico: integer('parada_fisico').notNull().default(1),
-  paradaSocial: integer('parada_social').notNull().default(1),
-  paradaMental: integer('parada_mental').notNull().default(1),
+  paradaFisico: integer('parada_fisico').default(1),
+  paradaSocial: integer('parada_social').default(1),
+  paradaMental: integer('parada_mental').default(1),
   vitalidade: integer().notNull().default(3),
   vontade: integer().notNull().default(3),
   paradasExcepcionais: jsonb('paradas_excepcionais')
@@ -245,6 +249,10 @@ export const modeloAntagonista = pgTable('modelo_antagonista', {
     .notNull()
     .default([]),
   notas: text().notNull().default(''),
+  fichaCompleta: jsonb('ficha_completa').$type<FichaAntagonistaCompleta>(),
+  statusRevisao: statusRevisaoBestiario('status_revisao').notNull().default('pendente'),
+  notaRevisao: text('nota_revisao').notNull().default(''),
+  incluido: boolean().notNull().default(true),
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
   atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
     .notNull()
