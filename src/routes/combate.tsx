@@ -1,3 +1,5 @@
+import { ConfigurarPoderesAntagonista, ResumoRecursosSobrenaturais } from '#/components/poderes-antagonista'
+import { sortearRecursosSobrenaturais, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
 import { EditorFichaAntagonistaCompleta, ResumoFichaAntagonistaCompleta } from '#/components/ficha-antagonista-completa'
 import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
@@ -818,7 +820,7 @@ function VisaoNarrador({
 
   const [selecaoPersonagens, setSelecaoPersonagens] = useState<string[]>([])
   const [inimigosParaAdicionar, setInimigosParaAdicionar] = useState<
-    Array<{ modeloId: string; nome: string }>
+    Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
   >([])
   const [personagensTemp, setPersonagensTemp] = useState<string[]>([])
   const [modelosTemp, setModelosTemp] = useState<string[]>([])
@@ -827,6 +829,7 @@ function VisaoNarrador({
   const [nomeInimigoAvulso, setNomeInimigoAvulso] = useState<string>('')
   const [personagensAvulsosTemp, setPersonagensAvulsosTemp] = useState<string[]>([])
   const [modelosAvulsosTemp, setModelosAvulsosTemp] = useState<string[]>([])
+  const [recursosAvulsos, setRecursosAvulsos] = useState<Record<string, RecursosSobrenaturais>>({})
 
   const [arrastandoId, setArrastandoId] = useState<string | null>(null)
   const [destinoId, setDestinoId] = useState<string | null>(null)
@@ -1099,35 +1102,35 @@ function VisaoNarrador({
   }
 
   async function handleIniciarNovoCombate() {
-    const participantes: ParticipanteCombate[] = []
-
-    for (const pId of selecaoPersonagens) {
-      const char = personagens.find((p) => p.id === pId)
-      if (char) {
-        participantes.push({
-          id: crypto.randomUUID(),
-          tipo: 'personagem',
-          personagemId: char.id,
-          nome: char.nome,
-          ehPdn: char.ehPdn,
-          condicoes: [],
-        })
-      }
-    }
-
-    for (const inimigoInfo of inimigosParaAdicionar) {
-      const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
-      if (modelo) {
-        participantes.push(criarInimigoDeModelo(modelo, { id: crypto.randomUUID(), nome: inimigoInfo.nome }))
-      }
-    }
-
-    if (participantes.length === 0) {
-      toast.error('Selecione pelo menos um participante para iniciar o combate.')
-      return
-    }
-
     try {
+      const participantes: ParticipanteCombate[] = []
+
+      for (const pId of selecaoPersonagens) {
+        const char = personagens.find((p) => p.id === pId)
+        if (char) {
+          participantes.push({
+            id: crypto.randomUUID(),
+            tipo: 'personagem',
+            personagemId: char.id,
+            nome: char.nome,
+            ehPdn: char.ehPdn,
+            condicoes: [],
+          })
+        }
+      }
+
+      for (const inimigoInfo of inimigosParaAdicionar) {
+        const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
+        if (modelo) {
+          participantes.push(criarInimigoDeModelo(modelo, { id: inimigoInfo.id, nome: inimigoInfo.nome }, inimigoInfo.recursos ?? sortearRecursosSobrenaturais(modelo)))
+        }
+      }
+
+      if (participantes.length === 0) {
+        toast.error('Selecione pelo menos um participante para iniciar o combate.')
+        return
+      }
+
       await iniciarCombateServer({ data: { participantes } })
       setDialogNovoCombate(false)
       setSelecaoPersonagens([])
@@ -1182,12 +1185,13 @@ function VisaoNarrador({
               ? nomeInimigoAvulso.trim()
               : `${modelo.nome} #${contagem}`
 
-          const part = criarInimigoDeModelo(modelo, { id: crypto.randomUUID(), nome: nomeFinal })
+          const part = criarInimigoDeModelo(modelo, { id: crypto.randomUUID(), nome: nomeFinal }, recursosAvulsos[mId] ?? sortearRecursosSobrenaturais(modelo))
           await adicionarParticipanteCombateServer({ data: { participante: part } })
         }
         setDialogAdicionarParticipante(false)
         setModelosAvulsosTemp([])
         setNomeInimigoAvulso('')
+        setRecursosAvulsos({})
         toast.success('Inimigo(s) adicionado(s) ao combate!')
         router.invalidate()
       } catch (err: unknown) {
@@ -1284,6 +1288,7 @@ function VisaoNarrador({
                 size="sm"
                 onClick={() => {
                   setTipoNovoPart('inimigo')
+                  setRecursosAvulsos({})
                   setModelosAvulsosTemp([])
                   setPersonagensAvulsosTemp([])
                   setNomeInimigoAvulso('')
@@ -1543,6 +1548,8 @@ function VisaoNarrador({
                         )}
                       </div>
 
+                      {part.tipo === 'inimigo' && part.recursosSobrenaturais && <div className="px-4 py-1"><ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} /></div>}
+
                       {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
                       <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
                         <BadgesCondicoes
@@ -1723,6 +1730,7 @@ function VisaoNarrador({
                             </div>
 
                             {part.fichaCompleta && <ResumoFichaAntagonistaCompleta ficha={part.fichaCompleta} nome={part.nome} />}
+                            <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
                             {!part.fichaCompleta && part.paradas && (
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1 border-t">
                                 <span>
@@ -1957,7 +1965,7 @@ function VisaoNarrador({
                     opcoes={modelos.map((m) => ({
                       valor: m.id ?? '',
                       rotulo: m.nome,
-                      detalhe: `${m.categoria} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
                     }))}
                     valores={modelosTemp}
                     onChange={setModelosTemp}
@@ -1976,6 +1984,7 @@ function VisaoNarrador({
                           const contagem = novosInimigos.filter((i) => i.modeloId === modelo.id).length + 1
                           const nomeSugerido = `${modelo.nome} #${contagem}`
                           novosInimigos.push({
+                            id: crypto.randomUUID(),
                             modeloId: modelo.id,
                             nome: nomeSugerido,
                           })
@@ -1996,24 +2005,23 @@ function VisaoNarrador({
                         const mod = modelos.find((m) => m.id === inimigo.modeloId)
                         return (
                           <div
-                            key={idx}
+                            key={inimigo.id}
                             className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-b-0"
                           >
                             <div className="flex flex-col flex-1 min-w-0">
                               <Input
                                 value={inimigo.nome}
                                 onChange={(e) => {
-                                  const copia = [...inimigosParaAdicionar]
-                                  copia[idx].nome = e.target.value
-                                  setInimigosParaAdicionar(copia)
+                                  setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, nome: e.target.value } : i))
                                 }}
                                 className="h-7 text-xs"
                               />
                               {mod?.categoria && (
                                 <span className="text-xs text-muted-foreground mt-1 ml-1">
-                                  Categoria: <strong className="font-medium text-foreground">{mod.categoria}</strong>
+                                  Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
                                 </span>
                               )}
+                              {mod && <ConfigurarPoderesAntagonista modelo={mod} valor={inimigo.recursos} onChange={recursos => setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, recursos } : i))} />}
                             </div>
                             <Button
                               type="button"
@@ -2068,6 +2076,7 @@ function VisaoNarrador({
                 className="flex-1"
                 onClick={() => {
                   setTipoNovoPart('inimigo')
+                  setRecursosAvulsos({})
                   setModelosAvulsosTemp([])
                   setNomeInimigoAvulso('')
                 }}
@@ -2096,7 +2105,7 @@ function VisaoNarrador({
                     opcoes={modelos.map((m) => ({
                       valor: m.id ?? '',
                       rotulo: m.nome,
-                      detalhe: `${m.categoria} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
                     }))}
                     valores={modelosAvulsosTemp}
                     onChange={(vals) => {
@@ -2109,6 +2118,13 @@ function VisaoNarrador({
                     placeholder="Selecionar modelo(s)..."
                   />
                 </div>
+                {modelosAvulsosTemp.map(mId => {
+                  const modelo = modelos.find(m => m.id === mId)
+                  return modelo ? <div key={mId} className="flex flex-col items-start gap-1">
+                    {modelosAvulsosTemp.length > 1 && <span className="text-xs text-muted-foreground">{modelo.nome}</span>}
+                    <ConfigurarPoderesAntagonista modelo={modelo} valor={recursosAvulsos[mId]} onChange={recursos => setRecursosAvulsos({ ...recursosAvulsos, [mId]: recursos })} />
+                  </div> : null
+                })}
                 {modelosAvulsosTemp.length === 1 && (
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
@@ -2117,7 +2133,7 @@ function VisaoNarrador({
                         const mod = modelos.find((m) => m.id === modelosAvulsosTemp[0])
                         return mod ? (
                           <span className="text-xs text-muted-foreground">
-                            Categoria: <strong className="font-medium text-foreground">{mod.categoria}</strong>
+                            Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
                           </span>
                         ) : null
                       })()}

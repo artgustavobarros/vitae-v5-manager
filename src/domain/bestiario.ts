@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { TIPOS_ANTAGONISTA, etiquetasAntagonistaSchema } from './classificacao-antagonistas'
 import { fichaAntagonistaCompletaSchema } from './ficha-antagonista'
 
 export const paradaExcepcionalSchema = z.object({
@@ -19,7 +20,8 @@ export type EspecialAntagonista = z.infer<typeof especialAntagonistaSchema>
 export const modeloAntagonistaSchema = z.object({
   id: z.string().uuid().optional(),
   nome: z.string().min(1, 'Nome do modelo é obrigatório'),
-  categoria: z.string().min(1, 'Categoria é obrigatória').default('Geral'),
+  categoria: z.enum(TIPOS_ANTAGONISTA, { error: 'Escolha um Tipo de Antagonista válido.' }).default('Outros'),
+  etiquetas: etiquetasAntagonistaSchema.optional(),
   paradaFisico: z.int().min(0, 'Parada física não pode ser negativa').nullable(),
   paradaSocial: z.int().min(0, 'Parada social não pode ser negativa').nullable(),
   paradaMental: z.int().min(0, 'Parada mental não pode ser negativa').nullable(),
@@ -44,7 +46,8 @@ export type ModeloAntagonista = z.infer<typeof modeloAntagonistaSchema>
 export function criarModeloAntagonistaPadrao(): Omit<ModeloAntagonista, 'id'> {
   return {
     nome: '',
-    categoria: 'Geral',
+    categoria: 'Outros',
+    etiquetas: [],
     paradaFisico: 1,
     paradaSocial: 1,
     paradaMental: 1,

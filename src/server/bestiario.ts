@@ -39,6 +39,7 @@ export const carregarModeloBestiario = createServerFn({ method: 'GET' })
       id: linha.id,
       nome: linha.nome,
       categoria: linha.categoria,
+      etiquetas: linha.etiquetas,
       paradaFisico: linha.paradaFisico,
       paradaSocial: linha.paradaSocial,
       paradaMental: linha.paradaMental,

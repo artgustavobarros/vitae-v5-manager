@@ -23,7 +23,8 @@ describe('Bestiário - Modelos de Antagonistas', () => {
   it('cria modelo padrão com valores válidos', () => {
     const padrao = criarModeloAntagonistaPadrao()
     expect(padrao.nome).toBe('')
-    expect(padrao.categoria).toBe('Geral')
+    expect(padrao.categoria).toBe('Outros')
+    expect(padrao.etiquetas).toEqual([])
     expect(padrao.paradaFisico).toBe(1)
     expect(padrao.paradaSocial).toBe(1)
     expect(padrao.paradaMental).toBe(1)
@@ -43,7 +44,8 @@ describe('Bestiário - Modelos de Antagonistas', () => {
     const modelo: ModeloAntagonista = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       nome: 'Guarda da Camarilla',
-      categoria: 'Segurança',
+      categoria: 'Mortal',
+      etiquetas: ['Segurança'],
       paradaFisico: 5,
       paradaSocial: 2,
       paradaMental: 3,

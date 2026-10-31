@@ -82,7 +82,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "9fa821e0-c10d-56b7-84b3-639cae4afa57",
     "nome": "Batedor da Trilha de Caim",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 6,
     "paradaSocial": 2,
     "paradaMental": 4,
@@ -129,7 +130,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "9c2596f1-4a42-508d-920e-41bed06b79e1",
     "nome": "Assassino da Trilha de Caim",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 8,
     "paradaSocial": 3,
     "paradaMental": 5,
@@ -180,7 +182,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "f4a3755b-d112-5f7b-a29c-20526d5b1c7c",
     "nome": "Isca Irresistível",
-    "categoria": "Carniçal · Sabá",
+    "categoria": "Carniçal",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 3,
     "paradaSocial": 5,
     "paradaMental": 2,
@@ -211,7 +214,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "316b14a6-4c8a-5681-bbef-325350cfffa4",
     "nome": "Radicalizador da Trilha dos Cátaros",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 3,
     "paradaSocial": 5,
     "paradaMental": 4,
@@ -254,7 +258,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "3efd81f5-eb49-57a9-95c9-9ca33e68a0f0",
     "nome": "O Vampiro da Trilha dos Cátaros",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 4,
     "paradaSocial": 7,
     "paradaMental": 5,
@@ -293,7 +298,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "0b004db7-5319-5ce6-9727-f8890911ce94",
     "nome": "Adormecido da Trilha da Morte e da Alma",
-    "categoria": "Carniçal · Sabá",
+    "categoria": "Carniçal",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 2,
     "paradaSocial": 3,
     "paradaMental": 5,
@@ -324,7 +330,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "9cc54ee3-2c3a-5853-ad63-19ef1d83faea",
     "nome": "Flautista da Trilha da Morte e da Alma",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 3,
     "paradaSocial": 3,
     "paradaMental": 6,
@@ -375,7 +382,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "08344c7a-16ca-5b55-bf3e-bd2c837983f2",
     "nome": "Molda-Vida da Trilha da Morte e da Alma",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 3,
     "paradaSocial": 5,
     "paradaMental": 8,
@@ -426,7 +434,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "117056be-99c6-5b96-933f-0644a7d2e68e",
     "nome": "Servo Arruinado da Trilha do Poder e da Voz Interior",
-    "categoria": "Carniçal · Sabá",
+    "categoria": "Carniçal",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 3,
     "paradaSocial": 4,
     "paradaMental": 3,
@@ -457,7 +466,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "ab094860-c283-509d-b57d-57da3fe7c515",
     "nome": "Cavaleiro da Trilha do Poder e da Voz Interior",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 5,
     "paradaSocial": 4,
     "paradaMental": 3,
@@ -504,7 +514,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "0f9386f1-2ccd-5ded-b9e6-be841715c53d",
     "nome": "Bispo da Trilha do Poder e da Voz Interior",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 6,
     "paradaSocial": 6,
     "paradaMental": 6,
@@ -555,7 +566,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "6168f48a-9619-59bc-89c9-9030984196cf",
     "nome": "Heliófilo da Trilha do Sol",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 4,
     "paradaSocial": 4,
     "paradaMental": 3,
@@ -590,7 +602,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "549728ee-9cd2-5535-89ae-75748d9273ec",
     "nome": "Pretendente do Sabá",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 4,
     "paradaSocial": 4,
     "paradaMental": 2,
@@ -629,7 +642,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "baa9fa54-6bbc-5099-aa81-9769e2be9cd7",
     "nome": "Não Nascido",
-    "categoria": "Vampiro · Sabá",
+    "categoria": "Vampiro",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 5,
     "paradaSocial": 1,
     "paradaMental": 2,
@@ -656,7 +670,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "f1576dde-bf90-5d30-a723-f963807efaa9",
     "nome": "Acorrentado",
-    "categoria": "Carniçal · Sabá",
+    "categoria": "Carniçal",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 2,
     "paradaSocial": 3,
     "paradaMental": 4,
@@ -691,7 +706,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "326f3ffb-399e-5ea4-a8c1-1ad32cdd4132",
     "nome": "Carniçal da Ninhada",
-    "categoria": "Carniçal · Sabá",
+    "categoria": "Carniçal",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 5,
     "paradaSocial": 3,
     "paradaMental": 4,
@@ -730,7 +746,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "8950ce37-08b5-51f4-bce2-675a9f481479",
     "nome": "Forma de Carne Fundida",
-    "categoria": "Carniçal · Sabá",
+    "categoria": "Carniçal",
+    "etiquetas": ["Sabá"],
     "paradaFisico": 9,
     "paradaSocial": 0,
     "paradaMental": 4,

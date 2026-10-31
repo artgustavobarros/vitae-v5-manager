@@ -129,6 +129,8 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   - Personagens;
   - PdNs;
   - Inimigos criados a partir de Modelos, cada um com Vitalidade e Força de Vontade próprias.
+- Os Modelos de Antagonistas têm um Tipo geral (Vampiro, Carniçal, Mortal, Animal, etc.) e Etiquetas livres, como Sabá e Ataque. O filtro principal mostra os Tipos; ao escolher um Tipo, aparecem suas Etiquetas para refinar a busca. Várias Etiquetas selecionadas exigem que o Modelo tenha todas elas. Trocar o Tipo limpa as Etiquetas selecionadas.
+- Ao adicionar um Antagonista ao Combate, o Narrador pode sortear ou escolher seus poderes de Disciplina, Rituais, Cerimônias e Fórmulas. Cada Inimigo guarda sua própria seleção; o Modelo não muda. A escolha respeita nível, quantidade de poderes, amálgamas e dependências entre itens. Condições de Clã, origem ou preparo exigem confirmação explícita do Narrador. A quantidade de Rituais, Cerimônias e Fórmulas é definida pelo Narrador.
 - A ordem de turnos é manual (arrastar), com destaque de quem está agindo e contador de Rodadas.
 - Os Jogadores veem a ordem e os Inimigos. Veem a Vitalidade de um Inimigo só se o Narrador liberar.
 - Os valores da Condição dos Personagens no Combate seguem as mesmas regras de compartilhamento. As tags de saúde e de condições/debuffs permanecem públicas, por decisão do Narrador, mesmo quando os valores estão ocultos.

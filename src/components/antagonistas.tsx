@@ -1,3 +1,6 @@
+import { etiquetasDoTipo, filtrarClassificacao, normalizarEtiquetas, TIPOS_ANTAGONISTA } from '#/domain/classificacao-antagonistas'
+import { casaBusca } from '#/domain/catalogo/busca'
+import { SelectMultiplo } from '#/components/ui/select-multiplo'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Plus, Trash2, Edit3, ShieldAlert, Copy, Search, ArrowLeft, Check } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -65,7 +68,9 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todas')
+  const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todos')
+  const [etiquetasAtivas, setEtiquetasAtivas] = useState<string[]>([])
+  const [novaEtiqueta, setNovaEtiqueta] = useState('')
   const [busca, setBusca] = useState<string>('')
   const [filtroRevisao, setFiltroRevisao] = useState<StatusRevisaoBestiario | 'todos'>('todos')
   const [atualizandoRevisao, setAtualizandoRevisao] = useState(false)
@@ -78,47 +83,36 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
   const faltamDecidir = contagens.pendente + contagens.corrigir
 
   const categorias = useMemo(() => {
-    const cats = new Set(modelosDaPagina.map((m) => m.categoria?.trim() || 'Geral'))
-    return ['Todas', ...Array.from(cats).sort()]
+    const existentes = new Set(modelosDaPagina.map(m => m.categoria))
+    return ['Todos', ...TIPOS_ANTAGONISTA.filter(tipo => existentes.has(tipo))]
   }, [modelosDaPagina])
+  const etiquetasExistentes = useMemo(() => normalizarEtiquetas(modelos.flatMap(m => m.etiquetas ?? [])).sort((a, b) => a.localeCompare(b, 'pt-BR')), [modelos])
+  const categoriaEfetiva = categorias.includes(categoriaAtiva) ? categoriaAtiva : 'Todos'
+  const tipoFiltrado = categoriaEfetiva === 'Todos' ? null : categoriaEfetiva
+  const etiquetasDisponiveis = etiquetasDoTipo(modelosDaPagina, tipoFiltrado)
+  const disponiveis = new Set(etiquetasDisponiveis)
+  const etiquetasEfetivas = etiquetasAtivas.filter(e => disponiveis.has(e))
+  const etiquetasSelecionadas = new Set(etiquetasEfetivas)
+  const modelosFiltrados = filtrarClassificacao(modelosDaPagina, tipoFiltrado, etiquetasEfetivas).filter(m => {
+    if (modoAprovacao && filtroRevisao !== 'todos' && (m.revisao?.status ?? 'pendente') !== filtroRevisao) return false
+    return casaBusca(busca, [m.nome, m.categoria, ...(m.etiquetas ?? []), m.notas, ...(modoAprovacao ? [m.revisao?.nota] : []), ...m.especiais.flatMap(e => [e.nome, e.descricao])])
+  })
 
-  const categoriasExistentes = useMemo(() => {
-    const cats = new Set(modelos.map((m) => m.categoria?.trim() || 'Geral'))
-    return Array.from(cats).sort()
-  }, [modelos])
-
-  const categoriaEfetiva = categorias.includes(categoriaAtiva) ? categoriaAtiva : 'Todas'
-
-  const modelosFiltrados = useMemo(() => {
-    return modelosDaPagina.filter((m) => {
-      const cat = m.categoria?.trim() || 'Geral'
-      const bateCategoria = categoriaEfetiva === 'Todas' || cat === categoriaEfetiva
-      if (!bateCategoria) return false
-      if (modoAprovacao && filtroRevisao !== 'todos' && (m.revisao?.status ?? 'pendente') !== filtroRevisao) return false
-
-      if (!busca.trim()) return true
-      const termo = busca.toLowerCase()
-      return (
-        m.nome.toLowerCase().includes(termo) ||
-        cat.toLowerCase().includes(termo) ||
-        m.notas.toLowerCase().includes(termo) ||
-        (modoAprovacao && m.revisao?.nota.toLowerCase().includes(termo)) ||
-        m.especiais.some(
-          (e) =>
-            e.nome.toLowerCase().includes(termo) ||
-            e.descricao.toLowerCase().includes(termo),
-        )
-      )
-    })
-  }, [modelosDaPagina, categoriaEfetiva, busca, modoAprovacao, filtroRevisao])
+  function adicionarEtiqueta() {
+    if (!modeloEmEdicao || !novaEtiqueta.trim()) return
+    setModeloEmEdicao({ ...modeloEmEdicao, etiquetas: normalizarEtiquetas([...(modeloEmEdicao.etiquetas ?? []), novaEtiqueta]) })
+    setNovaEtiqueta('')
+  }
 
   function abrirNovo() {
+    setNovaEtiqueta('')
     setModeloEmEdicao({ ...criarModeloAntagonistaPadrao(), ...(modoAprovacao ? { revisao: { status: 'pendente', nota: '' } } : {}) })
     setErro(null)
     setDialogAberto(true)
   }
 
   function abrirEditar(m: EdicaoModeloBestiario) {
+    setNovaEtiqueta('')
     setModeloEmEdicao({
       ...m,
       paradasExcepcionais: [...m.paradasExcepcionais],
@@ -129,12 +123,14 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
   }
 
   function abrirDuplicar(m: ModeloAntagonista) {
+    setNovaEtiqueta('')
     setModeloEmEdicao({
       ...m,
       id: undefined,
       nome: `${m.nome} (Cópia)`,
       revisao: modoAprovacao ? { status: 'pendente', nota: '' } : undefined,
-      categoria: m.categoria || 'Geral',
+      categoria: m.categoria || 'Outros',
+      etiquetas: [...(m.etiquetas ?? [])],
       paradasExcepcionais: m.paradasExcepcionais.map((p) => ({ ...p })),
       especiais: m.especiais.map((e) => ({ ...e })),
     })
@@ -282,7 +278,8 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                       variant={categoriaEfetiva === cat ? 'default' : 'outline'}
                       size="sm"
                       className="h-8 text-xs rounded-full px-3 shrink-0"
-                      onClick={() => setCategoriaAtiva(cat)}
+                      aria-pressed={categoriaEfetiva === cat}
+                      onClick={() => { setCategoriaAtiva(cat); setEtiquetasAtivas([]) }}
                     >
                       {cat}
                     </Button>
@@ -294,14 +291,29 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
               <div className="relative w-full sm:w-64 shrink-0">
                 <Search className="absolute left-2 top-2 size-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar modelo ou especial..."
+                  placeholder="Buscar Modelo, Etiqueta ou Especial..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   className="pl-8 h-8 text-xs"
-                  aria-label="Buscar Modelo ou Especial"
+                  aria-label="Buscar Modelo, Etiqueta ou Especial"
                 />
               </div>
             </div>
+
+            {tipoFiltrado && etiquetasDisponiveis.length > 0 && (
+              <div className="flex flex-col gap-2" role="group" aria-label={`Etiquetas de ${tipoFiltrado}`}>
+                <span className="text-xs text-muted-foreground">Etiquetas de {tipoFiltrado} · combine para refinar a busca</span>
+                <CarrosselBadges>
+                  <Button type="button" size="sm" variant={etiquetasEfetivas.length === 0 ? 'secondary' : 'outline'} aria-pressed={etiquetasEfetivas.length === 0} onClick={() => setEtiquetasAtivas([])}>Todas as Etiquetas</Button>
+                  {etiquetasDisponiveis.map(etiqueta => (
+                    <Button key={etiqueta} type="button" size="sm" variant={etiquetasSelecionadas.has(etiqueta) ? 'default' : 'outline'} aria-pressed={etiquetasSelecionadas.has(etiqueta)}
+                      onClick={() => setEtiquetasAtivas(etiquetasSelecionadas.has(etiqueta) ? etiquetasEfetivas.filter(e => e !== etiqueta) : [...etiquetasEfetivas, etiqueta])}>
+                      {etiqueta}
+                    </Button>
+                  ))}
+                </CarrosselBadges>
+              </div>
+            )}
 
             {modelosFiltrados.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
@@ -317,9 +329,10 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                       <div className="flex items-start justify-between gap-2">
                         <CardTitle className="font-serif text-xl leading-tight break-words">{m.nome}</CardTitle>
                         <Badge variant="secondary" className="text-xs shrink-0 font-normal">
-                          {m.categoria || 'Geral'}
+                          {m.categoria || 'Outros'}
                         </Badge>
                       </div>
+                      {(m.etiquetas?.length ?? 0) > 0 && <div className="flex flex-wrap gap-1">{m.etiquetas?.map(etiqueta => <Badge key={etiqueta} variant="outline" className="text-xs">{etiqueta}</Badge>)}</div>}
                       <CardDescription>
                         Vitalidade {m.vitalidade} &bull; Força de Vontade {m.vontade}
                       </CardDescription>
@@ -473,7 +486,7 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                     <Label htmlFor="nome-modelo">Nome do Modelo</Label>
                     <Input
                       id="nome-modelo"
-                      placeholder="Ex: Padrão, De Ataque, Ocultista..."
+                      placeholder="Ex.: Carniçal de ataque, Batedor..."
                       value={modeloEmEdicao.nome}
                       onChange={(e) =>
                         setModeloEmEdicao({ ...modeloEmEdicao, nome: e.target.value })
@@ -482,17 +495,28 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <Label htmlFor="categoria-modelo">Categoria / Arquétipo</Label>
+                    <Label htmlFor="categoria-modelo">Tipo de Antagonista</Label>
                     <Combobox
                       id="categoria-modelo"
-                      rotulo="Categoria / Arquétipo"
-                      opcoes={categoriasExistentes.map((categoria) => ({ valor: categoria, rotulo: categoria }))}
+                      rotulo="Tipo de Antagonista"
+                      opcoes={TIPOS_ANTAGONISTA.map(categoria => ({ valor: categoria, rotulo: categoria }))}
                       valor={modeloEmEdicao.categoria || null}
-                      onChange={(categoria) => setModeloEmEdicao({ ...modeloEmEdicao, categoria })}
-                      placeholder="Ex: Carniçal, Mortal, Segunda Inquisição..."
-                      permiteCriar
+                      onChange={valor => { const categoria = TIPOS_ANTAGONISTA.find(tipo => tipo === valor); if (categoria) setModeloEmEdicao({ ...modeloEmEdicao, categoria }) }}
+                      placeholder="Escolher tipo geral"
                     />
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="etiquetas-modelo">Etiquetas</Label>
+                  <SelectMultiplo id="etiquetas-modelo" rotulo="Etiquetas" valores={modeloEmEdicao.etiquetas ?? []}
+                    opcoes={normalizarEtiquetas([...(modeloEmEdicao.etiquetas ?? []), ...etiquetasExistentes]).map(etiqueta => ({ valor: etiqueta, rotulo: etiqueta }))}
+                    onChange={etiquetas => setModeloEmEdicao({ ...modeloEmEdicao, etiquetas })} placeholder="Selecionar Etiquetas" />
+                  <div className="flex items-center gap-2">
+                    <Input aria-label="Nova Etiqueta" value={novaEtiqueta} onChange={e => setNovaEtiqueta(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarEtiqueta() } }} placeholder="Ex.: Sabá, Ataque, Camarilla" />
+                    <Button type="button" variant="outline" disabled={!novaEtiqueta.trim()} onClick={adicionarEtiqueta}>Adicionar</Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Afiliações e variantes. Um Modelo pode ter várias Etiquetas.</p>
                 </div>
 
                 <div className="flex flex-col gap-1">

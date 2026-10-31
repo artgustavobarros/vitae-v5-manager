@@ -131,7 +131,7 @@ export const MODELOS_INICIAIS_BESTIARIO = [
   },
   {
     id: '19e21a6a-0f97-5b30-ba54-6f48aed6f8b5',
-    nome: 'Sabujo de Sangue', categoria: 'Carniçal',
+    nome: 'Sabujo de Sangue', categoria: 'Carniçal', etiquetas: ['Sabá'],
     paradaFisico: 5, paradaSocial: 1, paradaMental: 2,
     vitalidade: 6, vontade: 3,
     paradasExcepcionais: [

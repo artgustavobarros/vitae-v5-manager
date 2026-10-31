@@ -1,3 +1,4 @@
+import type { TipoAntagonista } from '../domain/classificacao-antagonistas'
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
@@ -234,7 +235,8 @@ export const statusRevisaoBestiario = pgEnum('status_revisao_bestiario', STATUS_
 export const modeloAntagonista = pgTable('modelo_antagonista', {
   id: uuid().primaryKey().defaultRandom(),
   nome: text().notNull(),
-  categoria: text().notNull().default('Geral'),
+  categoria: text().$type<TipoAntagonista>().notNull().default('Outros'),
+  etiquetas: jsonb().$type<string[]>().notNull().default([]),
   paradaFisico: integer('parada_fisico').default(1),
   paradaSocial: integer('parada_social').default(1),
   paradaMental: integer('parada_mental').default(1),

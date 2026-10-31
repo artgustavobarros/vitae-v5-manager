@@ -1,3 +1,5 @@
+import { etiquetasAntagonistaSchema } from './classificacao-antagonistas'
+import { recursosSobrenaturaisSchema, validarSelecaoParaModelo, type RecursosSobrenaturais } from './poderes-antagonista'
 import { z } from 'zod'
 
 import { modeloAntagonistaSchema, type ModeloAntagonista } from './bestiario'
@@ -257,7 +259,9 @@ export const participanteInimigoSchema = z.object({
   nome: z.string(),
   modeloId: z.string().uuid().nullable().optional(),
   fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
+  recursosSobrenaturais: recursosSobrenaturaisSchema.optional(),
   categoria: z.string().optional(),
+  etiquetas: etiquetasAntagonistaSchema.optional(),
   vitalidadeMax: z.int().min(1),
   danoVitalidade: danoTrilhaSchema,
   vontadeMax: z.int().min(1),
@@ -278,14 +282,15 @@ export const participanteInimigoSchema = z.object({
   return inimigo.fichaCompleta ? valores.every((v) => v === null) : valores.every((v) => v !== null)
 }, { message: 'Use paradas gerais na ficha simplificada ou Atributos e Habilidades na ficha completa.', path: ['paradas'] })
 
-export function criarInimigoDeModelo(entrada: ModeloAntagonista, identidade: { id: string; nome: string }): ParticipanteInimigo {
+export function criarInimigoDeModelo(entrada: ModeloAntagonista, identidade: { id: string; nome: string }, recursos?: RecursosSobrenaturais): ParticipanteInimigo {
   const modelo = modeloAntagonistaSchema.parse(entrada)
   return participanteInimigoSchema.parse(structuredClone({
-    ...identidade, tipo: 'inimigo', modeloId: modelo.id, categoria: modelo.categoria,
+    ...identidade, tipo: 'inimigo', modeloId: modelo.id, categoria: modelo.categoria, etiquetas: modelo.etiquetas ?? [],
     vitalidadeMax: modelo.vitalidade, vontadeMax: modelo.vontade,
     danoVitalidade: { superficial: 0, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 },
     paradas: { fisico: modelo.paradaFisico, social: modelo.paradaSocial, mental: modelo.paradaMental, excepcionais: modelo.paradasExcepcionais },
     fichaCompleta: modelo.fichaCompleta, especiais: modelo.especiais, notas: modelo.notas,
+    ...(recursos ? { recursosSobrenaturais: validarSelecaoParaModelo(modelo, recursos) } : {}),
   }))
 }
 

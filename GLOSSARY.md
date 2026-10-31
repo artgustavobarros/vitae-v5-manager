@@ -80,6 +80,13 @@ _Avoid_: Encontro, luta, batalha
 Entrada da lista de Antagonistas que descreve um tipo de antagonista com Ficha Simplificada ou Ficha Completa de Antagonista.
 _Avoid_: Template, monstro, ficha de inimigo
 
+**Tipo de Antagonista**:
+Natureza geral de um Modelo, como Vampiro, Carniçal, Mortal ou Animal. Um Modelo tem um único tipo.
+
+**Etiqueta de Antagonista**:
+Marcador opcional que detalha um Modelo, como Sabá ou Ataque. Um Modelo pode ter várias Etiquetas.
+_Avoid_: Tipo especial, categoria composta
+
 **Ficha Simplificada**:
 Formato de Modelo de antagonista com paradas gerais Físico, Social e Mental, Paradas Excepcionais, Vitalidade, Força de Vontade e Especiais.
 

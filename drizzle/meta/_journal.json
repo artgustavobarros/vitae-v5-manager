@@ -141,6 +141,13 @@
       "when": 1793423374574,
       "tag": "0019_ficha_completa_antagonista",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793468216053,
+      "tag": "0020_etiquetas_antagonistas",
+      "breakpoints": true
     }
   ]
 }
