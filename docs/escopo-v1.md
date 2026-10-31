@@ -6,6 +6,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 - Uma única Crônica, jogada presencialmente, com uso principal no celular.
 - Interface somente em PT-BR. Sem modo offline.
+- A barra de navegação fica visível no topo da página, recolhe ao rolar para baixo e reaparece ao rolar para cima, sem deslocar o conteúdo. A transição é curta e respeita movimento reduzido; foco de teclado e menus abertos mantêm a navegação disponível.
 - Um único Narrador, que entra com Google.
 - Jogadores entram por Convite para a Crônica:
   - é um link só para a mesa, que o Narrador envia como quiser; não precisa de e-mail;

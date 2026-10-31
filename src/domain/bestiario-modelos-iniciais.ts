@@ -322,7 +322,8 @@ export const MODELOS_INICIAIS_BESTIARIO = [
 {
   "id": "5897aa61-9526-5b5d-ad4e-83a260d0e006",
   "nome": "Fada",
-  "categoria": "Criatura sobrenatural",
+  "categoria": "Outras criaturas",
+  "etiquetas": ["Fada"],
   "paradaFisico": null,
   "paradaSocial": null,
   "paradaMental": null,
@@ -378,7 +379,8 @@ export const MODELOS_INICIAIS_BESTIARIO = [
 {
   "id": "54bc13f5-774f-5a0d-a7c9-16af92bdedc3",
   "nome": "Mago",
-  "categoria": "Criatura sobrenatural",
+  "categoria": "Outras criaturas",
+  "etiquetas": ["Mago"],
   "paradaFisico": null,
   "paradaSocial": null,
   "paradaMental": null,
@@ -499,7 +501,8 @@ export const MODELOS_INICIAIS_BESTIARIO = [
 {
   "id": "4f269a23-af61-5826-9b94-580b749ca282",
   "nome": "Espectro",
-  "categoria": "Criatura sobrenatural",
+  "categoria": "Outras criaturas",
+  "etiquetas": ["Espectro"],
   "paradaFisico": null,
   "paradaSocial": null,
   "paradaMental": null,

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { normalizar } from './catalogo/busca'
 
-export const TIPOS_ANTAGONISTA = ['Animal', 'Carniçal', 'Criatura sobrenatural', 'Lobisomem', 'Mortal', 'Vampiro', 'Outros'] as const
+export const TIPOS_ANTAGONISTA = ['Animal', 'Carniçal', 'Outras criaturas', 'Mortal', 'Vampiro', 'Outros'] as const
 export type TipoAntagonista = typeof TIPOS_ANTAGONISTA[number]
 
 export function normalizarEtiquetas(etiquetas: readonly string[]) {

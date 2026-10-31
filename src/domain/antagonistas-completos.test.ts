@@ -5,7 +5,7 @@ import { atualizarParticipanteInimigo, criarInimigoDeModelo, filtrarCombateParaJ
 
 const modelo = {
   ...criarModeloAntagonistaPadrao(),
-  nome: 'Fada', categoria: 'Criatura sobrenatural',
+  nome: 'Fada', categoria: 'Outras criaturas',
   paradaFisico: null, paradaSocial: null, paradaMental: null,
   fichaCompleta: {
     atributos: { forca: 2, destreza: 4, vigor: 3, carisma: 7, manipulacao: 5, autocontrole: 3, inteligencia: 3, raciocinio: 4, determinacao: 4 },

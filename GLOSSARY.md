@@ -81,7 +81,7 @@ Entrada da lista de Antagonistas que descreve um tipo de antagonista com Ficha S
 _Avoid_: Template, monstro, ficha de inimigo
 
 **Tipo de Antagonista**:
-Natureza geral de um Modelo, como Vampiro, Carniçal, Mortal ou Animal. Um Modelo tem um único tipo.
+Natureza geral de um Modelo, como Vampiro, Carniçal, Mortal ou Animal. Um Modelo tem um único tipo. Outras criaturas reúne seres como Espectro, Fada, Mago e Lobisomem.
 
 **Etiqueta de Antagonista**:
 Marcador opcional que detalha um Modelo, como Sabá ou Ataque. Um Modelo pode ter várias Etiquetas.
@@ -92,6 +92,9 @@ Formato de Modelo de antagonista com paradas gerais Físico, Social e Mental, Pa
 
 **Ficha Completa de Antagonista**:
 Formato de Modelo com Atributos, Habilidades e Disciplinas individuais, além de Vitalidade, Força de Vontade e Especiais; pode informar Humanidade, Potência do Sangue e Fome. Suas ações usam as características individuais, sem substituir valores ausentes por paradas gerais.
+
+**Dificuldade Geral**:
+Quantidade de sucessos usada como oposição fixa para um Antagonista. Pode ser um valor único ou um par: o primeiro vale nas áreas em que ele se destaca; o segundo, nos demais testes.
 
 **Paradas Excepcionais**:
 Paradas de dados específicas de um Modelo de antagonista fora das paradas gerais Físico, Social e Mental (ex.: Armas de Fogo, Furtividade).

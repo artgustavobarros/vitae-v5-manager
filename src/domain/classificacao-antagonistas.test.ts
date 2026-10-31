@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { criarModeloAntagonistaPadrao, modeloAntagonistaSchema } from './bestiario'
+import { MODELOS_INICIAIS_BESTIARIO } from './bestiario-modelos-iniciais'
 import { etiquetasDoTipo, filtrarClassificacao } from './classificacao-antagonistas'
 import { criarInimigoDeModelo, ehParticipanteVampiro } from './combate'
 
@@ -33,6 +34,14 @@ describe('Tipos e Etiquetas dos Antagonistas', () => {
     expect(filtrarClassificacao(modelos, 'Carniçal', ['Ataque']).map(m => m.nome)).toEqual(['Carniçal de ataque', 'Carniçal infiltrado'])
     expect(filtrarClassificacao(modelos, 'Carniçal', ['SABA', 'ataque']).map(m => m.nome)).toEqual(['Carniçal infiltrado'])
     expect(filtrarClassificacao(modelos, 'Mortal', ['Sabá'])).toEqual([])
+  })
+
+  it('agrupa Espectro, Fada, Mago e Lobisomem em Outras criaturas com etiquetas próprias', () => {
+    const iniciais = MODELOS_INICIAIS_BESTIARIO.map(m => modeloAntagonistaSchema.parse(m))
+    const criaturas = filtrarClassificacao(iniciais, 'Outras criaturas', [])
+    expect(criaturas.map(m => m.nome).sort()).toEqual(['Espectro', 'Fada', 'Lobisomem', 'Mago'])
+    expect(etiquetasDoTipo(criaturas, 'Outras criaturas')).toEqual(['Espectro', 'Fada', 'Lobisomem', 'Mago'])
+    expect(filtrarClassificacao(criaturas, 'Outras criaturas', ['Lobisomem']).map(m => m.nome)).toEqual(['Lobisomem'])
   })
 
   it('leva etiquetas para a cópia do Combate sem mudar o tipo nem as regras de saúde', () => {

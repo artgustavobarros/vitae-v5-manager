@@ -1,3 +1,5 @@
+import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
+import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
 import { ConfigurarPoderesAntagonista, ResumoRecursosSobrenaturais } from '#/components/poderes-antagonista'
 import { sortearRecursosSobrenaturais, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
 import { EditorFichaAntagonistaCompleta, ResumoFichaAntagonistaCompleta } from '#/components/ficha-antagonista-completa'
@@ -1334,6 +1336,7 @@ function VisaoNarrador({
         {combate && (
           <div className="flex flex-col gap-3">
             {participantesAtivos.map((part, index) => {
+              const resumoInimigo = part.tipo === 'inimigo' ? separarDificuldadeGeral(part.notas) : null
               const ehTurnoAtual = combate ? part.id === combate.participantes[combate.turnoAtual]?.id : false
               const ehProximoTurno = combate && proximoIndex !== -1 ? part.id === combate.participantes[proximoIndex]?.id : false
 
@@ -1548,7 +1551,7 @@ function VisaoNarrador({
                         )}
                       </div>
 
-                      {part.tipo === 'inimigo' && part.recursosSobrenaturais && <div className="px-4 py-1"><ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} /></div>}
+                      {part.tipo === 'inimigo' && (part.recursosSobrenaturais || resumoInimigo?.dificuldade) && <div className="flex flex-wrap items-center gap-2 px-4 py-1"><ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} /><ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} /></div>}
 
                       {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
                       <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
@@ -1730,6 +1733,7 @@ function VisaoNarrador({
                             </div>
 
                             {part.fichaCompleta && <ResumoFichaAntagonistaCompleta ficha={part.fichaCompleta} nome={part.nome} />}
+                            <ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} />
                             <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
                             {!part.fichaCompleta && part.paradas && (
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1 border-t">
@@ -1757,9 +1761,9 @@ function VisaoNarrador({
                               </div>
                             )}
 
-                            {part.notas && (
+                            {resumoInimigo?.notas && (
                               <div className="text-xs text-muted-foreground italic">
-                                <VisualizadorMarkdown markdown={part.notas} />
+                                <VisualizadorMarkdown markdown={resumoInimigo.notas} />
                               </div>
                             )}
 

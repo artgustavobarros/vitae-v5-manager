@@ -5,7 +5,8 @@ export const MODELOS_SUPLEMENTARES_ANTAGONISTAS = [
   {
     "id": "7d29db87-b745-52f1-8ef0-53e52718f6e8",
     "nome": "Lobisomem",
-    "categoria": "Lobisomem",
+    "categoria": "Outras criaturas",
+    "etiquetas": ["Lobisomem"],
     "paradaFisico": null,
     "paradaSocial": null,
     "paradaMental": null,

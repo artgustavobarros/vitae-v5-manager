@@ -1,3 +1,5 @@
+import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
+import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
 import { etiquetasDoTipo, filtrarClassificacao, normalizarEtiquetas, TIPOS_ANTAGONISTA } from '#/domain/classificacao-antagonistas'
 import { casaBusca } from '#/domain/catalogo/busca'
 import { SelectMultiplo } from '#/components/ui/select-multiplo'
@@ -322,22 +324,28 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                 </p>
               </div>
             ) : (
-              <div className={modoAprovacao ? "columns-1 gap-4 md:columns-2 lg:columns-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
-                {modelosFiltrados.map((m) => (
-                  <Card key={m.id} className={modoAprovacao ? "mb-4 break-inside-avoid flex flex-col" : "flex flex-col justify-between"}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="font-serif text-xl leading-tight break-words">{m.nome}</CardTitle>
+              <div className={modoAprovacao ? "columns-1 gap-4 md:columns-2 lg:columns-3" : "antagonistas-mosaico"}>
+                {modelosFiltrados.map((m) => {
+                  const resumo = separarDificuldadeGeral(m.notas)
+                  return (
+                  <Card
+                    key={m.id}
+                    className={modoAprovacao ? "mb-4 break-inside-avoid flex flex-col" : "mb-4 min-h-64 max-h-160 break-inside-avoid gap-4 overflow-hidden py-4"}
+                  >
+                    <CardHeader className={modoAprovacao ? "min-w-0 shrink-0" : "min-w-0 shrink-0 px-4"}>
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="secondary" className="text-xs shrink-0 font-normal">
                           {m.categoria || 'Outros'}
                         </Badge>
+                        {m.etiquetas?.map(etiqueta => <Badge key={etiqueta} variant="outline" className="text-xs">{etiqueta}</Badge>)}
                       </div>
-                      {(m.etiquetas?.length ?? 0) > 0 && <div className="flex flex-wrap gap-1">{m.etiquetas?.map(etiqueta => <Badge key={etiqueta} variant="outline" className="text-xs">{etiqueta}</Badge>)}</div>}
+                      <CardTitle className="min-w-0 font-serif text-xl leading-tight break-words">{m.nome}</CardTitle>
                       <CardDescription>
                         Vitalidade {m.vitalidade} &bull; Força de Vontade {m.vontade}
                       </CardDescription>
+                      <ChipDificuldadeAntagonista dificuldade={resumo.dificuldade} />
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-3 text-sm">
+                    <CardContent className={modoAprovacao ? "flex flex-col gap-3 text-sm" : "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 text-sm"}>
                       {modoAprovacao && (
                         <div className="flex flex-col gap-2">
                           <Badge variant={m.revisao?.status === 'aprovado' ? 'default' : 'outline'} className="self-start">
@@ -365,30 +373,31 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                       {m.paradasExcepcionais.length > 0 && (
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="text-xs font-medium text-muted-foreground">Paradas excepcionais:</span>
-                          <CarrosselBadges>
+                          <dl className="space-y-1">
                             {m.paradasExcepcionais.map((pe, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs shrink-0">
-                                {pe.nome}: {pe.valor}
-                              </Badge>
+                              <div key={idx} className="flex items-start justify-between gap-3">
+                                <dt className="min-w-0 break-words">{pe.nome}</dt>
+                                <dd className="shrink-0 font-medium tabular-nums">{pe.valor}</dd>
+                              </div>
                             ))}
-                          </CarrosselBadges>
+                          </dl>
                         </div>
                       )}
 
                       {m.especiais.length > 0 && (
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="text-xs font-medium text-muted-foreground">Especiais:</span>
-                          <CarrosselBadges>
+                          <div className="flex flex-wrap gap-2">
                             {m.especiais.map((esp, idx) => (
                               <BadgeEspecial key={idx} nome={esp.nome} descricao={esp.descricao} />
                             ))}
-                          </CarrosselBadges>
+                          </div>
                         </div>
                       )}
 
-                      {m.notas && (
-                        <div className={modoAprovacao ? "text-xs text-muted-foreground" : "text-xs text-muted-foreground line-clamp-3 italic"}>
-                          <VisualizadorMarkdown markdown={m.notas} />
+                      {resumo.notas && (
+                        <div className="text-xs text-muted-foreground">
+                          <VisualizadorMarkdown markdown={resumo.notas} />
                         </div>
                       )}
                       {modoAprovacao && (
@@ -421,39 +430,45 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                         </Button>
                       </CardFooter>
                     ) : (
-                    <CardFooter className="flex flex-wrap justify-end gap-1 border-t pt-3">
+                    <div role="group" aria-label={`Ações de ${m.nome}`} className="flex shrink-0 justify-end gap-1 px-4">
                       <Button
+                        type="button"
                         variant="ghost"
-                        size="sm"
-                        className="gap-1 text-xs"
+                        size="icon"
+                        className="size-11 touch-manipulation"
+                        aria-label={`Duplicar ${m.nome}`}
                         onClick={() => abrirDuplicar(m)}
-                        title="Duplicar modelo como nova variante"
+                        title="Duplicar"
                       >
                         <Copy className="size-4" />
-                        Duplicar
                       </Button>
                       <Button
+                        type="button"
                         variant="ghost"
-                        size="sm"
-                        className="gap-1 text-xs"
+                        size="icon"
+                        className="size-11 touch-manipulation"
+                        aria-label={`Editar ${m.nome}`}
+                        title="Editar"
                         onClick={() => abrirEditar(m)}
                       >
                         <Edit3 className="size-4" />
-                        Editar
                       </Button>
                       <Button
+                        type="button"
                         variant="ghost"
-                        size="sm"
-                        className="gap-1 text-xs text-destructive hover:text-destructive"
+                        size="icon"
+                        className="size-11 touch-manipulation text-destructive hover:text-destructive"
+                        aria-label={`Excluir ${m.nome}`}
+                        title="Excluir"
                         onClick={() => setModeloParaExcluir(m)}
                       >
                         <Trash2 className="size-4" />
-                        Excluir
                       </Button>
-                    </CardFooter>
+                    </div>
                     )}
                   </Card>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
