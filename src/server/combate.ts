@@ -30,6 +30,7 @@ import {
   type ParticipanteCombate,
 } from '#/domain/combate'
 import { vitalidadeMax, vontadeMax } from '#/domain/ficha'
+import { identificadorSchema, LIMITE_ITENS } from '#/domain/limites-entrada'
 import { notificacoesEventos } from '#/domain/notificacoes'
 import type { Dano } from '#/domain/trilhas'
 import { enviarNotificacao } from '#/server/enviar-notificacao'
@@ -194,7 +195,7 @@ export const carregarCombate = createServerFn({ method: 'GET' })
 
 export const iniciarCombateServer = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(z.object({ participantes: z.array(participanteCombateSchema) }))
+  .validator(z.object({ participantes: z.array(participanteCombateSchema).max(LIMITE_ITENS) }))
   .handler(async ({ data }: { data: { participantes: ParticipanteCombate[] } }) => {
     // Desativa combate anterior
     await db.update(combate).set({ ativo: false }).where(eq(combate.ativo, true))
@@ -336,7 +337,7 @@ export const voltarTurnoCombateServer = createServerFn({ method: 'POST' })
 
 export const reordenarParticipantesCombateServer = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(z.object({ ordemIds: z.array(z.string()) }))
+  .validator(z.object({ ordemIds: z.array(identificadorSchema).max(LIMITE_ITENS) }))
   .handler(async ({ data }: { data: { ordemIds: string[] } }) => {
     const [combateAtivo] = await db
       .select()
@@ -424,7 +425,7 @@ export const adicionarParticipanteCombateServer = createServerFn({ method: 'POST
 
 export const removerParticipanteCombateServer = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(z.object({ participanteId: z.string() }))
+  .validator(z.object({ participanteId: identificadorSchema }))
   .handler(async ({ data }: { data: { participanteId: string } }) => {
     const [combateAtivo] = await db
       .select()
@@ -461,13 +462,13 @@ export const aplicarDanoInimigoCombateServer = createServerFn({ method: 'POST' }
   .middleware([exigirNarrador])
   .validator(
     z.object({
-      participanteId: z.string(),
+      participanteId: identificadorSchema,
       tipoTrilha: z.enum(['vitalidade', 'vontade']),
       dano: z.object({
         superficial: z.number().int().min(0),
         agravado: z.number().int().min(0),
       }),
-      condicaoAdicionar: z.string().optional(),
+      condicaoAdicionar: identificadorSchema.optional(),
     }),
   )
   .handler(
@@ -517,7 +518,7 @@ export const alternarRevelarVitalidadeCombateServer = createServerFn({ method: '
   .middleware([exigirNarrador])
   .validator(
     z.object({
-      participanteId: z.string(),
+      participanteId: identificadorSchema,
       revelar: z.boolean().optional(),
     }),
   )
@@ -564,7 +565,7 @@ export const atualizarParticipanteInimigoServer = createServerFn({ method: 'POST
   .middleware([exigirNarrador])
   .validator(
     z.object({
-      participanteId: z.string(),
+      participanteId: identificadorSchema,
       atualizacao: atualizacaoInimigoSchema,
     }),
   )
@@ -611,8 +612,8 @@ export const alternarCondicaoParticipanteCombateServer = createServerFn({ method
   .middleware([exigirUsuario])
   .validator(
     z.object({
-      participanteId: z.string(),
-      condicaoId: z.string(),
+      participanteId: identificadorSchema,
+      condicaoId: identificadorSchema,
     }),
   )
   .handler(async ({ context, data }) => {

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { auth } from '#/lib/auth'
 import { barramento, type EventoReal } from '#/server/eventos'
+import { reservarConexaoTempoReal, respostaLimite } from '#/server/limites'
 
 export const Route = createFileRoute('/api/tempo-real')({
   server: {
@@ -14,6 +15,8 @@ export const Route = createFileRoute('/api/tempo-real')({
 
         const usuarioId = sessao.user.id
         const papel = sessao.user.papel
+        const liberarVaga = reservarConexaoTempoReal(usuarioId)
+        if (!liberarVaga) return respostaLimite(20)
 
         const encoder = new TextEncoder()
         let intervalPing: NodeJS.Timeout | null = null
@@ -22,6 +25,7 @@ export const Route = createFileRoute('/api/tempo-real')({
         const stream = new ReadableStream({
           start(controller) {
             const encerrar = () => {
+              liberarVaga()
               if (intervalPing) clearInterval(intervalPing)
               if (desinscrever) desinscrever()
               try {
@@ -62,8 +66,10 @@ export const Route = createFileRoute('/api/tempo-real')({
             })
 
             request.signal.addEventListener('abort', encerrar)
+            if (request.signal.aborted) encerrar()
           },
           cancel() {
+            liberarVaga()
             if (intervalPing) clearInterval(intervalPing)
             if (desinscrever) desinscrever()
           },

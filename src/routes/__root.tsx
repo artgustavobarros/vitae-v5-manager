@@ -18,6 +18,8 @@ const OG_IMAGE_URL = `${SITE_URL}/og-vitae.png`
 export const Route = createRootRoute({
   beforeLoad: async () => ({ usuario: await buscarUsuario() }),
   head: () => ({
+    // Precisa rodar antes de carregar os módulos: a sondagem de eval do Zod já ocorre durante os imports.
+    scripts: [{ children: 'globalThis.__zod_globalConfig={...globalThis.__zod_globalConfig,jitless:true}' }],
     meta: [
       {
         charSet: 'utf-8',

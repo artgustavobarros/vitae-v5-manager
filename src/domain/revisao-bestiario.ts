@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type { FonteModeloBestiario } from './bestiario-fontes'
 
 import { modeloAntagonistaSchema, type ModeloAntagonista } from './bestiario'
+import { textoLongoSchema } from './limites-entrada'
 
 export const STATUS_REVISAO_BESTIARIO = ['pendente', 'aprovado', 'corrigir', 'rejeitado'] as const
 export type StatusRevisaoBestiario = (typeof STATUS_REVISAO_BESTIARIO)[number]
@@ -15,7 +16,7 @@ export const ROTULOS_REVISAO_BESTIARIO: Record<StatusRevisaoBestiario, string> =
 
 export const revisaoModeloSchema = z.object({
   status: z.enum(STATUS_REVISAO_BESTIARIO),
-  nota: z.string().default(''),
+  nota: textoLongoSchema.default(''),
 })
 export type RevisaoModelo = z.infer<typeof revisaoModeloSchema>
 

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { normalizar } from './catalogo/busca'
+import { LIMITE_ITENS } from './limites-entrada'
 
 export const TIPOS_ANTAGONISTA = ['Animal', 'Carniçal', 'Outras criaturas', 'Mortal', 'Vampiro', 'Outros'] as const
 export type TipoAntagonista = typeof TIPOS_ANTAGONISTA[number]
@@ -14,7 +15,7 @@ export function normalizarEtiquetas(etiquetas: readonly string[]) {
   return [...unicas.values()]
 }
 
-export const etiquetasAntagonistaSchema = z.array(z.string().trim().min(1, 'Etiqueta não pode ficar vazia.')).transform(normalizarEtiquetas)
+export const etiquetasAntagonistaSchema = z.array(z.string().trim().min(1, 'Etiqueta não pode ficar vazia.').max(120)).max(LIMITE_ITENS).transform(normalizarEtiquetas)
 type Classificacao = { categoria: string; etiquetas?: string[] }
 
 export function etiquetasDoTipo(modelos: readonly Classificacao[], tipo: string | null) {

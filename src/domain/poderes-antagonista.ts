@@ -4,6 +4,7 @@ import { DISCIPLINAS, type Disciplina } from './ficha'
 import { PODERES, RITUAIS_TODOS, itemCatalogo } from './catalogo'
 import { requisitosItem } from './catalogo/requisitos'
 import type { Poder, Ritual } from './catalogo/tipos'
+import { identificadorSchema, LIMITE_ITENS } from './limites-entrada'
 
 export const TIPOS_RITUAIS = ['ritual', 'cerimonia', 'formula'] as const
 export type TipoRitualAntagonista = typeof TIPOS_RITUAIS[number]
@@ -14,11 +15,11 @@ const idsDisciplinas = DISCIPLINAS.map(d => d.id)
 const baseRecursos = z.object({
   disciplinas: z.partialRecord(z.enum(idsDisciplinas), z.int().min(1).max(5)),
   livres: z.int().min(0).max(1).default(0),
-  poderes: z.array(z.string()).default([]),
-  rituais: z.array(z.string()).default([]),
-  cerimonias: z.array(z.string()).default([]),
-  formulas: z.array(z.string()).default([]),
-  confirmacoes: z.array(z.string()).default([]),
+  poderes: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
+  rituais: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
+  cerimonias: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
+  formulas: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
+  confirmacoes: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
 })
 export type RecursosSobrenaturais = z.infer<typeof baseRecursos>
 export type QuantidadesRituais = Partial<Record<TipoRitualAntagonista, number>>

@@ -2,3 +2,9 @@ allowBuilds:
   esbuild: true
   lightningcss: true
   better-sqlite3: true
+
+# Correções transitivas enquanto as ferramentas ainda dependem das versões vulneráveis.
+overrides:
+  '@esbuild-kit/core-utils>esbuild': 0.25.12
+  '@tailwindcss/typography>postcss-selector-parser': ^6.1.5
+  'minimatch@<11.0.1': ^11.0.1

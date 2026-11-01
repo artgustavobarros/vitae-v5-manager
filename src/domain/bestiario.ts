@@ -2,17 +2,18 @@ import { z } from 'zod'
 
 import { TIPOS_ANTAGONISTA, etiquetasAntagonistaSchema } from './classificacao-antagonistas'
 import { fichaAntagonistaCompletaSchema } from './ficha-antagonista'
+import { LIMITE_ITENS, nomeSchema, textoLongoSchema } from './limites-entrada'
 
 export const paradaExcepcionalSchema = z.object({
-  nome: z.string().min(1, 'Nome da parada é obrigatório'),
+  nome: nomeSchema.min(1, 'Nome da parada é obrigatório'),
   valor: z.int().min(1, 'Valor deve ser pelo menos 1'),
 })
 
 export type ParadaExcepcional = z.infer<typeof paradaExcepcionalSchema>
 
 export const especialBaseSchema = z.object({
-  nome: z.string(),
-  descricao: z.string().default(''),
+  nome: nomeSchema,
+  descricao: textoLongoSchema.default(''),
   regra: z.literal('poder-livre-nivel-1').nullish(),
 })
 
@@ -25,14 +26,14 @@ export function normalizarEspecialAntagonista(especial: z.infer<typeof especialB
 }
 
 export const especialAntagonistaSchema = especialBaseSchema.extend({
-  nome: z.string().min(1, 'Nome do especial é obrigatório'),
+  nome: nomeSchema.min(1, 'Nome do especial é obrigatório'),
 }).transform(normalizarEspecialAntagonista)
 
 export type EspecialAntagonista = z.infer<typeof especialAntagonistaSchema>
 
 export const modeloAntagonistaSchema = z.object({
   id: z.string().uuid().optional(),
-  nome: z.string().min(1, 'Nome do modelo é obrigatório'),
+  nome: nomeSchema.min(1, 'Nome do modelo é obrigatório'),
   categoria: z.enum(TIPOS_ANTAGONISTA, { error: 'Escolha um Tipo de Antagonista válido.' }).default('Outros'),
   etiquetas: etiquetasAntagonistaSchema.optional(),
   paradaFisico: z.int().min(0, 'Parada física não pode ser negativa').nullable(),
@@ -40,9 +41,9 @@ export const modeloAntagonistaSchema = z.object({
   paradaMental: z.int().min(0, 'Parada mental não pode ser negativa').nullable(),
   vitalidade: z.int().min(1, 'Vitalidade deve ser pelo menos 1'),
   vontade: z.int().min(1, 'Força de Vontade deve ser pelo menos 1'),
-  paradasExcepcionais: z.array(paradaExcepcionalSchema).default([]),
-  especiais: z.array(especialAntagonistaSchema).default([]),
-  notas: z.string().default(''),
+  paradasExcepcionais: z.array(paradaExcepcionalSchema).max(LIMITE_ITENS).default([]),
+  especiais: z.array(especialAntagonistaSchema).max(LIMITE_ITENS).default([]),
+  notas: textoLongoSchema.default(''),
   fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
 }).superRefine((modelo, ctx) => {
   for (const campo of ['paradaFisico', 'paradaSocial', 'paradaMental'] as const) {

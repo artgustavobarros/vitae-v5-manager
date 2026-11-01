@@ -79,12 +79,36 @@ export function validarHtml(html: string) {
   return { caminhoFonte, caminhoScript }
 }
 
+/** Confere a política entregue pelo servidor e a hidratação que ela precisa autorizar. */
+export function validarSegurancaHtml(html: string, headers: Headers) {
+  assert.equal(headers.get('x-content-type-options'), 'nosniff', 'a página deve impedir MIME sniffing')
+  assert.equal(headers.get('referrer-policy'), 'no-referrer', 'links de Convite não devem vazar no Referer')
+  assert.equal(headers.get('cache-control'), 'no-store', 'HTML com sessão e nonce não deve ficar em cache')
+  const csp = headers.get('content-security-policy') ?? ''
+  const nonce = /'nonce-([^']+)'/.exec(csp)?.[1]
+  assert(nonce, 'CSP deve declarar um nonce por resposta')
+  assert(csp.includes("frame-ancestors 'none'"), 'CSP deve impedir enquadramento da página')
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+  for (const [, atributos, conteudo] of scripts) {
+    if (!conteudo.trim() || /\bsrc\s*=/.test(atributos)) continue
+    assert(atributos.includes(`nonce="${nonce}"`), 'todo script inline precisa do nonce da resposta')
+  }
+}
+
 async function main() {
   const servidor = await iniciarServidor()
   try {
     const pagina = await fetch(`${servidor.origem}/entrar`)
     assert.equal(pagina.status, 200, 'a página pública deve responder com sucesso')
-    const { caminhoFonte, caminhoScript } = validarHtml(await pagina.text())
+    const html = await pagina.text()
+    validarSegurancaHtml(html, pagina.headers)
+    const { caminhoFonte, caminhoScript } = validarHtml(html)
+    const anonimo = await fetch(`${servidor.origem}/api/tempo-real`)
+    assert.equal(anonimo.status, 401, 'tempo real deve negar acesso sem sessão')
+    const excesso = await fetch(`${servidor.origem}/api/auth/sign-up/email`, {
+      method: 'POST', body: 'a'.repeat(1024 * 1024 + 1),
+    })
+    assert.equal(excesso.status, 413, 'payload grande deve ser rejeitado antes da autenticação')
 
     const arquivosCss = selecionarAssetsCss(await readdir(resolve('.output/public/assets')))
     assert(arquivosCss.length > 0, 'o build deve manter o CSS versionado para navegação e cache')
@@ -101,7 +125,7 @@ async function main() {
     assert.deepEqual(problemas, [], `assets fora do esperado:\n${problemas.join('\n')}`)
 
     console.log(
-      `Smoke de produção passou: CSS inline, preload da fonte, ${arquivosCss.length} CSS e o bundle JS com Brotli/cache e gzip fallback.`,
+      `Smoke de produção passou: CSP/nonce, headers, acesso anônimo, limite de payload, CSS inline, preload da fonte, ${arquivosCss.length} CSS e o bundle JS com Brotli/cache e gzip fallback.`,
     )
   } catch (erro) {
     servidor.mostrarSaida()

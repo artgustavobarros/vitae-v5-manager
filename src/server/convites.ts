@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 
 import { createServerFn } from '@tanstack/react-start'
-import { setCookie } from '@tanstack/react-start/server'
+import { getRequestHeaders, setCookie } from '@tanstack/react-start/server'
 import { desc, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -10,6 +10,8 @@ import { conviteCronica } from '#/db/schema'
 import { estadoConvite } from '#/domain/convite'
 import { COOKIE_CONVITE } from '#/lib/cadastro'
 import { exigirNarrador } from '#/server/sessao'
+import { limitarConvite, respostaLimite } from '#/server/limites'
+import { ipDoProxy } from '#/server/seguranca-http'
 
 /** O link atual da Crônica, ou null se o Narrador ainda não gerou nenhum. */
 export const buscarLinkDaCronica = createServerFn({ method: 'GET' })
@@ -47,6 +49,8 @@ const comToken = z.object({ token: z.string().min(1).max(100) })
 export const verConvite = createServerFn({ method: 'GET' })
   .validator(comToken)
   .handler(async ({ data }) => {
+    const espera = limitarConvite(ipDoProxy(getRequestHeaders()))
+    if (espera) throw respostaLimite(espera)
     const convite = await db.query.conviteCronica.findFirst({ where: eq(conviteCronica.token, data.token) })
     return { estado: estadoConvite(convite) }
   })
@@ -55,6 +59,8 @@ export const verConvite = createServerFn({ method: 'GET' })
 export const prepararCadastro = createServerFn({ method: 'POST' })
   .validator(comToken)
   .handler(async ({ data }) => {
+    const espera = limitarConvite(ipDoProxy(getRequestHeaders()))
+    if (espera) throw respostaLimite(espera)
     const convite = await db.query.conviteCronica.findFirst({ where: eq(conviteCronica.token, data.token) })
     if (estadoConvite(convite) !== 'valido') throw new Error('Este link da Crônica não vale mais. Peça o link novo ao Narrador.')
     setCookie(COOKIE_CONVITE, data.token, {

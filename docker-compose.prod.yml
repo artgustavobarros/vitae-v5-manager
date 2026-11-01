@@ -3,6 +3,16 @@
 # Nome do projeto Docker Manager existente: mantido para atualizar a stack e o volume do banco no lugar.
 name: v5-manager
 
+x-imagem-app: &imagem-app
+  image: vitae-v5-manager:local
+  build:
+    context: .
+    dockerfile: Dockerfile
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
 services:
   db:
     image: postgres:17-alpine
@@ -19,18 +29,31 @@ services:
       timeout: 5s
       retries: 10
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
+  migrar:
+    <<: *imagem-app
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      PORT: 3000
       DATABASE_URL: postgres://v5_manager:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@db:5432/v5_manager
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?defina APP_DATABASE_PASSWORD}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?defina BETTER_AUTH_SECRET}
+    command: ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && node --experimental-strip-types scripts/preparar-banco.ts"]
+
+  app:
+    <<: *imagem-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrar:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://vitae_app:${APP_DATABASE_PASSWORD:?defina APP_DATABASE_PASSWORD}@db:5432/v5_manager
       BETTER_AUTH_URL: https://${APP_HOST:?defina APP_HOST}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?defina BETTER_AUTH_SECRET}
       NARRADOR_EMAIL: ${NARRADOR_EMAIL:?defina NARRADOR_EMAIL}
@@ -50,7 +73,11 @@ services:
       - traefik.http.routers.vitae-v5-manager.tls.certresolver=letsencrypt
       - traefik.http.middlewares.vitae-compress.compress=true
       - traefik.http.middlewares.vitae-compress.compress.excludedContentTypes=text/event-stream
-      - traefik.http.routers.vitae-v5-manager.middlewares=vitae-compress
+      - traefik.http.middlewares.vitae-seguranca.headers.stsSeconds=31536000
+      - traefik.http.middlewares.vitae-seguranca.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.vitae-seguranca.headers.frameDeny=true
+      - traefik.http.middlewares.vitae-seguranca.headers.referrerPolicy=no-referrer
+      - traefik.http.routers.vitae-v5-manager.middlewares=vitae-seguranca,vitae-compress
       - traefik.http.services.vitae-v5-manager.loadbalancer.server.port=3000
 
 volumes:
