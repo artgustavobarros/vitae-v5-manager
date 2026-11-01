@@ -1,4 +1,5 @@
 import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
+import { RegraEspecialAntagonista } from '#/components/regra-especial-antagonista'
 import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
 import { etiquetasDoTipo, filtrarClassificacao, normalizarEtiquetas, TIPOS_ANTAGONISTA } from '#/domain/classificacao-antagonistas'
 import { casaBusca } from '#/domain/catalogo/busca'
@@ -15,6 +16,7 @@ import type { FonteModeloBestiario } from '#/domain/bestiario-fontes'
 import { BarraApp } from '#/components/barra-app'
 import { Combobox } from '#/components/combobox'
 import { BadgeEspecial } from '#/components/badge-especial'
+import { ChipParadaExcepcional } from '#/components/chip-parada-excepcional'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -345,7 +347,7 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                       </CardDescription>
                       <ChipDificuldadeAntagonista dificuldade={resumo.dificuldade} />
                     </CardHeader>
-                    <CardContent className={modoAprovacao ? "flex flex-col gap-3 text-sm" : "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 text-sm"}>
+                    <CardContent className={modoAprovacao ? "flex flex-col gap-3 text-sm" : "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 text-sm"}>
                       {modoAprovacao && (
                         <div className="flex flex-col gap-2">
                           <Badge variant={m.revisao?.status === 'aprovado' ? 'default' : 'outline'} className="self-start">
@@ -373,14 +375,11 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                       {m.paradasExcepcionais.length > 0 && (
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="text-xs font-medium text-muted-foreground">Paradas excepcionais:</span>
-                          <dl className="space-y-1">
+                          <div className="flex flex-wrap gap-2">
                             {m.paradasExcepcionais.map((pe, idx) => (
-                              <div key={idx} className="flex items-start justify-between gap-3">
-                                <dt className="min-w-0 break-words">{pe.nome}</dt>
-                                <dd className="shrink-0 font-medium tabular-nums">{pe.valor}</dd>
-                              </div>
+                              <ChipParadaExcepcional key={idx} nome={pe.nome} valor={pe.valor} />
                             ))}
-                          </dl>
+                          </div>
                         </div>
                       )}
 
@@ -756,6 +755,11 @@ export function PaginaAntagonistas({ modelos, modoAprovacao = false }: {
                           <Trash2 className="size-4" /><span className="sr-only">Remover Especial</span>
                         </Button>
                       </div>
+                      <RegraEspecialAntagonista regra={esp.regra} onChange={regra => {
+                        const copia = [...modeloEmEdicao.especiais]
+                        copia[idx] = { ...copia[idx], regra }
+                        setModeloEmEdicao({ ...modeloEmEdicao, especiais: copia })
+                      }} />
                       <EditorRichText
                         placeholder="Descrição ou regras do Especial (suporta Markdown: negrito, itálico, listas...)"
                         rows={3}

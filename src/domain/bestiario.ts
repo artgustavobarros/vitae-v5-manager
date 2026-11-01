@@ -10,10 +10,23 @@ export const paradaExcepcionalSchema = z.object({
 
 export type ParadaExcepcional = z.infer<typeof paradaExcepcionalSchema>
 
-export const especialAntagonistaSchema = z.object({
-  nome: z.string().min(1, 'Nome do especial é obrigatório'),
+export const especialBaseSchema = z.object({
+  nome: z.string(),
   descricao: z.string().default(''),
+  regra: z.literal('poder-livre-nivel-1').nullish(),
 })
+
+export function normalizarEspecialAntagonista(especial: z.infer<typeof especialBaseSchema>) {
+  if (especial.regra !== undefined) return especial
+  const nome = especial.nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase()
+  return ['poder de disciplina a escolha', 'disciplina a escolha'].includes(nome)
+    ? { ...especial, regra: 'poder-livre-nivel-1' as const }
+    : especial
+}
+
+export const especialAntagonistaSchema = especialBaseSchema.extend({
+  nome: z.string().min(1, 'Nome do especial é obrigatório'),
+}).transform(normalizarEspecialAntagonista)
 
 export type EspecialAntagonista = z.infer<typeof especialAntagonistaSchema>
 

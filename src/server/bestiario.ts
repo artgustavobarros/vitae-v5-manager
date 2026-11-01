@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 import { db } from '#/db'
 import { modeloAntagonista } from '#/db/schema'
-import type { ModeloAntagonista } from '#/domain/bestiario'
+import { normalizarEspecialAntagonista, type ModeloAntagonista } from '#/domain/bestiario'
 import {
   edicaoModeloBestiarioSchema,
   revisaoModeloSchema,
@@ -46,7 +46,7 @@ export const carregarModeloBestiario = createServerFn({ method: 'GET' })
       vitalidade: linha.vitalidade,
       vontade: linha.vontade,
       paradasExcepcionais: linha.paradasExcepcionais,
-      especiais: linha.especiais,
+      especiais: linha.especiais.map(normalizarEspecialAntagonista),
       notas: linha.notas,
       fichaCompleta: linha.fichaCompleta,
     }

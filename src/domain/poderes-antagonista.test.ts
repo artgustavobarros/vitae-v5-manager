@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { criarModeloAntagonistaPadrao, modeloAntagonistaSchema } from './bestiario'
+import { criarModeloAntagonistaPadrao, especialAntagonistaSchema, modeloAntagonistaSchema } from './bestiario'
 import { MODELOS_INICIAIS_BESTIARIO } from './bestiario-modelos-iniciais'
 import { PODERES, RITUAIS_TODOS } from './catalogo'
 import { requisitosItem, REQUISITOS_CATALOGO } from './catalogo/requisitos'
-import { criarInimigoDeModelo, filtrarCombateParaJogador, iniciarCombate, participanteInimigoSchema } from './combate'
+import { atualizarParticipanteInimigo, criarInimigoDeModelo, filtrarCombateParaJogador, iniciarCombate, participanteInimigoSchema } from './combate'
 import {
-  obterPerfilSobrenatural, sortearRecursosSobrenaturais, validarRecursosSobrenaturais,
-  opcoesSobrenaturais, trocarPoder, type RecursosSobrenaturais,
+  distribuirPoderes, obterPerfilSobrenatural, sortearRecursosSobrenaturais, validarRecursosSobrenaturais,
+  opcoesSobrenaturais, trocarPoder, validarSelecaoParaModelo, type RecursosSobrenaturais,
 } from './poderes-antagonista'
 
 const modelos = MODELOS_INICIAIS_BESTIARIO.map(m => modeloAntagonistaSchema.parse(m))
@@ -29,6 +29,56 @@ describe('Requisitos estruturados do Catálogo', () => {
 })
 
 describe('Poderes de Antagonistas', () => {
+  it('Desaparecer depende do Manto de Sombras de Ofuscação, não do poder de Oblívio', () => {
+    const selecao = { ...vazio({ ofuscacao: 4, oblivio: 1 }), poderes: ['ofuscacao-1-manto-de-sombras'] }
+    const motivos = (s: RecursosSobrenaturais) => opcoesSobrenaturais(s, 'poder', 'ofuscacao').find(o => o.item.id === 'ofuscacao-4-desaparecer')?.motivos
+    expect(motivos(selecao)).toEqual([])
+    expect(motivos({ ...selecao, poderes: ['oblivio-1-capa-de-sombras'] })?.length).toBeGreaterThan(0)
+  })
+
+  it('atribui o extra de nível 1 à cota livre sem rejeitar um poder regular de nível 2', () => {
+    const m = { ...criarModeloAntagonistaPadrao(), especiais: [{ nome: 'Potência 2', descricao: '' }, { nome: 'Poder de Disciplina à escolha', descricao: '' }] }
+    const recursos = { ...vazio({ potencia: 2 }), livres: 1, poderes: ['potencia-1-corpo-letal', 'potencia-2-proeza', 'potencia-1-salto-prodigioso'] }
+    expect(() => validarSelecaoParaModelo(m, recursos)).not.toThrow()
+    expect(() => validarRecursosSobrenaturais({ ...recursos, poderes: ['potencia-1-corpo-letal', 'potencia-2-proeza', 'potencia-2-aperto-implacavel'] })).toThrow(/cada ponto/)
+  })
+
+  it('troca somente o poder livre, preservando os poderes regulares e seus níveis', () => {
+    const poderes = ['potencia-1-corpo-letal', 'potencia-2-proeza']
+    const recursos = { ...vazio({ potencia: 2 }), livres: 1, poderes: [...poderes, 'celeridade-1-reflexos-rapidos'] }
+    const distribuicao = distribuirPoderes(recursos)
+    expect(distribuicao.regulares.potencia).toEqual(poderes)
+    expect(distribuicao.livres).toEqual(['celeridade-1-reflexos-rapidos'])
+    const trocada = trocarPoder(recursos, distribuicao.livres[0], 'auspicios-1-sentidos-agucados')
+    expect(trocada.poderes).toEqual([...poderes, 'auspicios-1-sentidos-agucados'])
+    expect(() => validarRecursosSobrenaturais(trocada)).not.toThrow()
+  })
+
+  it('preserva a regra de poder livre ao renomear o Especial e permite desativá-la explicitamente', () => {
+    const especial = especialAntagonistaSchema.parse({ nome: 'Poder de Disciplina à escolha', descricao: '' })
+    expect(obterPerfilSobrenatural({ especiais: [{ ...especial, nome: 'Dom do Sangue' }] }).livres).toBe(1)
+    const desativado = especialAntagonistaSchema.parse({ ...especial, regra: null })
+    expect(obterPerfilSobrenatural({ especiais: [desativado] }).livres).toBe(0)
+    expect(obterPerfilSobrenatural({ especiais: [{ nome: '', descricao: '' }] }).livres).toBe(0)
+  })
+
+  it('não aceita salvar uma Ficha editada mantendo poderes incompatíveis e aceita reconfigurá-los', () => {
+    const m = modelo('Mago')
+    const inimigo = criarInimigoDeModelo(m, { id: 'mago', nome: 'Mago' }, sortearRecursosSobrenaturais(m))
+    const combate = iniciarCombate([inimigo])
+    const fichaCompleta = { ...inimigo.fichaCompleta!, disciplinas: {} }
+    expect(() => atualizarParticipanteInimigo(combate, inimigo.id, { fichaCompleta })).toThrow(/poderes/i)
+    const atualizado = atualizarParticipanteInimigo(combate, inimigo.id, { fichaCompleta, recursosSobrenaturais: null })
+    expect(atualizado.participantes[0]).not.toHaveProperty('recursosSobrenaturais')
+    expect(inimigo.recursosSobrenaturais?.poderes.length).toBeGreaterThan(0)
+    const fichaNova = { ...inimigo.fichaCompleta!, disciplinas: { 'Feitiçaria de Sangue': 2 } }
+    const recursosNovos = sortearRecursosSobrenaturais({ ...m, fichaCompleta: fichaNova })
+    const reconfigurado = atualizarParticipanteInimigo(combate, inimigo.id, { fichaCompleta: fichaNova, recursosSobrenaturais: recursosNovos })
+    expect(reconfigurado.participantes[0]).toMatchObject({ fichaCompleta: fichaNova, recursosSobrenaturais: recursosNovos })
+    const renomeado = atualizarParticipanteInimigo(combate, inimigo.id, { nome: 'Mago Renomeado' })
+    expect(renomeado.participantes[0]).toMatchObject({ nome: 'Mago Renomeado', recursosSobrenaturais: inimigo.recursosSobrenaturais })
+  })
+
   it('reconhece níveis dos dois formatos, poder livre e poderes fixos sem ativar efeitos condicionais', () => {
     expect(obterPerfilSobrenatural(modelo('Batedor da Trilha de Caim')).disciplinas).toEqual({ animalismo: 2, ofuscacao: 2, potencia: 2 })
     expect(obterPerfilSobrenatural(modelo('Fada')).disciplinas).toMatchObject({ presenca: 5, dominacao: 4 })

@@ -132,6 +132,15 @@
   pointer-events: none;
 }
 
+/* A faixa da Ficha acompanha a barra para manter Humanidade e Manchas acessíveis. */
+body:has(.barra-app) .faixa-fome {
+  top: 3.5rem;
+}
+
+body:has(.barra-app[data-oculto='true']):not(:has(.barra-app :focus-visible)):not(:has(.barra-app [aria-expanded='true'])) .faixa-fome {
+  top: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .barra-app {
     transition: opacity 100ms linear;

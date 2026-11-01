@@ -17,13 +17,15 @@ import { requisitosItem } from '#/domain/catalogo/requisitos'
 import { DISCIPLINAS } from '#/domain/ficha'
 import {
   CAMPO_SOBRENATURAL, DISCIPLINA_RITUAL, ROTULO_RITUAL, TIPOS_RITUAIS,
-  obterPerfilSobrenatural, opcoesSobrenaturais, sortearRecursosSobrenaturais, trocarPoder,
+  distribuirPoderes, obterPerfilSobrenatural, opcoesSobrenaturais, sortearRecursosSobrenaturais, trocarPoder,
   validarSelecaoParaModelo, type QuantidadesRituais, type RecursosSobrenaturais,
 } from '#/domain/poderes-antagonista'
 
 const nomesDisciplinas = new Map(DISCIPLINAS.map(d => [d.id, d.nome]))
 
-function erroSelecao(modelo: ModeloAntagonista, selecao: RecursosSobrenaturais | null, quantidades: QuantidadesRituais) {
+type ModeloComPoderes = Pick<ModeloAntagonista, 'nome' | 'fichaCompleta' | 'especiais'>
+
+function erroSelecao(modelo: ModeloComPoderes, selecao: RecursosSobrenaturais | null, quantidades: QuantidadesRituais) {
   if (!selecao) return 'Sorteie ou escolha os poderes para continuar.'
   try {
     validarSelecaoParaModelo(modelo, selecao)
@@ -34,10 +36,11 @@ function erroSelecao(modelo: ModeloAntagonista, selecao: RecursosSobrenaturais |
   } catch (erro) { return erro instanceof Error ? erro.message : 'Seleção inválida.' }
 }
 
-export function ConfigurarPoderesAntagonista({ modelo, valor, onChange }: {
-  modelo: ModeloAntagonista
+export function ConfigurarPoderesAntagonista({ modelo, valor, onChange, aoSalvar = false }: {
+  modelo: ModeloComPoderes
   valor?: RecursosSobrenaturais
   onChange: (valor: RecursosSobrenaturais) => void
+  aoSalvar?: boolean
 }) {
   const id = useId()
   const perfil = obterPerfilSobrenatural(modelo)
@@ -50,9 +53,14 @@ export function ConfigurarPoderesAntagonista({ modelo, valor, onChange }: {
 
   function abrir(abrirDialogo: boolean) {
     if (abrirDialogo) {
-      const novasQuantidades = valor ? Object.fromEntries(TIPOS_RITUAIS.map(t => [t, valor[CAMPO_SOBRENATURAL[t]].length])) : perfil.quantidades
+      let anterior = valor
+      if (anterior) {
+        try { validarSelecaoParaModelo(modelo, anterior) }
+        catch { anterior = undefined }
+      }
+      const novasQuantidades = anterior ? Object.fromEntries(TIPOS_RITUAIS.map(t => [t, anterior![CAMPO_SOBRENATURAL[t]].length])) : perfil.quantidades
       setQuantidades(novasQuantidades)
-      try { setSelecao(valor ? structuredClone(valor) : sortearRecursosSobrenaturais(modelo, { quantidades: novasQuantidades })) }
+      try { setSelecao(anterior ? structuredClone(anterior) : sortearRecursosSobrenaturais(modelo, { quantidades: novasQuantidades })) }
       catch (erro) {
         setSelecao({ disciplinas: perfil.disciplinas, livres: perfil.livres, poderes: [], rituais: [], cerimonias: [], formulas: [], confirmacoes: [] })
         toast.error(erro instanceof Error ? erro.message : 'Falha ao sortear poderes.')
@@ -75,12 +83,14 @@ export function ConfigurarPoderesAntagonista({ modelo, valor, onChange }: {
   const erro = erroSelecao(modelo, selecao, quantidades)
   const grupos = DISCIPLINAS.filter(d => d.id !== 'alquimia-de-sangue-ralo' && perfil.disciplinas[d.id])
   const temRituais = TIPOS_RITUAIS.filter(tipo => perfil.disciplinas[DISCIPLINA_RITUAL[tipo]])
+  const distribuicao = selecao ? distribuirPoderes(selecao) : null
+  const poderLivre = distribuicao?.livres[0] ?? ''
 
   return (
     <Dialog open={aberto} onOpenChange={abrir}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="h-auto max-w-full whitespace-normal text-left" aria-label={`Configurar poderes de ${modelo.nome}`}>
-          {valor ? `Revisar poderes (${valor.poderes.length})` : 'Poderes: sortear ao adicionar'}
+          {valor ? `Revisar poderes (${valor.poderes.length})` : aoSalvar ? 'Configurar poderes' : 'Poderes: sortear ao adicionar'}
           {temRituais.length > 0 && ' · configurar Rituais'}
         </Button>
       </DialogTrigger>
@@ -93,7 +103,13 @@ export function ConfigurarPoderesAntagonista({ modelo, valor, onChange }: {
         <p className="text-xs text-muted-foreground">Um poder por ponto de Disciplina, de seu nível ou inferior. Trocar um poder remove os dependentes que perderem os requisitos.</p>
         {selecao && <>
           {grupos.map(d => {
-            const escolhidos = selecao.poderes.filter(pid => { const p = itemCatalogo(pid); return p?.tipo === 'poder' && p.disciplina === d.id })
+            const escolhidos = Array.from({ length: perfil.disciplinas[d.id] ?? 0 }, () => '')
+            for (const pid of distribuicao?.regulares[d.id] ?? []) {
+              const poder = itemCatalogo(pid)
+              if (poder?.tipo !== 'poder') continue
+              const indice = escolhidos.findIndex((atual, i) => !atual && poder.nivel <= i + 1)
+              if (indice >= 0) escolhidos[indice] = pid
+            }
             return (
               <Card key={d.id}>
                 <CardHeader><CardTitle className="font-serif text-base">{d.nome} {perfil.disciplinas[d.id]}</CardTitle></CardHeader>
@@ -116,9 +132,9 @@ export function ConfigurarPoderesAntagonista({ modelo, valor, onChange }: {
           })}
           {perfil.livres > 0 && <div className="flex flex-col gap-1">
             <Label htmlFor={`${id}-livre`}>Um poder de nível 1 de qualquer Disciplina</Label>
-            <Combobox id={`${id}-livre`} valor={selecao.poderes[0] ?? null}
-              opcoes={opcoesSobrenaturais({ ...selecao, poderes: [] }, 'poder').filter(o => o.item.nivel === 1).map(o => ({ valor: o.item.id, rotulo: `${o.item.tipo === 'poder' ? nomesDisciplinas.get(o.item.disciplina) : ''} · ${o.item.nome}`, aviso: o.motivos.join('; '), desabilitada: o.motivos.length > 0 }))}
-              onChange={pid => setSelecao(trocarPoder(selecao, selecao.poderes[0] ?? '', pid))} placeholder="Escolher poder livre" />
+            <Combobox id={`${id}-livre`} valor={poderLivre || null} disabled={fixos.has(poderLivre)}
+              opcoes={opcoesSobrenaturais({ ...selecao, poderes: selecao.poderes.filter(pid => pid !== poderLivre) }, 'poder').filter(o => o.item.nivel === 1).map(o => ({ valor: o.item.id, rotulo: `${o.item.tipo === 'poder' ? nomesDisciplinas.get(o.item.disciplina) : ''} · ${o.item.nome}`, aviso: o.motivos.join('; '), desabilitada: o.motivos.length > 0 }))}
+              onChange={pid => setSelecao(trocarPoder(selecao, poderLivre, pid))} placeholder="Escolher poder livre" />
           </div>}
           {temRituais.map(tipo => {
             const campo = CAMPO_SOBRENATURAL[tipo]

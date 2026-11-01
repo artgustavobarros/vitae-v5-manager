@@ -2,7 +2,7 @@ import { etiquetasAntagonistaSchema } from './classificacao-antagonistas'
 import { recursosSobrenaturaisSchema, validarSelecaoParaModelo, type RecursosSobrenaturais } from './poderes-antagonista'
 import { z } from 'zod'
 
-import { modeloAntagonistaSchema, type ModeloAntagonista } from './bestiario'
+import { especialBaseSchema, normalizarEspecialAntagonista, modeloAntagonistaSchema, type ModeloAntagonista } from './bestiario'
 import { fichaAntagonistaCompletaSchema } from './ficha-antagonista'
 
 import type { Dano } from './trilhas'
@@ -17,10 +17,7 @@ export const paradaExcepcionalCombateSchema = z.object({
   valor: z.int(),
 })
 
-export const especialCombateSchema = z.object({
-  nome: z.string(),
-  descricao: z.string().default(''),
-})
+export const especialCombateSchema = especialBaseSchema.transform(normalizarEspecialAntagonista)
 
 export type EspecialCombate = z.infer<typeof especialCombateSchema>
 
@@ -629,6 +626,7 @@ export const atualizacaoInimigoSchema = z.object({
     })
     .optional(),
   fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
+  recursosSobrenaturais: recursosSobrenaturaisSchema.nullish(),
   especiais: z.array(especialCombateSchema).optional(),
   notas: z.string().optional(),
 })
@@ -652,6 +650,13 @@ export function atualizarParticipanteInimigo(
       ...(atualizacao.notas !== undefined ? { notas: atualizacao.notas } : {}),
       ...(atualizacao.vitalidadeMax !== undefined ? { vitalidadeMax: atualizacao.vitalidadeMax } : {}),
       ...(atualizacao.vontadeMax !== undefined ? { vontadeMax: atualizacao.vontadeMax } : {}),
+    }
+
+    if (atualizacao.recursosSobrenaturais === null) delete novo.recursosSobrenaturais
+    else if (atualizacao.recursosSobrenaturais !== undefined) novo.recursosSobrenaturais = atualizacao.recursosSobrenaturais
+    if (novo.recursosSobrenaturais) {
+      try { validarSelecaoParaModelo(novo, novo.recursosSobrenaturais) }
+      catch { throw new Error('As Disciplinas ou os Especiais mudaram. Configure os poderes do Inimigo antes de salvar.') }
     }
 
     if (atualizacao.vitalidadeMax !== undefined) {

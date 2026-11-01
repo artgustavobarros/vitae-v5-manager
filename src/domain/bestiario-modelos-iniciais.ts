@@ -63,7 +63,7 @@ export const MODELOS_INICIAIS_BESTIARIO = [
     paradaFisico: 4, paradaSocial: 4, paradaMental: 4,
     vitalidade: 6, vontade: 5,
     paradasExcepcionais: [{nome: 'Ocultismo', valor: 6}, {nome: 'Furtividade', valor: 5}, {nome: 'Percepção', valor: 6}, {nome: 'Intimidação', valor: 5}],
-    especiais: [{nome: 'Poder de Disciplina à escolha', descricao: 'Um poder de nível 1 de qualquer Disciplina, à escolha do Narrador.'}],
+    especiais: [{nome: 'Poder de Disciplina à escolha', descricao: 'Um poder de nível 1 de qualquer Disciplina, à escolha do Narrador.', regra: 'poder-livre-nivel-1'}],
     notas: '',
   },
   {

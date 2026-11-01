@@ -18,7 +18,7 @@ type BancoBestiario = Pick<typeof db, 'select' | 'insert' | 'update' | 'transact
 
 function paraRevisao(linha: typeof modeloAntagonista.$inferSelect): ModeloParaRevisao {
   const { statusRevisao, notaRevisao, criadoEm: _criadoEm, atualizadoEm: _atualizadoEm, ...modelo } = linha
-  return { ...modelo, fonte: FONTES_MODELOS_BESTIARIO[modelo.id] ?? null, revisao: { status: statusRevisao, nota: notaRevisao } }
+  return { ...modelo, ...modeloAntagonistaSchema.parse(modelo), id: modelo.id, fonte: FONTES_MODELOS_BESTIARIO[modelo.id] ?? null, revisao: { status: statusRevisao, nota: notaRevisao } }
 }
 
 export async function listarModelosBestiarioNoBanco(banco: BancoBestiario = db): Promise<ModeloAntagonista[]> {

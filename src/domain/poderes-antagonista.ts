@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ModeloAntagonista } from './bestiario'
+import { normalizarEspecialAntagonista, type ModeloAntagonista } from './bestiario'
 import { DISCIPLINAS, type Disciplina } from './ficha'
 import { PODERES, RITUAIS_TODOS, itemCatalogo } from './catalogo'
 import { requisitosItem } from './catalogo/requisitos'
@@ -36,7 +36,7 @@ export function obterPerfilSobrenatural(modelo: Pick<ModeloAntagonista, 'fichaCo
     const id = partes && disciplinaPorNome.get(normalizar(partes[1]))
     if (id) disciplinas[id] = Math.max(disciplinas[id] ?? 0, Number(partes![2]))
   }
-  const livres = modelo.especiais.some(e => e.nome === 'Poder de Disciplina à escolha') ? 1 : 0
+  const livres = modelo.especiais.some(e => normalizarEspecialAntagonista(e).regra === 'poder-livre-nivel-1') ? 1 : 0
   const fixos = PODERES.filter(p => p.nivel <= (disciplinas[p.disciplina] ?? 0)
     && modelo.especiais.some(e => normalizar(e.nome) === normalizar(p.nome))).map(p => p.id)
   const quantidades: QuantidadesRituais = {}
@@ -71,6 +71,23 @@ export function opcoesSobrenaturais(selecao: RecursosSobrenaturais, tipo: Poder[
     .map(item => ({ item, motivos: motivosItem(selecao, item) }))
 }
 
+/** Separa a cota livre dos poderes regulares, inclusive quando ambos usam a mesma Disciplina. */
+export function distribuirPoderes(selecao: RecursosSobrenaturais) {
+  const livres: string[] = []
+  const regulares: Partial<Record<Disciplina, string[]>> = {}
+  for (const disciplina of DISCIPLINAS) {
+    const poderes = selecao.poderes.map(itemCatalogo).filter((p): p is Poder => p?.tipo === 'poder' && p.disciplina === disciplina.id).sort((a, b) => a.nivel - b.nivel)
+    const nivel = selecao.disciplinas[disciplina.id] ?? 0
+    const extras = Math.max(0, poderes.length - nivel)
+    const candidatosLivres = poderes.slice(0, extras)
+    if (candidatosLivres.some(p => p.nivel !== 1)) throw new Error('O poder livre deve ser de nível 1.')
+    livres.push(...candidatosLivres.map(p => p.id))
+    regulares[disciplina.id] = poderes.slice(extras).map(p => p.id)
+  }
+  if (livres.length > selecao.livres) throw new Error('Quantidade de poderes acima do permitido pelas Disciplinas.')
+  return { livres, regulares }
+}
+
 export function validarRecursosSobrenaturais(entrada: RecursosSobrenaturais): RecursosSobrenaturais {
   const selecao = baseRecursos.parse(entrada)
   for (const tipo of ['poder', ...TIPOS_RITUAIS] as const) {
@@ -83,20 +100,14 @@ export function validarRecursosSobrenaturais(entrada: RecursosSobrenaturais): Re
       if (motivos.length) throw new Error(`${item.nome}: ${motivos.join('; ')}`)
     }
   }
-  let livresUsados = 0
+  const distribuicao = distribuirPoderes(selecao)
   for (const disciplina of DISCIPLINAS) {
-    const poderes = selecao.poderes.map(id => itemCatalogo(id) as Poder).filter(p => p.disciplina === disciplina.id).sort((a,b) => a.nivel-b.nivel)
+    const poderes = (distribuicao.regulares[disciplina.id] ?? []).map(id => itemCatalogo(id) as Poder)
     const nivel = selecao.disciplinas[disciplina.id] ?? 0
-    if (poderes.length > nivel) {
-      const extras = poderes.slice(nivel)
-      if (extras.some(p => p.nivel !== 1)) throw new Error('O poder livre deve ser de nível 1.')
-      livresUsados += extras.length
-    }
     for (let i = 0; i < Math.min(nivel, poderes.length); i++) {
       if (poderes[i].nivel > i + 1) throw new Error(`${disciplina.nome}: cada ponto permite um poder de seu nível ou inferior.`)
     }
   }
-  if (livresUsados > selecao.livres) throw new Error('Quantidade de poderes acima do permitido pelas Disciplinas.')
   return selecao
 }
 
@@ -106,7 +117,7 @@ export const recursosSobrenaturaisSchema = baseRecursos.superRefine((selecao, ct
   }
 })
 
-export function validarSelecaoParaModelo(modelo: ModeloAntagonista, recursos: RecursosSobrenaturais) {
+export function validarSelecaoParaModelo(modelo: Pick<ModeloAntagonista, 'fichaCompleta' | 'especiais'>, recursos: RecursosSobrenaturais) {
   const perfil = obterPerfilSobrenatural(modelo)
   const validos = validarRecursosSobrenaturais(recursos)
   for (const d of DISCIPLINAS) if ((perfil.disciplinas[d.id] ?? 0) !== (validos.disciplinas[d.id] ?? 0)) throw new Error('Os níveis de Disciplina devem acompanhar o Modelo.')
@@ -138,7 +149,7 @@ export function trocarPoder(selecao: RecursosSobrenaturais, anterior: string, no
 }
 
 export function sortearRecursosSobrenaturais(
-  modelo: ModeloAntagonista,
+  modelo: Pick<ModeloAntagonista, 'fichaCompleta' | 'especiais'>,
   opcoes: { quantidades?: QuantidadesRituais; confirmacoes?: string[] } = {},
   aleatorio: () => number = Math.random,
 ): RecursosSobrenaturais {

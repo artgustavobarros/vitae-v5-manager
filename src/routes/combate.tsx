@@ -1,7 +1,9 @@
 import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
 import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
 import { ConfigurarPoderesAntagonista, ResumoRecursosSobrenaturais } from '#/components/poderes-antagonista'
-import { sortearRecursosSobrenaturais, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
+import { obterPerfilSobrenatural, sortearRecursosSobrenaturais, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
+import { RegraEspecialAntagonista } from '#/components/regra-especial-antagonista'
+import { normalizarEspecialAntagonista, type EspecialAntagonista } from '#/domain/bestiario'
 import { EditorFichaAntagonistaCompleta, ResumoFichaAntagonistaCompleta } from '#/components/ficha-antagonista-completa'
 import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
@@ -29,6 +31,7 @@ import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
 import { BadgeEspecial } from '#/components/badge-especial'
+import { ChipParadaExcepcional } from '#/components/chip-parada-excepcional'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -815,7 +818,8 @@ function VisaoNarrador({
       mental: number | null
       excepcionais: Array<{ nome: string; valor: number }>
     }
-    especiais: Array<{ nome: string; descricao: string }>
+    especiais: EspecialAntagonista[]
+    recursosSobrenaturais?: RecursosSobrenaturais
     notas: string
   } | null>(null)
   const [salvandoEdicaoInimigo, setSalvandoEdicaoInimigo] = useState(false)
@@ -885,7 +889,8 @@ function VisaoNarrador({
           []
         ).map((pe) => ({ ...pe })),
       },
-      especiais: (part.especiais ?? []).map((esp) => ({ ...esp })),
+      especiais: (part.especiais ?? []).map(normalizarEspecialAntagonista),
+      recursosSobrenaturais: part.recursosSobrenaturais ? structuredClone(part.recursosSobrenaturais) : undefined,
       notas: part.notas ?? '',
     })
   }
@@ -895,6 +900,7 @@ function VisaoNarrador({
     if (!inimigoEmEdicao) return
     setSalvandoEdicaoInimigo(true)
     try {
+      const perfil = obterPerfilSobrenatural(inimigoEmEdicao)
       await atualizarParticipanteInimigoServer({
         data: {
           participanteId: inimigoEmEdicao.id,
@@ -905,6 +911,8 @@ function VisaoNarrador({
             paradas: inimigoEmEdicao.paradas,
             fichaCompleta: inimigoEmEdicao.fichaCompleta,
             especiais: inimigoEmEdicao.especiais,
+            recursosSobrenaturais: perfil.livres || Object.keys(perfil.disciplinas).length
+              ? inimigoEmEdicao.recursosSobrenaturais : null,
             notas: inimigoEmEdicao.notas,
           },
         },
@@ -1748,16 +1756,15 @@ function VisaoNarrador({
                                 <span>
                                   Mental: <strong className="text-foreground">{part.paradas.mental}</strong>
                                 </span>
-                                {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).length > 0 && (
-                                  <>
-                                    <span>&bull;</span>
-                                    {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).map((pe, i) => (
-                                      <Badge key={i} variant="outline" className="text-xs">
-                                        {pe.nome}: {pe.valor}
-                                      </Badge>
-                                    ))}
-                                  </>
-                                )}
+                              </div>
+                            )}
+
+                            {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).length > 0 && (
+                              <div className="flex flex-wrap items-center gap-2 border-t pt-1">
+                                <span className="text-xs font-medium text-muted-foreground">Paradas Excepcionais:</span>
+                                {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).map((pe, i) => (
+                                  <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />
+                                ))}
                               </div>
                             )}
 
@@ -2488,6 +2495,11 @@ function VisaoNarrador({
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
+                      <RegraEspecialAntagonista regra={esp.regra} onChange={regra => {
+                        const copia = [...inimigoEmEdicao.especiais]
+                        copia[idx] = { ...copia[idx], regra }
+                        setInimigoEmEdicao({ ...inimigoEmEdicao, especiais: copia })
+                      }} />
                       <EditorRichText
                         placeholder="Descrição ou regras do Especial (suporta Markdown)..."
                         rows={3}
@@ -2501,6 +2513,9 @@ function VisaoNarrador({
                     </div>
                   ))}
                 </div>
+
+                <ConfigurarPoderesAntagonista modelo={inimigoEmEdicao} valor={inimigoEmEdicao.recursosSobrenaturais} aoSalvar
+                  onChange={recursosSobrenaturais => setInimigoEmEdicao({ ...inimigoEmEdicao, recursosSobrenaturais })} />
 
                 {/* Notas */}
                 <div className="flex flex-col gap-2">

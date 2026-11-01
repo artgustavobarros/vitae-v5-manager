@@ -19,7 +19,7 @@ export const REQUISITOS_CATALOGO: Record<string, RequisitosCatalogo> = {
   "oblivio-4-profanar-o-sagrado": {"itens":[["oblivio-3-aura-de-decadencia","oblivio-3-toque-do-oblivio"]]},
   "ofuscacao-2-esconderijo": {"itens":[["ofuscacao-1-ocultar-pertences"]]},
   "ofuscacao-3-mascara-do-isolamento": {"itens":[["ofuscacao-3-mascara-das-mil-faces"]]},
-  "ofuscacao-4-desaparecer": {"itens":[["oblivio-1-capa-de-sombras"]]},
+  "ofuscacao-4-desaparecer": {"itens":[["ofuscacao-1-manto-de-sombras"]]},
   "ofuscacao-5-disfarce-do-impostor": {"itens":[["ofuscacao-3-mascara-das-mil-faces"]]},
   "potencia-3-demolidor": {"itens":[["potencia-2-proeza"]]},
   "potencia-4-queda-esmagadora": {"itens":[["potencia-1-salto-prodigioso"]]},
