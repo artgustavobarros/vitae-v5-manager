@@ -72,11 +72,12 @@ export function opcoesSobrenaturais(selecao: RecursosSobrenaturais, tipo: Poder[
 }
 
 /** Separa a cota livre dos poderes regulares, inclusive quando ambos usam a mesma Disciplina. */
-export function distribuirPoderes(selecao: RecursosSobrenaturais) {
+export function distribuirPoderes(selecao: RecursosSobrenaturais, fixos: readonly string[] = []) {
   const livres: string[] = []
   const regulares: Partial<Record<Disciplina, string[]>> = {}
   for (const disciplina of DISCIPLINAS) {
-    const poderes = selecao.poderes.map(itemCatalogo).filter((p): p is Poder => p?.tipo === 'poder' && p.disciplina === disciplina.id).sort((a, b) => a.nivel - b.nivel)
+    const poderes = selecao.poderes.map(itemCatalogo).filter((p): p is Poder => p?.tipo === 'poder' && p.disciplina === disciplina.id)
+      .sort((a, b) => a.nivel - b.nivel || Number(fixos.includes(a.id)) - Number(fixos.includes(b.id)))
     const nivel = selecao.disciplinas[disciplina.id] ?? 0
     const extras = Math.max(0, poderes.length - nivel)
     const candidatosLivres = poderes.slice(0, extras)

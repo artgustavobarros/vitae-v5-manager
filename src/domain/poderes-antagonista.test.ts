@@ -54,6 +54,21 @@ describe('Poderes de Antagonistas', () => {
     expect(() => validarRecursosSobrenaturais(trocada)).not.toThrow()
   })
 
+  it('mantém o poder fixo na cota regular para permitir trocar o poder livre', () => {
+    const m = { ...criarModeloAntagonistaPadrao(), especiais: [
+      { nome: 'Potência 2', descricao: '' }, { nome: 'Corpo Letal', descricao: '' },
+      { nome: 'Poder de Disciplina à escolha', descricao: '' },
+    ] }
+    const recursos = { ...vazio({ potencia: 2 }), livres: 1, poderes: ['potencia-1-corpo-letal', 'potencia-2-proeza', 'potencia-1-salto-prodigioso'] }
+    const { fixos } = obterPerfilSobrenatural(m)
+    const distribuicao = distribuirPoderes(recursos, fixos)
+    expect(distribuicao.livres).toEqual(['potencia-1-salto-prodigioso'])
+    expect(distribuicao.regulares.potencia).toEqual(['potencia-1-corpo-letal', 'potencia-2-proeza'])
+    const trocada = trocarPoder(recursos, distribuicao.livres[0], 'auspicios-1-sentidos-agucados')
+    expect(trocada.poderes).toEqual(['potencia-1-corpo-letal', 'potencia-2-proeza', 'auspicios-1-sentidos-agucados'])
+    expect(() => validarSelecaoParaModelo(m, trocada)).not.toThrow()
+  })
+
   it('preserva a regra de poder livre ao renomear o Especial e permite desativá-la explicitamente', () => {
     const especial = especialAntagonistaSchema.parse({ nome: 'Poder de Disciplina à escolha', descricao: '' })
     expect(obterPerfilSobrenatural({ especiais: [{ ...especial, nome: 'Dom do Sangue' }] }).livres).toBe(1)

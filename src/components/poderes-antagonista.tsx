@@ -83,7 +83,7 @@ export function ConfigurarPoderesAntagonista({ modelo, valor, onChange, aoSalvar
   const erro = erroSelecao(modelo, selecao, quantidades)
   const grupos = DISCIPLINAS.filter(d => d.id !== 'alquimia-de-sangue-ralo' && perfil.disciplinas[d.id])
   const temRituais = TIPOS_RITUAIS.filter(tipo => perfil.disciplinas[DISCIPLINA_RITUAL[tipo]])
-  const distribuicao = selecao ? distribuirPoderes(selecao) : null
+  const distribuicao = selecao ? distribuirPoderes(selecao, perfil.fixos) : null
   const poderLivre = distribuicao?.livres[0] ?? ''
 
   return (
