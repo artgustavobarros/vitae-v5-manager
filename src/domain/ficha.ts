@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod'
+import { identificadorSchema, LIMITE_ITENS, textoCurtoSchema, textoLongoSchema } from './limites-entrada'
 
 import { MAX_FOME, TOTAL_HUMANIDADE, type Dano } from './trilhas'
 
@@ -128,7 +129,7 @@ const danoSchema = z.object({ superficial: z.int().min(0), agravado: z.int().min
 
 /** Vantagem ou Defeito escolhido do Catálogo, com o nível e uma nota livre (ex.: quem é o Contato). */
 export const escolhaVantagemSchema = z.object({
-  id: z.string().min(1),
+  id: identificadorSchema,
   nivel: z.int().min(1).max(5),
   nota: z.string().max(200).optional(),
 })
@@ -136,36 +137,36 @@ export const escolhaVantagemSchema = z.object({
 export type EscolhaVantagem = z.infer<typeof escolhaVantagemSchema>
 
 const idsCatalogo = z
-  .array(z.string().min(1))
+  .array(identificadorSchema).max(LIMITE_ITENS)
   .refine((ids) => new Set(ids).size === ids.length, { message: 'Item repetido' })
   .default([])
 
 export const conviccaoSchema = z.object({
-  conviccao: z.string().default(''),
-  pedraDeToque: z.string().default(''),
+  conviccao: textoCurtoSchema.default(''),
+  pedraDeToque: textoCurtoSchema.default(''),
 })
 
 export type Conviccao = z.infer<typeof conviccaoSchema>
 
 export const fichaSchema = z.object({
-  conceito: z.string().default(''),
+  conceito: textoCurtoSchema.default(''),
   cla: z.enum(ids(CLAS)).nullable(),
   geracao: faixa(FAIXAS.geracao).nullable(),
   seita: z.enum(ids(SEITAS)).nullable(),
-  senhor: z.string().default(''),
-  tipoPredador: z.string().nullable().default(null),
-  ambicao: z.string().default(''),
-  desejo: z.string().default(''),
-  conviccoes: z.array(conviccaoSchema).default([]),
-  aparencia: z.string().default(''),
-  historia: z.string().default(''),
+  senhor: textoCurtoSchema.default(''),
+  tipoPredador: identificadorSchema.nullable().default(null),
+  ambicao: textoCurtoSchema.default(''),
+  desejo: textoCurtoSchema.default(''),
+  conviccoes: z.array(conviccaoSchema).max(LIMITE_ITENS).default([]),
+  aparencia: textoLongoSchema.default(''),
+  historia: textoLongoSchema.default(''),
   atributos: z.record(z.enum(ids(ATRIBUTOS)), faixa(FAIXAS.atributo)),
   habilidades: z.record(
     z.enum(ids(HABILIDADES)),
-    z.object({ valor: faixa(FAIXAS.habilidade), especializacoes: z.array(z.string()) }),
+    z.object({ valor: faixa(FAIXAS.habilidade), especializacoes: z.array(textoCurtoSchema).max(LIMITE_ITENS) }),
   ),
   disciplinas: z
-    .array(z.object({ disciplina: z.enum(ids(DISCIPLINAS)), nivel: faixa(FAIXAS.disciplina) }))
+    .array(z.object({ disciplina: z.enum(ids(DISCIPLINAS)), nivel: faixa(FAIXAS.disciplina) })).max(DISCIPLINAS.length)
     .refine((lista) => new Set(lista.map((d) => d.disciplina)).size === lista.length, {
       message: 'Disciplina repetida',
     }),
@@ -177,15 +178,14 @@ export const fichaSchema = z.object({
   cerimonias: idsCatalogo,
   /** Fórmulas de Alquimia de Sangue-Ralo. */
   formulas: idsCatalogo,
-  vantagens: z.array(escolhaVantagemSchema).default([]),
-  defeitos: z.array(escolhaVantagemSchema).default([]),
+  vantagens: z.array(escolhaVantagemSchema).max(LIMITE_ITENS).default([]),
+  defeitos: z.array(escolhaVantagemSchema).max(LIMITE_ITENS).default([]),
   potenciaSangue: faixa(FAIXAS.potenciaSangue),
   humanidade: faixa(FAIXAS.humanidade),
   manchas: z.int().min(0).max(TOTAL_HUMANIDADE),
   fome: z.int().min(0).max(MAX_FOME),
   danoVitalidade: danoSchema,
   danoVontade: danoSchema,
-  criacao: z.record(z.string(), z.any()).optional(),
 })
 
 export type Ficha = z.infer<typeof fichaSchema>

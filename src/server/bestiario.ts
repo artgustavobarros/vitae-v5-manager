@@ -1,37 +1,28 @@
 import { createServerFn } from '@tanstack/react-start'
-import { asc, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
 import { modeloAntagonista } from '#/db/schema'
+import { normalizarEspecialAntagonista, type ModeloAntagonista } from '#/domain/bestiario'
 import {
-  modeloAntagonistaSchema,
-  type ModeloAntagonista,
-} from '#/domain/bestiario'
+  edicaoModeloBestiarioSchema,
+  revisaoModeloSchema,
+  type EdicaoModeloBestiario,
+  type RevisaoModelo,
+} from '#/domain/revisao-bestiario'
+import {
+  concluirRevisaoBestiarioNoBanco,
+  listarModelosBestiarioNoBanco,
+  listarModelosParaRevisaoNoBanco,
+  registrarRevisaoModeloNoBanco,
+  salvarModeloBestiarioNoBanco,
+} from '#/server/revisao-bestiario-db'
 import { exigirNarrador } from '#/server/sessao'
 
 export const listarModelosBestiario = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
-  .handler(async (): Promise<ModeloAntagonista[]> => {
-    const linhas = await db
-      .select()
-      .from(modeloAntagonista)
-      .orderBy(asc(modeloAntagonista.nome))
-
-    return linhas.map((l) => ({
-      id: l.id,
-      nome: l.nome,
-      categoria: l.categoria,
-      paradaFisico: l.paradaFisico,
-      paradaSocial: l.paradaSocial,
-      paradaMental: l.paradaMental,
-      vitalidade: l.vitalidade,
-      vontade: l.vontade,
-      paradasExcepcionais: l.paradasExcepcionais,
-      especiais: l.especiais,
-      notas: l.notas,
-    }))
-  })
+  .handler(() => listarModelosBestiarioNoBanco())
 
 export const carregarModeloBestiario = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
@@ -48,60 +39,36 @@ export const carregarModeloBestiario = createServerFn({ method: 'GET' })
       id: linha.id,
       nome: linha.nome,
       categoria: linha.categoria,
+      etiquetas: linha.etiquetas,
       paradaFisico: linha.paradaFisico,
       paradaSocial: linha.paradaSocial,
       paradaMental: linha.paradaMental,
       vitalidade: linha.vitalidade,
       vontade: linha.vontade,
       paradasExcepcionais: linha.paradasExcepcionais,
-      especiais: linha.especiais,
+      especiais: linha.especiais.map(normalizarEspecialAntagonista),
       notas: linha.notas,
+      fichaCompleta: linha.fichaCompleta,
     }
   })
 
 export const salvarModeloBestiario = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(modeloAntagonistaSchema)
-  .handler(async ({ data }: { data: ModeloAntagonista }) => {
-    if (data.id) {
-      const [atualizado] = await db
-        .update(modeloAntagonista)
-        .set({
-          nome: data.nome,
-          categoria: data.categoria,
-          paradaFisico: data.paradaFisico,
-          paradaSocial: data.paradaSocial,
-          paradaMental: data.paradaMental,
-          vitalidade: data.vitalidade,
-          vontade: data.vontade,
-          paradasExcepcionais: data.paradasExcepcionais,
-          especiais: data.especiais,
-          notas: data.notas,
-        })
-        .where(eq(modeloAntagonista.id, data.id))
-        .returning()
+  .validator(edicaoModeloBestiarioSchema)
+  .handler(({ data }: { data: EdicaoModeloBestiario }) => salvarModeloBestiarioNoBanco(data))
 
-      return atualizado
-    }
+export const listarModelosParaAprovacao = createServerFn({ method: 'GET' })
+  .middleware([exigirNarrador])
+  .handler(() => listarModelosParaRevisaoNoBanco())
 
-    const [criado] = await db
-      .insert(modeloAntagonista)
-      .values({
-        nome: data.nome,
-        categoria: data.categoria,
-        paradaFisico: data.paradaFisico,
-        paradaSocial: data.paradaSocial,
-        paradaMental: data.paradaMental,
-        vitalidade: data.vitalidade,
-        vontade: data.vontade,
-        paradasExcepcionais: data.paradasExcepcionais,
-        especiais: data.especiais,
-        notas: data.notas,
-      })
-      .returning()
+export const registrarRevisaoModelo = createServerFn({ method: 'POST' })
+  .middleware([exigirNarrador])
+  .validator(z.object({ id: z.string().uuid(), revisao: revisaoModeloSchema }))
+  .handler(({ data }: { data: { id: string; revisao: RevisaoModelo } }) => registrarRevisaoModeloNoBanco(data))
 
-    return criado
-  })
+export const concluirRevisaoBestiario = createServerFn({ method: 'POST' })
+  .middleware([exigirNarrador])
+  .handler(() => concluirRevisaoBestiarioNoBanco())
 
 export const excluirModeloBestiario = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])

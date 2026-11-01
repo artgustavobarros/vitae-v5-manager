@@ -18,6 +18,7 @@ import { Route as ApiTempoRealRouteImport } from './routes/api/tempo-real'
 import { Route as ConviteTokenRouteImport } from './routes/convite/$token'
 import { Route as CoteriesIndexRouteImport } from './routes/coteries/index'
 import { Route as CoteriesIdRouteImport } from './routes/coteries/$id'
+import { Route as NarradorAntagonistasRouteImport } from './routes/narrador/antagonistas'
 import { Route as NarradorBestiarioRouteImport } from './routes/narrador/bestiario'
 import { Route as NarradorConvitesRouteImport } from './routes/narrador/convites'
 import { Route as NarradorCoteriesRouteImport } from './routes/narrador/coteries'
@@ -26,6 +27,8 @@ import { Route as NarradorPersonagensRouteImport } from './routes/narrador/perso
 import { Route as NarradorRolagensRouteImport } from './routes/narrador/rolagens'
 import { Route as NarradorSorteiosRouteImport } from './routes/narrador/sorteios'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as NarradorAntagonistasAprovacaoRouteImport } from './routes/narrador/antagonistas_.aprovacao'
+import { Route as NarradorBestiarioAprovacaoRouteImport } from './routes/narrador/bestiario_.aprovacao'
 import { Route as PersonagensIdIndexRouteImport } from './routes/personagens/$id/index'
 import { Route as PersonagensIdEditarRouteImport } from './routes/personagens/$id/editar'
 
@@ -74,6 +77,11 @@ const CoteriesIdRoute = CoteriesIdRouteImport.update({
   path: '/coteries/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NarradorAntagonistasRoute = NarradorAntagonistasRouteImport.update({
+  id: '/narrador/antagonistas',
+  path: '/narrador/antagonistas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NarradorBestiarioRoute = NarradorBestiarioRouteImport.update({
   id: '/narrador/bestiario',
   path: '/narrador/bestiario',
@@ -114,6 +122,18 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NarradorAntagonistasAprovacaoRoute =
+  NarradorAntagonistasAprovacaoRouteImport.update({
+    id: '/narrador/antagonistas_/aprovacao',
+    path: '/narrador/antagonistas/aprovacao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const NarradorBestiarioAprovacaoRoute =
+  NarradorBestiarioAprovacaoRouteImport.update({
+    id: '/narrador/bestiario_/aprovacao',
+    path: '/narrador/bestiario/aprovacao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PersonagensIdIndexRoute = PersonagensIdIndexRouteImport.update({
   id: '/personagens/$id/',
   path: '/personagens/$id/',
@@ -134,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
+  '/narrador/antagonistas': typeof NarradorAntagonistasRoute
   '/narrador/bestiario': typeof NarradorBestiarioRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/narrador/coteries': typeof NarradorCoteriesRoute
@@ -143,6 +164,8 @@ export interface FileRoutesByFullPath {
   '/narrador/sorteios': typeof NarradorSorteiosRoute
   '/coteries/': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/narrador/antagonistas/aprovacao': typeof NarradorAntagonistasAprovacaoRoute
+  '/narrador/bestiario/aprovacao': typeof NarradorBestiarioAprovacaoRoute
   '/personagens/$id/editar': typeof PersonagensIdEditarRoute
   '/personagens/$id/': typeof PersonagensIdIndexRoute
 }
@@ -155,6 +178,7 @@ export interface FileRoutesByTo {
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
+  '/narrador/antagonistas': typeof NarradorAntagonistasRoute
   '/narrador/bestiario': typeof NarradorBestiarioRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/narrador/coteries': typeof NarradorCoteriesRoute
@@ -164,6 +188,8 @@ export interface FileRoutesByTo {
   '/narrador/sorteios': typeof NarradorSorteiosRoute
   '/coteries': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/narrador/antagonistas/aprovacao': typeof NarradorAntagonistasAprovacaoRoute
+  '/narrador/bestiario/aprovacao': typeof NarradorBestiarioAprovacaoRoute
   '/personagens/$id/editar': typeof PersonagensIdEditarRoute
   '/personagens/$id': typeof PersonagensIdIndexRoute
 }
@@ -177,6 +203,7 @@ export interface FileRoutesById {
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
+  '/narrador/antagonistas': typeof NarradorAntagonistasRoute
   '/narrador/bestiario': typeof NarradorBestiarioRoute
   '/narrador/convites': typeof NarradorConvitesRoute
   '/narrador/coteries': typeof NarradorCoteriesRoute
@@ -186,6 +213,8 @@ export interface FileRoutesById {
   '/narrador/sorteios': typeof NarradorSorteiosRoute
   '/coteries/': typeof CoteriesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/narrador/antagonistas_/aprovacao': typeof NarradorAntagonistasAprovacaoRoute
+  '/narrador/bestiario_/aprovacao': typeof NarradorBestiarioAprovacaoRoute
   '/personagens/$id/editar': typeof PersonagensIdEditarRoute
   '/personagens/$id/': typeof PersonagensIdIndexRoute
 }
@@ -200,6 +229,7 @@ export interface FileRouteTypes {
     | '/api/tempo-real'
     | '/convite/$token'
     | '/coteries/$id'
+    | '/narrador/antagonistas'
     | '/narrador/bestiario'
     | '/narrador/convites'
     | '/narrador/coteries'
@@ -209,6 +239,8 @@ export interface FileRouteTypes {
     | '/narrador/sorteios'
     | '/coteries/'
     | '/api/auth/$'
+    | '/narrador/antagonistas/aprovacao'
+    | '/narrador/bestiario/aprovacao'
     | '/personagens/$id/editar'
     | '/personagens/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -221,6 +253,7 @@ export interface FileRouteTypes {
     | '/api/tempo-real'
     | '/convite/$token'
     | '/coteries/$id'
+    | '/narrador/antagonistas'
     | '/narrador/bestiario'
     | '/narrador/convites'
     | '/narrador/coteries'
@@ -230,6 +263,8 @@ export interface FileRouteTypes {
     | '/narrador/sorteios'
     | '/coteries'
     | '/api/auth/$'
+    | '/narrador/antagonistas/aprovacao'
+    | '/narrador/bestiario/aprovacao'
     | '/personagens/$id/editar'
     | '/personagens/$id'
   id:
@@ -242,6 +277,7 @@ export interface FileRouteTypes {
     | '/api/tempo-real'
     | '/convite/$token'
     | '/coteries/$id'
+    | '/narrador/antagonistas'
     | '/narrador/bestiario'
     | '/narrador/convites'
     | '/narrador/coteries'
@@ -251,6 +287,8 @@ export interface FileRouteTypes {
     | '/narrador/sorteios'
     | '/coteries/'
     | '/api/auth/$'
+    | '/narrador/antagonistas_/aprovacao'
+    | '/narrador/bestiario_/aprovacao'
     | '/personagens/$id/editar'
     | '/personagens/$id/'
   fileRoutesById: FileRoutesById
@@ -264,6 +302,7 @@ export interface RootRouteChildren {
   ApiTempoRealRoute: typeof ApiTempoRealRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   CoteriesIdRoute: typeof CoteriesIdRoute
+  NarradorAntagonistasRoute: typeof NarradorAntagonistasRoute
   NarradorBestiarioRoute: typeof NarradorBestiarioRoute
   NarradorConvitesRoute: typeof NarradorConvitesRoute
   NarradorCoteriesRoute: typeof NarradorCoteriesRoute
@@ -273,6 +312,8 @@ export interface RootRouteChildren {
   NarradorSorteiosRoute: typeof NarradorSorteiosRoute
   CoteriesIndexRoute: typeof CoteriesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  NarradorAntagonistasAprovacaoRoute: typeof NarradorAntagonistasAprovacaoRoute
+  NarradorBestiarioAprovacaoRoute: typeof NarradorBestiarioAprovacaoRoute
   PersonagensIdEditarRoute: typeof PersonagensIdEditarRoute
   PersonagensIdIndexRoute: typeof PersonagensIdIndexRoute
 }
@@ -342,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoteriesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/narrador/antagonistas': {
+      id: '/narrador/antagonistas'
+      path: '/narrador/antagonistas'
+      fullPath: '/narrador/antagonistas'
+      preLoaderRoute: typeof NarradorAntagonistasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/narrador/bestiario': {
       id: '/narrador/bestiario'
       path: '/narrador/bestiario'
@@ -398,6 +446,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/narrador/antagonistas_/aprovacao': {
+      id: '/narrador/antagonistas_/aprovacao'
+      path: '/narrador/antagonistas/aprovacao'
+      fullPath: '/narrador/antagonistas/aprovacao'
+      preLoaderRoute: typeof NarradorAntagonistasAprovacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/narrador/bestiario_/aprovacao': {
+      id: '/narrador/bestiario_/aprovacao'
+      path: '/narrador/bestiario/aprovacao'
+      fullPath: '/narrador/bestiario/aprovacao'
+      preLoaderRoute: typeof NarradorBestiarioAprovacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/personagens/$id/': {
       id: '/personagens/$id/'
       path: '/personagens/$id'
@@ -424,6 +486,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTempoRealRoute: ApiTempoRealRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   CoteriesIdRoute: CoteriesIdRoute,
+  NarradorAntagonistasRoute: NarradorAntagonistasRoute,
   NarradorBestiarioRoute: NarradorBestiarioRoute,
   NarradorConvitesRoute: NarradorConvitesRoute,
   NarradorCoteriesRoute: NarradorCoteriesRoute,
@@ -433,6 +496,8 @@ const rootRouteChildren: RootRouteChildren = {
   NarradorSorteiosRoute: NarradorSorteiosRoute,
   CoteriesIndexRoute: CoteriesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  NarradorAntagonistasAprovacaoRoute: NarradorAntagonistasAprovacaoRoute,
+  NarradorBestiarioAprovacaoRoute: NarradorBestiarioAprovacaoRoute,
   PersonagensIdEditarRoute: PersonagensIdEditarRoute,
   PersonagensIdIndexRoute: PersonagensIdIndexRoute,
 }

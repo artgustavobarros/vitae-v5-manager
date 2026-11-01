@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: v5
       POSTGRES_DB: v5_manager
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

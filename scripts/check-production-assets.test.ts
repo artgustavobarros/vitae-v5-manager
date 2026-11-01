@@ -6,6 +6,7 @@ import {
   selecionarAssetsCss,
   validarAsset,
   validarHtml,
+  validarSegurancaHtml,
 } from './check-production-assets.ts'
 
 const respostaOk = {
@@ -13,6 +14,26 @@ const respostaOk = {
   cacheControl: 'public, max-age=31536000, immutable',
   contentEncoding: 'br',
 }
+
+describe('segurança no HTML de produção', () => {
+  const headers = new Headers({
+    'content-security-policy': "default-src 'self'; script-src 'self' 'nonce-teste'; frame-ancestors 'none'",
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
+    'cache-control': 'no-store',
+  })
+  it('exige o nonce do CSP em todos os scripts inline da hidratação', () => {
+    expect(() => validarSegurancaHtml('<script nonce="teste">window.exemplo=1</script>', headers)).not.toThrow()
+    expect(() => validarSegurancaHtml('<script>window.exemplo=1</script>', headers)).toThrow(/nonce/)
+    expect(() => validarSegurancaHtml('<script nonce="outro">window.exemplo=1</script>', headers)).toThrow(/nonce/)
+  })
+  it('exige headers e cache privado na página de entrada', () => {
+    expect(() => validarSegurancaHtml('', new Headers())).toThrow()
+    const publico = new Headers(headers)
+    publico.set('cache-control', 'public, max-age=3600')
+    expect(() => validarSegurancaHtml('', publico)).toThrow(/cache/i)
+  })
+})
 
 describe('extrairLinks', () => {
   it('aceita aspas simples, duplas e qualquer ordem de atributos', () => {

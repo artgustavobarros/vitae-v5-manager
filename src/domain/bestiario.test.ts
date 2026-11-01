@@ -9,10 +9,22 @@ import {
 } from './bestiario'
 
 describe('Bestiário - Modelos de Antagonistas', () => {
+  it.each(['paradaFisico', 'paradaSocial', 'paradaMental'] as const)(
+    'permite zero em %s e continua rejeitando negativos',
+    (campo) => {
+      const modelo = { ...criarModeloAntagonistaPadrao(), nome: 'Antagonista' }
+      const resultado = validarModeloAntagonista({ ...modelo, [campo]: 0 })
+      expect(resultado.valido).toBe(true)
+      if (resultado.valido) expect(resultado.dados[campo]).toBe(0)
+      expect(validarModeloAntagonista({ ...modelo, [campo]: -1 }).valido).toBe(false)
+    },
+  )
+
   it('cria modelo padrão com valores válidos', () => {
     const padrao = criarModeloAntagonistaPadrao()
     expect(padrao.nome).toBe('')
-    expect(padrao.categoria).toBe('Geral')
+    expect(padrao.categoria).toBe('Outros')
+    expect(padrao.etiquetas).toEqual([])
     expect(padrao.paradaFisico).toBe(1)
     expect(padrao.paradaSocial).toBe(1)
     expect(padrao.paradaMental).toBe(1)
@@ -32,7 +44,8 @@ describe('Bestiário - Modelos de Antagonistas', () => {
     const modelo: ModeloAntagonista = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       nome: 'Guarda da Camarilla',
-      categoria: 'Segurança',
+      categoria: 'Mortal',
+      etiquetas: ['Segurança'],
       paradaFisico: 5,
       paradaSocial: 2,
       paradaMental: 3,

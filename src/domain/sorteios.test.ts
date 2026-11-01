@@ -26,6 +26,32 @@ describe('Sorteios de Ressonância', () => {
     expect(resultado.intensidade.id).toBeDefined()
   })
 
+  describe.each([
+    ['colerico', ['celeridade', 'potencia']],
+    ['melancolico', ['fortitude', 'oblivio']],
+    ['fleumatico', ['auspicios', 'dominacao']],
+    ['sanguineo', ['feiticaria-de-sangue', 'presenca']],
+  ] as const)('tipo escolhido: %s', (tipo, disciplinas) => {
+    it.each([
+      [0, 'desprezivel', 1],
+      [0.6, 'fugaz', 1],
+      [0.8, 'intensa', 2],
+      [0.99, 'aguda', 2],
+    ] as const)('sorteia intensidade com rng %s mantendo o tipo escolhido', (rng, intensidade, nivel) => {
+      const resultado = sortearRessonancia(() => rng, undefined, tipo)
+
+      expect(resultado.tipo.id).toBe(tipo)
+      expect(resultado.intensidade.id).toBe(intensidade)
+      expect(disciplinas).toContain(resultado.manifestacaoSangueFraco.disciplinaId)
+      expect(resultado.manifestacaoSangueFraco.nivel).toBe(nivel)
+      if (intensidade === 'aguda') {
+        expect(resultado.discrasia?.tipoRessonancia).toBe(tipo)
+      } else {
+        expect(resultado.discrasia).toBeUndefined()
+      }
+    })
+  })
+
   it('quando intensidade for aguda, inclui automaticamente uma discrasia', () => {
     // rng que seleciona aguda (última intensidade)
     let count = 0

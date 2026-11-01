@@ -7,6 +7,12 @@
       "skillPath": "better-auth/best-practices/SKILL.md",
       "computedHash": "0c30be0e118c2b7a0c4c57bd9e63bf110c7e420a79ec6ce7997153f3b1e066ee"
     },
+    "break-ui": {
+      "source": "artgustavobarros/skills",
+      "sourceType": "github",
+      "skillPath": "frontend/break-ui/SKILL.md",
+      "computedHash": "60ada67662925f4df5e3c6ff41cac3ab241b66f8898100a5ffcd7ba7196cb868"
+    },
     "browser-testing-with-devtools": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
@@ -66,6 +72,12 @@
       "version": "0.9.18",
       "computedHash": "8649e0889daf3468b425a1ec843db02f68ea2d82165bc5bc9a8fcaa3daafa9f1"
     },
+    "mobile-native": {
+      "source": "artgustavobarros/skills",
+      "sourceType": "github",
+      "skillPath": "frontend/mobile-native/SKILL.md",
+      "computedHash": "f221cea36642168df6d3d6d7f236237cbf1ae669138ff7df07775674223d49ad"
+    },
     "node": {
       "source": "mcollina/skills",
       "sourceType": "github",
@@ -85,6 +97,12 @@
       "skillPath": "skills/performance-optimization/SKILL.md",
       "computedHash": "a2cdba94ff8f898183b3d5af736272dc439826083723b17a88782e75d2351530"
     },
+    "pick-ui-library": {
+      "source": "artgustavobarros/skills",
+      "sourceType": "github",
+      "skillPath": "frontend/pick-ui-library/SKILL.md",
+      "computedHash": "5d2a77bf0ecafbda85aa95fb49999b6d77945d9066ec83d970b62e5b388cd686"
+    },
     "react-doctor": {
       "source": "millionco/react-doctor",
       "sourceType": "github",
@@ -97,6 +115,12 @@
       "skillPath": "skills/react-start/SKILL.md",
       "version": "1.169.3",
       "computedHash": "a4958f11580b305a23fae542f452d03a10fa0f4d21d56adbd00ee815b45e3ed8"
+    },
+    "review-animations": {
+      "source": "artgustavobarros/skills",
+      "sourceType": "github",
+      "skillPath": "frontend/review-animations/SKILL.md",
+      "computedHash": "b4e5f0f4fe3e2743c85bf7354108f48a0b9d502cb20ef5c4a9c195da91f93736"
     },
     "test-driven-development": {
       "source": "obra/superpowers",

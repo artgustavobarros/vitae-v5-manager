@@ -6,6 +6,7 @@ import {
   alternarRevelarVitalidade,
   aplicarDanoInimigo,
   atualizarParticipanteInimigo,
+  atualizacaoInimigoSchema,
   avancarTurno,
   calcularEstadoSaude,
   CONDICOES_COMBATE_V5,
@@ -55,6 +56,26 @@ const mockInimigo: ParticipanteCombate = {
 }
 
 describe('Combate - Ciclo de Turnos e Rodadas', () => {
+  it('salva edição de Inimigo com paradas zeradas sem alterar seus recursos', () => {
+    const atualizacao = atualizacaoInimigoSchema.safeParse({
+      paradas: { fisico: 0, social: 0, mental: 0, excepcionais: [] },
+    })
+    expect(atualizacao.success).toBe(true)
+    if (!atualizacao.success) return
+    const atualizado = atualizarParticipanteInimigo(iniciarCombate([mockInimigo]), 'i1', atualizacao.data)
+    expect(atualizado.participantes[0]).toMatchObject({
+      paradas: { fisico: 0, social: 0, mental: 0 },
+      vitalidadeMax: 5,
+      vontadeMax: 3,
+    })
+  })
+
+  it.each(['fisico', 'social', 'mental'] as const)('rejeita %s negativo na edição de Inimigo', (campo) => {
+    expect(atualizacaoInimigoSchema.safeParse({
+      paradas: { fisico: 1, social: 1, mental: 1, [campo]: -1 },
+    }).success).toBe(false)
+  })
+
   it('recusa adicionar Torpor a um inimigo que não é vampiro', () => {
     const combate = iniciarCombate([mockInimigo])
     expect(() => alternarCondicaoParticipante(combate, mockInimigo.id, 'torpor'))

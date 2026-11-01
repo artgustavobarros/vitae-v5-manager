@@ -7,6 +7,7 @@ import { useState, useSyncExternalStore } from 'react'
 import { ProvedorMarcas } from '#/components/provedor-marcas'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
+import { TooltipProvider } from '#/components/ui/tooltip'
 import jostFonte from '@fontsource-variable/jost/files/jost-latin-wght-normal.woff2?url'
 import { buscarUsuario } from '#/server/sessao'
 import '../styles.css'
@@ -17,6 +18,8 @@ const OG_IMAGE_URL = `${SITE_URL}/og-vitae.png`
 export const Route = createRootRoute({
   beforeLoad: async () => ({ usuario: await buscarUsuario() }),
   head: () => ({
+    // Precisa rodar antes de carregar os módulos: a sondagem de eval do Zod já ocorre durante os imports.
+    scripts: [{ children: 'globalThis.__zod_globalConfig={...globalThis.__zod_globalConfig,jitless:true}' }],
     meta: [
       {
         charSet: 'utf-8',
@@ -105,7 +108,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          {children}
+          <TooltipProvider delayDuration={150}>{children}</TooltipProvider>
         </QueryClientProvider>
         <Toaster position="top-center" />
         {desktop && (

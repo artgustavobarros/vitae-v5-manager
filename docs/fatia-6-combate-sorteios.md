@@ -4,24 +4,49 @@ Decisões de implementação para a **Fatia 6**, seguindo rigorosamente o `GLOSS
 
 ## 1. Escopo Desta Fatia
 
-### Bestiário do Narrador (`/narrador/bestiario`)
-- Antagonistas e Bestiário privados do Narrador.
-- Modelos de antagonistas com ficha simplificada do V5:
+### Antagonistas do Narrador (`/narrador/antagonistas`)
+- Antagonistas e Antagonistas privados do Narrador.
+- Modelos de antagonistas com Ficha Simplificada ou Ficha Completa de Antagonista:
   - Categoria / Arquétipo (ex: Carniçal, Mortal, Segunda Inquisição, Lupino) com filtro por abas e busca textual rápida.
   - Botão **Duplicar Modelo** para clonar modelos existentes e criar variantes rapidamente.
-  - Paradas: Físico, Social e Mental (mínimo 1).
+  - Paradas: Físico, Social e Mental (mínimo 0; valores negativos não são permitidos).
   - Paradas excepcionais (lista dinâmica de pares `{ nome: string, valor: number }`).
   - Vitalidade e Força de Vontade máximas.
   - Especiais (regras/poderes com nome e descrição com texto rico / Markdown via `EditorRichText`, exibidos na tela como badges clicáveis com `VisualizadorMarkdown`).
   - Notas livres com suporte a texto rico / Markdown via `EditorRichText` (equipamento, táticas, etc.).
 - CRUD completo com persistência em PostgreSQL (`modelo_antagonista`).
+- Carga inicial opcional: `pnpm antagonistas:povoar` inclui 40 Modelos (21 do Craft, 18 do Sabá e o Lobisomem do livro básico), após a revisão inicial, sem migration. Os nomes originais e as fontes ficam nos documentos de pesquisa. Identificadores fixos e a comparação de nomes evitam duplicatas ao repetir a carga; Modelos existentes e edições do Narrador são preservados. As regras caseiras de alimentação do PDF não são importadas.
+
+- A Ficha Completa usa Atributos (inclusive valores sobrenaturais acima de 5), Habilidades e Disciplinas individuais; Humanidade, Potência do Sangue e Fome ficam vazias quando não informadas. Não há conversão automática para paradas gerais.
+- A migration `0019_ficha_completa_antagonista` adiciona os dados completos e permite paradas gerais nulas nesse formato. Os Modelos existentes continuam simplificados. Os Inimigos mantêm a ficha completa no Combate, com edição da cópia e sem expor características privadas aos Jogadores.
+
+### Revisão inicial de Antagonistas encerrada
+
+- Em 31/10/2026, foram mantidos os 41 Modelos aprovados no banco, incluindo os dois Carniçais preexistentes. Os 16 pendentes (15 Victim SPC Cards e Criatura, do Craft) foram recusados e retirados das listas de Antagonistas e do Combate. Seus registros e decisões são preservados no banco; as cópias já usadas em Combates mantêm as fichas.
+- Os 16 candidatos recusados foram removidos da carga inicial. Os 40 Modelos restantes incluem um Carniçal genérico; a carga preserva variantes existentes e edições do Narrador.
+- O acesso à aprovação foi encerrado. O botão de revisão saiu da lista e as URLs antigas redirecionam para `/narrador/antagonistas`.
+- A migration `0018_aprovacao_bestiario` e os campos de decisão, nota e inclusão continuam preservando o histórico da revisão. Não há nova migration para encerrar a revisão.
 
 ### Gerenciador de Combate (`/combate`)
 - Apenas 1 Combate ativo por vez na Crônica (descartável ao encerrar).
 - Participantes:
   - Personagens dos Jogadores e PdNs da Crônica.
-  - Inimigos instanciados a partir dos Modelos do Bestiário com Vitalidade e Força de Vontade próprias e controle de dano superficial/agravado.
-  - **Edição / Customização de Instâncias de Inimigos**: botão de edição no card do inimigo permite que o Narrador altere nome, paradas, vitalidade/vontade máximas, adicione/remova Especiais e Notas temporárias diretamente na cena sem afetar o modelo original do Bestiário.
+  - Inimigos instanciados a partir dos Modelos da lista de Antagonistas com Vitalidade e Força de Vontade próprias e controle de dano superficial/agravado.
+  - **Edição / Customização de Instâncias de Inimigos**: botão de edição no card do inimigo permite que o Narrador altere nome, paradas, vitalidade/vontade máximas, adicione/remova Especiais e Notas temporárias diretamente na cena sem afetar o modelo original da lista de Antagonistas.
+- **Dificuldade Geral no card**: os valores já registrados nas notas aparecem em um chip, como **Dificuldade 4/3** ou **Dificuldade 2**, sem repetir a anotação no texto do card. Tocar no chip explica o uso dos sucessos nas áreas fortes e nos demais testes. A apresentação também vale para os Inimigos no Combate, inclusive minimizados; o texto original continua editável nas notas. Não há cálculo automático a partir das paradas, alteração dos valores nem migration.
+- A lista de Antagonistas usa o mosaico escolhido pelo Narrador: colunas a partir de 320 px (uma coluna na largura disponível em telas menores) e cards com alturas entre 256 e 640 px. O conteúdo permanece no topo, com rolagem interna quando necessário. Paradas Excepcionais e Especiais aparecem em chips que quebram linha. Nas Paradas com especialidade entre parênteses, o chip mostra um ícone de etiqueta antes de `Nome: valor`; hover ou foco revela só o detalhe, e clique/toque abre o mesmo texto. O nome original permanece editável, sem alteração dos dados. O padrão também vale no Combate. Os três ícones de duplicar, editar e excluir ficam sempre visíveis na parte inferior, sem exigir seleção nem formar um rodapé separado por borda. As ações mantêm os formulários e a confirmação de exclusão existentes.
+- **Decisão de layout (2026-10-31)**: entre grade fluida, lista com ficha e mosaico, o Narrador escolheu o mosaico (variante C) e pediu ícones sempre visíveis. As prévias e o contexto anterior à promoção foram preservados na branch `prototype/antagonistas-layouts`, commit `b85e0f47`. O seletor e as variantes experimentais saíram da aplicação.
+- A roda do mouse continua rolando a página quando o ponteiro está sobre um card sem conteúdo excedente ou quando sua rolagem interna chega ao limite. Os cards não contêm o encadeamento da rolagem.
+- **Tipos e Etiquetas**: o filtro principal agrupa todos os Modelos do mesmo Tipo geral, como Vampiro ou Carniçal. Sabá, Ataque e outras variações são Etiquetas editáveis, exibidas nos cards e pesquisáveis também no seletor do Combate. Ao selecionar um Tipo, uma segunda linha mostra só suas Etiquetas; várias seleções refinam por interseção, e trocar o Tipo limpa o refinamento. O formulário usa um seletor simples de Tipo e múltiplo de Etiquetas, com criação de novas Etiquetas.
+  - **Outras criaturas** reúne Espectro, Fada, Mago e Lobisomem; os quatro aparecem como Etiquetas do grupo. A migration `0021_outras_criaturas` atualiza os Modelos existentes sem alterar nomes, fichas, decisões ou Combates já criados.
+  - A migration `0020_etiquetas_antagonistas` adiciona a lista de Etiquetas e separa as categorias compostas existentes. Os Carniçais antigos classificados como Ataque ou Geral passam a Tipo Carniçal com a variação como Etiqueta. Tipos antigos sem equivalência ficam em Outros, preservando o texto como Etiqueta. Fichas, decisões de revisão e inclusão são preservadas; Combates existentes mantêm suas cópias.
+- **Poderes dos Antagonistas**: ao iniciar o Combate ou incluir participantes, cada Inimigo permite **Configurar poderes**. Sem seleção manual, seus poderes são sorteados ao adicionar; o diálogo permite sortear novamente, escolher os poderes individualmente e consultar as regras.
+  - Disciplinas vêm da Ficha Completa ou de Especiais com nome e nível explícitos, como `Dominação 3`. Efeitos condicionais, como a liberação do Acorrentado, não viram Disciplinas permanentes. O Carniçal genérico recebe um poder de nível 1 de qualquer Disciplina. Poderes indicados no Modelo, como Armas Ferais, são preservados.
+  - Cada ponto de Disciplina permite um poder de seu nível ou inferior. A escolha verifica amálgamas, dependências por ids estáveis (incluindo alternativas e combinações de requisitos) e duplicatas. Trocar um poder retira os dependentes inválidos da seleção em edição.
+  - Rituais, Cerimônias e Fórmulas têm quantidade configurável por Inimigo, inicialmente zero, salvo quantidade explícita no Modelo (como as quatro Cerimônias do Flautista). Não há teto pela quantidade de pontos da Disciplina; cada item respeita o nível da Disciplina correspondente e seus requisitos. Restrições de Clã, origem, culto, ingredientes ou preparo precisam de confirmação individual do Narrador e não entram no sorteio sem ela.
+  - A seleção fica em `recursosSobrenaturais`, no JSON de cada participante; não exige migration e não altera o Modelo nem Combates antigos. Somente o Narrador acessa esses dados. **Poderes e Rituais** no card do Inimigo abre a consulta dos itens escolhidos, também no card minimizado.
+  - O editor do Inimigo também configura os poderes. Alterar Disciplinas ou a cota livre exige reconfigurar a seleção incompatível antes de salvar; retirar todas as Disciplinas e a cota livre remove a seleção.
+  - O Especial que concede um poder de nível 1 à escolha guarda a regra em `regra: 'poder-livre-nivel-1'`, no JSON existente. O editor permite ativar ou desativar essa regra independentemente do nome. Os dois nomes legados são reconhecidos ao carregar, preservando a regra ao renomeá-los. `regra: null` desativa explicitamente essa inferência.
 - Ordem de turnos manual:
   - Reordenação manual com botões subir/descer (mantendo o participante ativo no índice correto).
   - Destaque marcante no participante que está agindo agora.
@@ -38,7 +63,7 @@ Decisões de implementação para a **Fatia 6**, seguindo rigorosamente o `GLOSS
 
 ### Rolagens do Narrador (`/narrador/rolagens`)
 - Rolagens para o Narrador:
-  - **Ressonância**: rola Tipo (Colérico, Melancólico, Fleumático, Sanguíneo) e Intensidade com d10 canônico (1-5 Desprezível, 6-8 Fugaz, 9 Intensa, 10 Aguda). Se resultar em Aguda (10), rola automaticamente a Discrasia associada.
+  - **Ressonância**: o Narrador escolhe o Tipo (Colérico, Melancólico, Fleumático, Sanguíneo) ou mantém Aleatório. Rola Intensidade com d10 canônico (1-5 Desprezível, 6-8 Fugaz, 9 Intensa, 10 Aguda). Se resultar em Aguda (10), rola automaticamente a Discrasia associada ao tipo.
   - **Manifestação de Sangue-Fraco**:
     - Se a vítima for Sangue-Fraco (regras V5 p. 114/229), seleciona aleatoriamente 1 das 2 disciplinas associadas ao tipo de ressonância.
     - Se Intensidade Desprezível ou Fugaz (d10 <= 8): manifesta Disciplina Nível 1 com 1 poder Nível 1 sorteado (sem amálgama).

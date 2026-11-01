@@ -32,6 +32,7 @@ export const auth = betterAuth({
     },
   },
   account: {
+    encryptOAuthTokens: true,
     accountLinking: {
       // Quem entra por nome de usuário conecta o Google em /conta. O e-mail dessas contas é sintético
       // e nunca bate com o do Google, por isso aceita e-mails diferentes. Nome e foto não mudam ao conectar.
@@ -46,6 +47,7 @@ export const auth = betterAuth({
       papel: { type: 'string', required: false, input: false },
     },
   },
+  advanced: { ipAddress: { ipAddressHeaders: ['x-real-ip'] } },
   databaseHooks: {
     user: {
       create: {

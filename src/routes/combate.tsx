@@ -1,3 +1,11 @@
+import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
+import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
+import { ConfigurarPoderesAntagonista, ResumoRecursosSobrenaturais } from '#/components/poderes-antagonista'
+import { obterPerfilSobrenatural, sortearRecursosSobrenaturais, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
+import { RegraEspecialAntagonista } from '#/components/regra-especial-antagonista'
+import { normalizarEspecialAntagonista, type EspecialAntagonista } from '#/domain/bestiario'
+import { EditorFichaAntagonistaCompleta, ResumoFichaAntagonistaCompleta } from '#/components/ficha-antagonista-completa'
+import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { cn } from 'cn'
 import {
@@ -23,6 +31,7 @@ import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
 import { BadgeEspecial } from '#/components/badge-especial'
+import { ChipParadaExcepcional } from '#/components/chip-parada-excepcional'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +64,7 @@ import {
   calcularEstadoSaude,
   CONDICOES_COMBATE_V5,
   ehInimigoIncapacitado,
+  criarInimigoDeModelo,
   ehParticipanteVampiro,
   obterCondicaoCombate,
   obterProximoIndiceAtivo,
@@ -801,20 +811,22 @@ function VisaoNarrador({
     nome: string
     vitalidadeMax: number
     vontadeMax: number
+    fichaCompleta?: FichaAntagonistaCompleta | null
     paradas: {
-      fisico: number
-      social: number
-      mental: number
+      fisico: number | null
+      social: number | null
+      mental: number | null
       excepcionais: Array<{ nome: string; valor: number }>
     }
-    especiais: Array<{ nome: string; descricao: string }>
+    especiais: EspecialAntagonista[]
+    recursosSobrenaturais?: RecursosSobrenaturais
     notas: string
   } | null>(null)
   const [salvandoEdicaoInimigo, setSalvandoEdicaoInimigo] = useState(false)
 
   const [selecaoPersonagens, setSelecaoPersonagens] = useState<string[]>([])
   const [inimigosParaAdicionar, setInimigosParaAdicionar] = useState<
-    Array<{ modeloId: string; nome: string }>
+    Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
   >([])
   const [personagensTemp, setPersonagensTemp] = useState<string[]>([])
   const [modelosTemp, setModelosTemp] = useState<string[]>([])
@@ -823,6 +835,7 @@ function VisaoNarrador({
   const [nomeInimigoAvulso, setNomeInimigoAvulso] = useState<string>('')
   const [personagensAvulsosTemp, setPersonagensAvulsosTemp] = useState<string[]>([])
   const [modelosAvulsosTemp, setModelosAvulsosTemp] = useState<string[]>([])
+  const [recursosAvulsos, setRecursosAvulsos] = useState<Record<string, RecursosSobrenaturais>>({})
 
   const [arrastandoId, setArrastandoId] = useState<string | null>(null)
   const [destinoId, setDestinoId] = useState<string | null>(null)
@@ -865,6 +878,7 @@ function VisaoNarrador({
       nome: part.nome,
       vitalidadeMax: part.vitalidadeMax,
       vontadeMax: part.vontadeMax,
+      fichaCompleta: part.fichaCompleta ? structuredClone(part.fichaCompleta) : null,
       paradas: {
         fisico: part.paradas.fisico,
         social: part.paradas.social,
@@ -875,7 +889,8 @@ function VisaoNarrador({
           []
         ).map((pe) => ({ ...pe })),
       },
-      especiais: (part.especiais ?? []).map((esp) => ({ ...esp })),
+      especiais: (part.especiais ?? []).map(normalizarEspecialAntagonista),
+      recursosSobrenaturais: part.recursosSobrenaturais ? structuredClone(part.recursosSobrenaturais) : undefined,
       notas: part.notas ?? '',
     })
   }
@@ -885,6 +900,7 @@ function VisaoNarrador({
     if (!inimigoEmEdicao) return
     setSalvandoEdicaoInimigo(true)
     try {
+      const perfil = obterPerfilSobrenatural(inimigoEmEdicao)
       await atualizarParticipanteInimigoServer({
         data: {
           participanteId: inimigoEmEdicao.id,
@@ -893,7 +909,10 @@ function VisaoNarrador({
             vitalidadeMax: inimigoEmEdicao.vitalidadeMax,
             vontadeMax: inimigoEmEdicao.vontadeMax,
             paradas: inimigoEmEdicao.paradas,
+            fichaCompleta: inimigoEmEdicao.fichaCompleta,
             especiais: inimigoEmEdicao.especiais,
+            recursosSobrenaturais: perfil.livres || Object.keys(perfil.disciplinas).length
+              ? inimigoEmEdicao.recursosSobrenaturais : null,
             notas: inimigoEmEdicao.notas,
           },
         },
@@ -1093,55 +1112,35 @@ function VisaoNarrador({
   }
 
   async function handleIniciarNovoCombate() {
-    const participantes: ParticipanteCombate[] = []
-
-    for (const pId of selecaoPersonagens) {
-      const char = personagens.find((p) => p.id === pId)
-      if (char) {
-        participantes.push({
-          id: crypto.randomUUID(),
-          tipo: 'personagem',
-          personagemId: char.id,
-          nome: char.nome,
-          ehPdn: char.ehPdn,
-          condicoes: [],
-        })
-      }
-    }
-
-    for (const inimigoInfo of inimigosParaAdicionar) {
-      const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
-      if (modelo) {
-        participantes.push({
-          id: crypto.randomUUID(),
-          tipo: 'inimigo',
-          nome: inimigoInfo.nome,
-          modeloId: modelo.id,
-          categoria: modelo.categoria,
-          vitalidadeMax: modelo.vitalidade,
-          danoVitalidade: { superficial: 0, agravado: 0 },
-          vontadeMax: modelo.vontade,
-          danoVontade: { superficial: 0, agravado: 0 },
-          paradas: {
-            fisico: modelo.paradaFisico,
-            social: modelo.paradaSocial,
-            mental: modelo.paradaMental,
-            excepcionais: modelo.paradasExcepcionais,
-          },
-          especiais: modelo.especiais,
-          notas: modelo.notas,
-          revelarVitalidade: false,
-          condicoes: [],
-        })
-      }
-    }
-
-    if (participantes.length === 0) {
-      toast.error('Selecione pelo menos um participante para iniciar o combate.')
-      return
-    }
-
     try {
+      const participantes: ParticipanteCombate[] = []
+
+      for (const pId of selecaoPersonagens) {
+        const char = personagens.find((p) => p.id === pId)
+        if (char) {
+          participantes.push({
+            id: crypto.randomUUID(),
+            tipo: 'personagem',
+            personagemId: char.id,
+            nome: char.nome,
+            ehPdn: char.ehPdn,
+            condicoes: [],
+          })
+        }
+      }
+
+      for (const inimigoInfo of inimigosParaAdicionar) {
+        const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
+        if (modelo) {
+          participantes.push(criarInimigoDeModelo(modelo, { id: inimigoInfo.id, nome: inimigoInfo.nome }, inimigoInfo.recursos ?? sortearRecursosSobrenaturais(modelo)))
+        }
+      }
+
+      if (participantes.length === 0) {
+        toast.error('Selecione pelo menos um participante para iniciar o combate.')
+        return
+      }
+
       await iniciarCombateServer({ data: { participantes } })
       setDialogNovoCombate(false)
       setSelecaoPersonagens([])
@@ -1196,32 +1195,13 @@ function VisaoNarrador({
               ? nomeInimigoAvulso.trim()
               : `${modelo.nome} #${contagem}`
 
-          const part: ParticipanteInimigo = {
-            id: crypto.randomUUID(),
-            tipo: 'inimigo',
-            nome: nomeFinal,
-            modeloId: modelo.id,
-            categoria: modelo.categoria,
-            vitalidadeMax: modelo.vitalidade,
-            danoVitalidade: { superficial: 0, agravado: 0 },
-            vontadeMax: modelo.vontade,
-            danoVontade: { superficial: 0, agravado: 0 },
-            paradas: {
-              fisico: modelo.paradaFisico,
-              social: modelo.paradaSocial,
-              mental: modelo.paradaMental,
-              excepcionais: modelo.paradasExcepcionais,
-            },
-            especiais: modelo.especiais,
-            notas: modelo.notas,
-            revelarVitalidade: false,
-            condicoes: [],
-          }
+          const part = criarInimigoDeModelo(modelo, { id: crypto.randomUUID(), nome: nomeFinal }, recursosAvulsos[mId] ?? sortearRecursosSobrenaturais(modelo))
           await adicionarParticipanteCombateServer({ data: { participante: part } })
         }
         setDialogAdicionarParticipante(false)
         setModelosAvulsosTemp([])
         setNomeInimigoAvulso('')
+        setRecursosAvulsos({})
         toast.success('Inimigo(s) adicionado(s) ao combate!')
         router.invalidate()
       } catch (err: unknown) {
@@ -1318,6 +1298,7 @@ function VisaoNarrador({
                 size="sm"
                 onClick={() => {
                   setTipoNovoPart('inimigo')
+                  setRecursosAvulsos({})
                   setModelosAvulsosTemp([])
                   setPersonagensAvulsosTemp([])
                   setNomeInimigoAvulso('')
@@ -1344,7 +1325,7 @@ function VisaoNarrador({
             <Swords className="size-12 text-muted-foreground/60 mb-3" />
             <h3 className="font-serif text-2xl font-medium">Nenhum Combate em andamento</h3>
             <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-6">
-              Monte os participantes (Personagens, PdNs e Inimigos do Bestiário) para iniciar a ordem de turnos.
+              Monte os participantes (Personagens, PdNs e Inimigos da lista de Antagonistas) para iniciar a ordem de turnos.
             </p>
             <Button
               onClick={() => {
@@ -1363,6 +1344,7 @@ function VisaoNarrador({
         {combate && (
           <div className="flex flex-col gap-3">
             {participantesAtivos.map((part, index) => {
+              const resumoInimigo = part.tipo === 'inimigo' ? separarDificuldadeGeral(part.notas) : null
               const ehTurnoAtual = combate ? part.id === combate.participantes[combate.turnoAtual]?.id : false
               const ehProximoTurno = combate && proximoIndex !== -1 ? part.id === combate.participantes[proximoIndex]?.id : false
 
@@ -1577,6 +1559,8 @@ function VisaoNarrador({
                         )}
                       </div>
 
+                      {part.tipo === 'inimigo' && (part.recursosSobrenaturais || resumoInimigo?.dificuldade) && <div className="flex flex-wrap items-center gap-2 px-4 py-1"><ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} /><ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} /></div>}
+
                       {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
                       <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
                         <BadgesCondicoes
@@ -1756,7 +1740,10 @@ function VisaoNarrador({
                               </div>
                             </div>
 
-                            {part.paradas && (
+                            {part.fichaCompleta && <ResumoFichaAntagonistaCompleta ficha={part.fichaCompleta} nome={part.nome} />}
+                            <ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} />
+                            <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
+                            {!part.fichaCompleta && part.paradas && (
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1 border-t">
                                 <span>
                                   Físico: <strong className="text-foreground">{part.paradas.fisico}</strong>
@@ -1769,22 +1756,21 @@ function VisaoNarrador({
                                 <span>
                                   Mental: <strong className="text-foreground">{part.paradas.mental}</strong>
                                 </span>
-                                {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).length > 0 && (
-                                  <>
-                                    <span>&bull;</span>
-                                    {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).map((pe, i) => (
-                                      <Badge key={i} variant="outline" className="text-xs">
-                                        {pe.nome}: {pe.valor}
-                                      </Badge>
-                                    ))}
-                                  </>
-                                )}
                               </div>
                             )}
 
-                            {part.notas && (
+                            {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).length > 0 && (
+                              <div className="flex flex-wrap items-center gap-2 border-t pt-1">
+                                <span className="text-xs font-medium text-muted-foreground">Paradas Excepcionais:</span>
+                                {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).map((pe, i) => (
+                                  <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />
+                                ))}
+                              </div>
+                            )}
+
+                            {resumoInimigo?.notas && (
                               <div className="text-xs text-muted-foreground italic">
-                                <VisualizadorMarkdown markdown={part.notas} />
+                                <VisualizadorMarkdown markdown={resumoInimigo.notas} />
                               </div>
                             )}
 
@@ -1978,11 +1964,11 @@ function VisaoNarrador({
             <div className="flex flex-col gap-2">
               <Label className="font-semibold flex items-center gap-1">
                 <Skull className="size-4" />
-                Inimigos a partir do Bestiário
+                Inimigos a partir da lista de Antagonistas
               </Label>
               {modelos.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  Nenhum modelo cadastrado no Bestiário.
+                  Nenhum modelo cadastrado em Antagonistas.
                 </p>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -1990,7 +1976,7 @@ function VisaoNarrador({
                     opcoes={modelos.map((m) => ({
                       valor: m.id ?? '',
                       rotulo: m.nome,
-                      detalhe: `${m.categoria} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
                     }))}
                     valores={modelosTemp}
                     onChange={setModelosTemp}
@@ -2009,6 +1995,7 @@ function VisaoNarrador({
                           const contagem = novosInimigos.filter((i) => i.modeloId === modelo.id).length + 1
                           const nomeSugerido = `${modelo.nome} #${contagem}`
                           novosInimigos.push({
+                            id: crypto.randomUUID(),
                             modeloId: modelo.id,
                             nome: nomeSugerido,
                           })
@@ -2029,24 +2016,23 @@ function VisaoNarrador({
                         const mod = modelos.find((m) => m.id === inimigo.modeloId)
                         return (
                           <div
-                            key={idx}
+                            key={inimigo.id}
                             className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-b-0"
                           >
                             <div className="flex flex-col flex-1 min-w-0">
                               <Input
                                 value={inimigo.nome}
                                 onChange={(e) => {
-                                  const copia = [...inimigosParaAdicionar]
-                                  copia[idx].nome = e.target.value
-                                  setInimigosParaAdicionar(copia)
+                                  setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, nome: e.target.value } : i))
                                 }}
                                 className="h-7 text-xs"
                               />
                               {mod?.categoria && (
                                 <span className="text-xs text-muted-foreground mt-1 ml-1">
-                                  Categoria: <strong className="font-medium text-foreground">{mod.categoria}</strong>
+                                  Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
                                 </span>
                               )}
+                              {mod && <ConfigurarPoderesAntagonista modelo={mod} valor={inimigo.recursos} onChange={recursos => setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, recursos } : i))} />}
                             </div>
                             <Button
                               type="button"
@@ -2101,11 +2087,12 @@ function VisaoNarrador({
                 className="flex-1"
                 onClick={() => {
                   setTipoNovoPart('inimigo')
+                  setRecursosAvulsos({})
                   setModelosAvulsosTemp([])
                   setNomeInimigoAvulso('')
                 }}
               >
-                Inimigo (Bestiário)
+                Inimigo (Antagonistas)
               </Button>
               <Button
                 type="button"
@@ -2124,12 +2111,12 @@ function VisaoNarrador({
             {tipoNovoPart === 'inimigo' ? (
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
-                  <Label>Modelo(s) do Bestiário</Label>
+                  <Label>Modelo(s) da lista de Antagonistas</Label>
                   <SelectMultiplo
                     opcoes={modelos.map((m) => ({
                       valor: m.id ?? '',
                       rotulo: m.nome,
-                      detalhe: `${m.categoria} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
                     }))}
                     valores={modelosAvulsosTemp}
                     onChange={(vals) => {
@@ -2142,6 +2129,13 @@ function VisaoNarrador({
                     placeholder="Selecionar modelo(s)..."
                   />
                 </div>
+                {modelosAvulsosTemp.map(mId => {
+                  const modelo = modelos.find(m => m.id === mId)
+                  return modelo ? <div key={mId} className="flex flex-col items-start gap-1">
+                    {modelosAvulsosTemp.length > 1 && <span className="text-xs text-muted-foreground">{modelo.nome}</span>}
+                    <ConfigurarPoderesAntagonista modelo={modelo} valor={recursosAvulsos[mId]} onChange={recursos => setRecursosAvulsos({ ...recursosAvulsos, [mId]: recursos })} />
+                  </div> : null
+                })}
                 {modelosAvulsosTemp.length === 1 && (
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
@@ -2150,7 +2144,7 @@ function VisaoNarrador({
                         const mod = modelos.find((m) => m.id === modelosAvulsosTemp[0])
                         return mod ? (
                           <span className="text-xs text-muted-foreground">
-                            Categoria: <strong className="font-medium text-foreground">{mod.categoria}</strong>
+                            Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
                           </span>
                         ) : null
                       })()}
@@ -2243,7 +2237,7 @@ function VisaoNarrador({
                   Editar Inimigo no Combate
                 </DialogTitle>
                 <DialogDescription>
-                  Customizações feitas aqui afetam apenas este combate, sem alterar o Modelo original do Bestiário.
+                  Customizações feitas aqui afetam apenas este combate, sem alterar o Modelo original da lista de Antagonistas.
                 </DialogDescription>
               </DialogHeader>
 
@@ -2261,14 +2255,17 @@ function VisaoNarrador({
                   />
                 </div>
 
+                {inimigoEmEdicao.fichaCompleta ? (
+                  <EditorFichaAntagonistaCompleta ficha={inimigoEmEdicao.fichaCompleta} onChange={(fichaCompleta) => setInimigoEmEdicao({ ...inimigoEmEdicao, fichaCompleta })} />
+                ) : (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="inst-fisico">Físico</Label>
                     <InputNumero
                       id="inst-fisico"
-                      min={1}
+                      min={0}
                       max={15}
-                      value={inimigoEmEdicao.paradas.fisico}
+                      value={inimigoEmEdicao.paradas.fisico ?? 0}
                       onChange={(val) =>
                         setInimigoEmEdicao({
                           ...inimigoEmEdicao,
@@ -2285,9 +2282,9 @@ function VisaoNarrador({
                     <Label htmlFor="inst-social">Social</Label>
                     <InputNumero
                       id="inst-social"
-                      min={1}
+                      min={0}
                       max={15}
-                      value={inimigoEmEdicao.paradas.social}
+                      value={inimigoEmEdicao.paradas.social ?? 0}
                       onChange={(val) =>
                         setInimigoEmEdicao({
                           ...inimigoEmEdicao,
@@ -2304,9 +2301,9 @@ function VisaoNarrador({
                     <Label htmlFor="inst-mental">Mental</Label>
                     <InputNumero
                       id="inst-mental"
-                      min={1}
+                      min={0}
                       max={15}
-                      value={inimigoEmEdicao.paradas.mental}
+                      value={inimigoEmEdicao.paradas.mental ?? 0}
                       onChange={(val) =>
                         setInimigoEmEdicao({
                           ...inimigoEmEdicao,
@@ -2320,6 +2317,9 @@ function VisaoNarrador({
                     />
                   </div>
                 </div>
+
+
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
@@ -2486,6 +2486,7 @@ function VisaoNarrador({
                           variant="ghost"
                           size="icon"
                           className="size-8 text-destructive hover:text-destructive"
+                          aria-label={`Remover Especial ${esp.nome}`}
                           onClick={() => {
                             const copia = inimigoEmEdicao.especiais.filter((_, i) => i !== idx)
                             setInimigoEmEdicao({ ...inimigoEmEdicao, especiais: copia })
@@ -2494,6 +2495,11 @@ function VisaoNarrador({
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
+                      <RegraEspecialAntagonista regra={esp.regra} onChange={regra => {
+                        const copia = [...inimigoEmEdicao.especiais]
+                        copia[idx] = { ...copia[idx], regra }
+                        setInimigoEmEdicao({ ...inimigoEmEdicao, especiais: copia })
+                      }} />
                       <EditorRichText
                         placeholder="Descrição ou regras do Especial (suporta Markdown)..."
                         rows={3}
@@ -2507,6 +2513,9 @@ function VisaoNarrador({
                     </div>
                   ))}
                 </div>
+
+                <ConfigurarPoderesAntagonista modelo={inimigoEmEdicao} valor={inimigoEmEdicao.recursosSobrenaturais} aoSalvar
+                  onChange={recursosSobrenaturais => setInimigoEmEdicao({ ...inimigoEmEdicao, recursosSobrenaturais })} />
 
                 {/* Notas */}
                 <div className="flex flex-col gap-2">

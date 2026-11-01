@@ -3,6 +3,7 @@ import { getRequestHeaders } from '@tanstack/react-start/server'
 
 import type { Papel } from '#/domain/acesso'
 import { auth } from '#/lib/auth'
+import { limitarUsuario, respostaLimite } from './limites'
 
 export type Usuario = {
   id: string
@@ -35,6 +36,8 @@ export const exigirNarrador = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     const usuario = await lerUsuario()
     if (usuario?.papel !== 'narrador') throw new Error('Acesso negado')
+    const espera = limitarUsuario(usuario.id)
+    if (espera) throw respostaLimite(espera)
     return next({ context: { usuario } })
   },
 )
@@ -43,6 +46,8 @@ export const exigirUsuario = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     const usuario = await lerUsuario()
     if (!usuario) throw new Error('Acesso negado')
+    const espera = limitarUsuario(usuario.id)
+    if (espera) throw respostaLimite(espera)
     return next({ context: { usuario } })
   },
 )

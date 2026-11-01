@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { identificadorSchema, LIMITE_ITENS, nomeSchema, textoLongoSchema } from '#/domain/limites-entrada'
 
 import { db } from '#/db'
 import {
@@ -24,8 +25,13 @@ import { exigirNarrador } from '#/server/sessao'
 
 export const sortearRessonanciaServer = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .handler(async () => {
-    return sortearRessonancia()
+  .validator(
+    z.object({
+      tipoRessonancia: z.enum(['colerico', 'melancolico', 'fleumatico', 'sanguineo']).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    return sortearRessonancia(Math.random, undefined, data.tipoRessonancia)
   })
 
 export const sortearDiscrasiaServer = createServerFn({ method: 'POST' })
@@ -44,7 +50,7 @@ export const sortearCompulsaoServer = createServerFn({ method: 'POST' })
   .validator(
     z.object({
       tipo: z.enum(['geral', 'cla']),
-      claId: z.string().optional(),
+      claId: identificadorSchema.optional(),
     }),
   )
   .handler(async ({ data }: { data: { tipo: 'geral' | 'cla'; claId?: string } }) => {
@@ -57,28 +63,28 @@ export const aplicarRessonanciaPersonagemServer = createServerFn({ method: 'POST
     z.object({
       personagemId: z.string().uuid(),
       ressonancia: z.object({
-        tipo: z.string(),
-        intensidade: z.string(),
+        tipo: identificadorSchema,
+        intensidade: identificadorSchema,
         discrasia: z
           .object({
-            nome: z.string(),
-            descricao: z.string(),
+            nome: nomeSchema,
+            descricao: textoLongoSchema,
           })
           .optional()
           .nullable(),
         manifestacaoSangueFraco: z
           .object({
-            disciplinaId: z.string().optional(),
-            disciplinaNome: z.string(),
+            disciplinaId: identificadorSchema.optional(),
+            disciplinaNome: nomeSchema,
             nivel: z.number(),
             poderes: z.array(
               z.object({
-                id: z.string().optional(),
-                nome: z.string(),
+                id: identificadorSchema.optional(),
+                nome: nomeSchema,
                 nivel: z.number(),
-                descricao: z.string(),
+                descricao: textoLongoSchema,
               }),
-            ),
+            ).max(LIMITE_ITENS),
           })
           .optional()
           .nullable(),
@@ -153,8 +159,8 @@ export const aplicarCompulsaoPersonagemServer = createServerFn({ method: 'POST' 
       personagemId: z.string().uuid(),
       compulsao: z.object({
         tipo: z.enum(['geral', 'cla']),
-        nome: z.string(),
-        descricao: z.string(),
+        nome: nomeSchema,
+        descricao: textoLongoSchema,
       }),
     }),
   )

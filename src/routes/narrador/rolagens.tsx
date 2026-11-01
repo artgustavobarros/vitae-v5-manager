@@ -20,6 +20,7 @@ import {
 import { Label } from '#/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { CLAS } from '#/domain/ficha'
+import { RESSONANCIAS } from '#/domain/sorteios'
 import type {
   CompulsaoSorteada,
   Discrasia,
@@ -54,6 +55,7 @@ function PaginaSorteios() {
   const router = useRouter()
 
   // Estados dos Sorteios
+  const [tipoRessonancia, setTipoRessonancia] = useState<TipoRessonancia | 'aleatorio'>('aleatorio')
   const [resultadoRessonancia, setResultadoRessonancia] = useState<ResultadoRessonancia | null>(null)
   const [sorteandoRessonancia, setSorteandoRessonancia] = useState(false)
 
@@ -89,7 +91,8 @@ function PaginaSorteios() {
   async function handleSortearRessonancia() {
     setSorteandoRessonancia(true)
     try {
-      const res = await sortearRessonanciaServer()
+      const tipo = tipoRessonancia === 'aleatorio' ? undefined : tipoRessonancia
+      const res = await sortearRessonanciaServer({ data: { tipoRessonancia: tipo } })
       setResultadoRessonancia(res)
     } finally {
       setSorteandoRessonancia(false)
@@ -233,18 +236,33 @@ function PaginaSorteios() {
                   Rolagem de Ressonância
                 </CardTitle>
                 <CardDescription>
-                  Rola tipo e intensidade (d10). Se resultar em Aguda (10), confere Discrasia. Para Sangue-Fraco, manifesta Disciplina e Poderes temporários.
+                  Escolha o tipo ou deixe aleatório e role a intensidade (d10). Se resultar em Aguda (10), confere Discrasia. Para Sangue-Fraco, manifesta Disciplina e Poderes temporários.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
-                <Button
-                  onClick={handleSortearRessonancia}
-                  disabled={sorteandoRessonancia}
-                  className="w-full sm:w-auto gap-2"
-                >
-                  <Dices className="size-4" />
-                  {sorteandoRessonancia ? 'Rolando...' : 'Rolar Ressonância'}
-                </Button>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="flex w-full flex-col gap-2 sm:w-56">
+                    <Label htmlFor="tipo-ressonancia">Tipo de Ressonância</Label>
+                    <Combobox
+                      id="tipo-ressonancia"
+                      opcoes={[
+                        { valor: 'aleatorio', rotulo: 'Aleatório' },
+                        ...RESSONANCIAS.map((r) => ({ valor: r.id, rotulo: r.nome })),
+                      ]}
+                      valor={tipoRessonancia}
+                      onChange={(valor) => setTipoRessonancia(valor as TipoRessonancia | 'aleatorio')}
+                      disabled={sorteandoRessonancia}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSortearRessonancia}
+                    disabled={sorteandoRessonancia}
+                    className="w-full gap-2 sm:w-auto sm:max-w-56"
+                  >
+                    <Dices className="size-4" />
+                    {sorteandoRessonancia ? 'Rolando...' : 'Rolar Ressonância'}
+                  </Button>
+                </div>
 
                 {resultadoRessonancia && (
                   <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">

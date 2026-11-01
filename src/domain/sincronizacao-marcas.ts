@@ -1,10 +1,11 @@
 import { z } from 'zod'
 
 import { marcasSchema, type Marcas } from './ficha'
+import { identificadorSchema } from './limites-entrada'
 
 export const alteracaoMarcasSchema = z.object({
   operacaoId: z.uuid(),
-  usuarioId: z.string().min(1),
+  usuarioId: identificadorSchema,
   id: z.uuid(),
   base: marcasSchema.strict(),
   marcas: marcasSchema.partial().strict().refine((marcas) => {

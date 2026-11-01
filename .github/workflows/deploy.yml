@@ -41,6 +41,9 @@ jobs:
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
 
+      - name: Verificar vulnerabilidades nas dependências
+        run: pnpm audit --audit-level moderate
+
       - name: Aplicar migrations
         run: pnpm db:migrate
 
@@ -75,24 +78,33 @@ jobs:
           HOSTINGER_VM_ID: ${{ secrets.HOSTINGER_VM_ID }}
           APP_HOST: ${{ secrets.APP_HOST }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          APP_DATABASE_PASSWORD: ${{ secrets.APP_DATABASE_PASSWORD }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           NARRADOR_EMAIL: ${{ secrets.NARRADOR_EMAIL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           missing=0
-          for name in HOSTINGER_API_KEY HOSTINGER_VM_ID APP_HOST POSTGRES_PASSWORD BETTER_AUTH_SECRET NARRADOR_EMAIL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+          for name in HOSTINGER_API_KEY HOSTINGER_VM_ID APP_HOST POSTGRES_PASSWORD APP_DATABASE_PASSWORD BETTER_AUTH_SECRET NARRADOR_EMAIL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
             if [ -z "${!name}" ]; then
               echo "::error::Falta o secret $name em Settings → Secrets and variables → Actions"
               missing=1
             fi
           done
-          for name in POSTGRES_PASSWORD; do
+          for name in POSTGRES_PASSWORD APP_DATABASE_PASSWORD; do
             if [ -n "${!name}" ] && ! [[ "${!name}" =~ ^[A-Za-z0-9]+$ ]]; then
               echo "::error::$name deve conter só letras e números (gere com: openssl rand -hex 32)"
               missing=1
             fi
           done
+          if [ -n "$APP_DATABASE_PASSWORD" ] && [ "${#APP_DATABASE_PASSWORD}" -lt 32 ]; then
+            echo "::error::APP_DATABASE_PASSWORD precisa ter pelo menos 32 caracteres"
+            missing=1
+          fi
+          if [ -n "$APP_DATABASE_PASSWORD" ] && [ "$APP_DATABASE_PASSWORD" = "$POSTGRES_PASSWORD" ]; then
+            echo "::error::APP_DATABASE_PASSWORD deve ser diferente de POSTGRES_PASSWORD"
+            missing=1
+          fi
           exit "$missing"
 
       - name: Deploy no VPS
@@ -105,6 +117,7 @@ jobs:
           environment-variables: |
             APP_HOST=${{ secrets.APP_HOST }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            APP_DATABASE_PASSWORD=${{ secrets.APP_DATABASE_PASSWORD }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
             NARRADOR_EMAIL=${{ secrets.NARRADOR_EMAIL }}
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}

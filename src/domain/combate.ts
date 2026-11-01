@@ -1,4 +1,10 @@
+import { etiquetasAntagonistaSchema } from './classificacao-antagonistas'
+import { recursosSobrenaturaisSchema, validarSelecaoParaModelo, type RecursosSobrenaturais } from './poderes-antagonista'
 import { z } from 'zod'
+
+import { especialBaseSchema, normalizarEspecialAntagonista, modeloAntagonistaSchema, type ModeloAntagonista } from './bestiario'
+import { fichaAntagonistaCompletaSchema } from './ficha-antagonista'
+import { identificadorSchema, LIMITE_ITENS, nomeSchema, textoLongoSchema } from './limites-entrada'
 
 import type { Dano } from './trilhas'
 
@@ -8,14 +14,11 @@ export const danoTrilhaSchema = z.object({
 })
 
 export const paradaExcepcionalCombateSchema = z.object({
-  nome: z.string(),
+  nome: nomeSchema,
   valor: z.int(),
 })
 
-export const especialCombateSchema = z.object({
-  nome: z.string(),
-  descricao: z.string().default(''),
-})
+export const especialCombateSchema = especialBaseSchema.transform(normalizarEspecialAntagonista)
 
 export type EspecialCombate = z.infer<typeof especialCombateSchema>
 
@@ -249,35 +252,53 @@ export function calcularEstadoSaude(
 }
 
 export const participanteInimigoSchema = z.object({
-  id: z.string(),
+  id: identificadorSchema,
   tipo: z.literal('inimigo'),
-  nome: z.string(),
+  nome: nomeSchema,
   modeloId: z.string().uuid().nullable().optional(),
-  categoria: z.string().optional(),
+  fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
+  recursosSobrenaturais: recursosSobrenaturaisSchema.optional(),
+  categoria: nomeSchema.optional(),
+  etiquetas: etiquetasAntagonistaSchema.optional(),
   vitalidadeMax: z.int().min(1),
   danoVitalidade: danoTrilhaSchema,
   vontadeMax: z.int().min(1),
   danoVontade: danoTrilhaSchema,
   paradas: z.object({
-    fisico: z.int(),
-    social: z.int(),
-    mental: z.int(),
-    excepcionais: z.array(paradaExcepcionalCombateSchema).default([]),
-    especiais: z.array(paradaExcepcionalCombateSchema).optional(),
+    fisico: z.int().min(0).nullable(),
+    social: z.int().min(0).nullable(),
+    mental: z.int().min(0).nullable(),
+    excepcionais: z.array(paradaExcepcionalCombateSchema).max(LIMITE_ITENS).default([]),
+    especiais: z.array(paradaExcepcionalCombateSchema).max(LIMITE_ITENS).optional(),
   }),
-  especiais: z.array(especialCombateSchema).default([]),
-  notas: z.string().default(''),
+  especiais: z.array(especialCombateSchema).max(LIMITE_ITENS).default([]),
+  notas: textoLongoSchema.default(''),
   revelarVitalidade: z.boolean().default(false),
-  condicoes: z.array(z.string()).default([]),
-})
+  condicoes: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
+}).refine((inimigo) => {
+  const valores = [inimigo.paradas.fisico, inimigo.paradas.social, inimigo.paradas.mental]
+  return inimigo.fichaCompleta ? valores.every((v) => v === null) : valores.every((v) => v !== null)
+}, { message: 'Use paradas gerais na ficha simplificada ou Atributos e Habilidades na ficha completa.', path: ['paradas'] })
+
+export function criarInimigoDeModelo(entrada: ModeloAntagonista, identidade: { id: string; nome: string }, recursos?: RecursosSobrenaturais): ParticipanteInimigo {
+  const modelo = modeloAntagonistaSchema.parse(entrada)
+  return participanteInimigoSchema.parse(structuredClone({
+    ...identidade, tipo: 'inimigo', modeloId: modelo.id, categoria: modelo.categoria, etiquetas: modelo.etiquetas ?? [],
+    vitalidadeMax: modelo.vitalidade, vontadeMax: modelo.vontade,
+    danoVitalidade: { superficial: 0, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 },
+    paradas: { fisico: modelo.paradaFisico, social: modelo.paradaSocial, mental: modelo.paradaMental, excepcionais: modelo.paradasExcepcionais },
+    fichaCompleta: modelo.fichaCompleta, especiais: modelo.especiais, notas: modelo.notas,
+    ...(recursos ? { recursosSobrenaturais: validarSelecaoParaModelo(modelo, recursos) } : {}),
+  }))
+}
 
 export const participantePersonagemSchema = z.object({
-  id: z.string(),
+  id: identificadorSchema,
   tipo: z.literal('personagem'),
-  nome: z.string(),
+  nome: nomeSchema,
   personagemId: z.string().uuid(),
   ehPdn: z.boolean().default(false),
-  condicoes: z.array(z.string()).default([]),
+  condicoes: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
 })
 
 export const participanteCombateSchema = z.discriminatedUnion('tipo', [
@@ -297,7 +318,7 @@ export const combateSchema = z.object({
   id: z.string().uuid(),
   rodada: z.int().min(1).default(1),
   turnoAtual: z.int().min(0).default(0),
-  participantes: z.array(participanteCombateSchema).default([]),
+  participantes: z.array(participanteCombateSchema).max(LIMITE_ITENS).default([]),
   ativo: z.boolean().default(true),
 })
 
@@ -593,20 +614,22 @@ export function alternarCondicaoParticipante(
 }
 
 export const atualizacaoInimigoSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório').optional(),
+  nome: nomeSchema.min(1, 'Nome é obrigatório').optional(),
   vitalidadeMax: z.int().min(1).optional(),
   vontadeMax: z.int().min(1).optional(),
   paradas: z
     .object({
-      fisico: z.int().min(1),
-      social: z.int().min(1),
-      mental: z.int().min(1),
-      excepcionais: z.array(paradaExcepcionalCombateSchema).default([]),
-      especiais: z.array(paradaExcepcionalCombateSchema).optional(),
+      fisico: z.int().min(0).nullable(),
+      social: z.int().min(0).nullable(),
+      mental: z.int().min(0).nullable(),
+      excepcionais: z.array(paradaExcepcionalCombateSchema).max(LIMITE_ITENS).default([]),
+      especiais: z.array(paradaExcepcionalCombateSchema).max(LIMITE_ITENS).optional(),
     })
     .optional(),
-  especiais: z.array(especialCombateSchema).optional(),
-  notas: z.string().optional(),
+  fichaCompleta: fichaAntagonistaCompletaSchema.nullish(),
+  recursosSobrenaturais: recursosSobrenaturaisSchema.nullish(),
+  especiais: z.array(especialCombateSchema).max(LIMITE_ITENS).optional(),
+  notas: textoLongoSchema.optional(),
 })
 
 export type AtualizacaoInimigo = z.infer<typeof atualizacaoInimigoSchema>
@@ -621,12 +644,20 @@ export function atualizarParticipanteInimigo(
 
     const novo: ParticipanteInimigo = {
       ...p,
+      ...(atualizacao.fichaCompleta !== undefined ? { fichaCompleta: atualizacao.fichaCompleta } : {}),
       ...(atualizacao.nome !== undefined ? { nome: atualizacao.nome } : {}),
       ...(atualizacao.paradas !== undefined ? { paradas: atualizacao.paradas } : {}),
       ...(atualizacao.especiais !== undefined ? { especiais: atualizacao.especiais } : {}),
       ...(atualizacao.notas !== undefined ? { notas: atualizacao.notas } : {}),
       ...(atualizacao.vitalidadeMax !== undefined ? { vitalidadeMax: atualizacao.vitalidadeMax } : {}),
       ...(atualizacao.vontadeMax !== undefined ? { vontadeMax: atualizacao.vontadeMax } : {}),
+    }
+
+    if (atualizacao.recursosSobrenaturais === null) delete novo.recursosSobrenaturais
+    else if (atualizacao.recursosSobrenaturais !== undefined) novo.recursosSobrenaturais = atualizacao.recursosSobrenaturais
+    if (novo.recursosSobrenaturais) {
+      try { validarSelecaoParaModelo(novo, novo.recursosSobrenaturais) }
+      catch { throw new Error('As Disciplinas ou os Especiais mudaram. Configure os poderes do Inimigo antes de salvar.') }
     }
 
     if (atualizacao.vitalidadeMax !== undefined) {
@@ -636,7 +667,7 @@ export function atualizarParticipanteInimigo(
       novo.danoVontade = cortarDano(novo.danoVontade, novo.vontadeMax)
     }
 
-    return novo
+    return participanteInimigoSchema.parse(novo)
   })
 
   return {

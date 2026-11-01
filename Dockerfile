@@ -24,7 +24,8 @@ COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/drizzle ./drizzle
 COPY --from=build --chown=node:node /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/scripts/preparar-banco.ts ./scripts/preparar-banco.ts
 
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && exec node .output/server/index.mjs"]
+CMD ["node", ".output/server/index.mjs"]

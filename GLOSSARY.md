@@ -66,9 +66,9 @@ _Avoid_: Ficha desbloqueada, modo edição, gastar XP
 Anotação livre que só o Jogador escreve na Ficha do próprio Personagem; o Narrador lê, a menos que o Jogador marque a Nota como privada.
 _Avoid_: Observação, comentário, diário
 
-**Bestiário**:
-Coleção de inimigos criada pelo Narrador; nenhum Jogador tem acesso a ela.
-_Avoid_: Monstruário, lista de NPCs
+**Antagonistas**:
+Coleção de Modelos de inimigos criada pelo Narrador; nenhum Jogador tem acesso a ela.
+_Avoid_: Bestiário, Monstruário, lista de NPCs
 
 ## Combate
 
@@ -77,8 +77,24 @@ Cena de conflito conduzida pelo Narrador, com ordem de turnos manual; só existe
 _Avoid_: Encontro, luta, batalha
 
 **Modelo**:
-Entrada do Bestiário que descreve um tipo de inimigo com a ficha simplificada de antagonista.
+Entrada da lista de Antagonistas que descreve um tipo de antagonista com Ficha Simplificada ou Ficha Completa de Antagonista.
 _Avoid_: Template, monstro, ficha de inimigo
+
+**Tipo de Antagonista**:
+Natureza geral de um Modelo, como Vampiro, Carniçal, Mortal ou Animal. Um Modelo tem um único tipo. Outras criaturas reúne seres como Espectro, Fada, Mago e Lobisomem.
+
+**Etiqueta de Antagonista**:
+Marcador opcional que detalha um Modelo, como Sabá ou Ataque. Um Modelo pode ter várias Etiquetas.
+_Avoid_: Tipo especial, categoria composta
+
+**Ficha Simplificada**:
+Formato de Modelo de antagonista com paradas gerais Físico, Social e Mental, Paradas Excepcionais, Vitalidade, Força de Vontade e Especiais.
+
+**Ficha Completa de Antagonista**:
+Formato de Modelo com Atributos, Habilidades e Disciplinas individuais, além de Vitalidade, Força de Vontade e Especiais; pode informar Humanidade, Potência do Sangue e Fome. Suas ações usam as características individuais, sem substituir valores ausentes por paradas gerais.
+
+**Dificuldade Geral**:
+Quantidade de sucessos usada como oposição fixa para um Antagonista. Pode ser um valor único ou um par: o primeiro vale nas áreas em que ele se destaca; o segundo, nos demais testes.
 
 **Paradas Excepcionais**:
 Paradas de dados específicas de um Modelo de antagonista fora das paradas gerais Físico, Social e Mental (ex.: Armas de Fogo, Furtividade).

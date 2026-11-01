@@ -6,6 +6,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 - Uma única Crônica, jogada presencialmente, com uso principal no celular.
 - Interface somente em PT-BR. Sem modo offline.
+- A barra de navegação fica visível no topo da página, recolhe ao rolar para baixo e reaparece ao rolar para cima, sem deslocar o conteúdo. A transição é curta e respeita movimento reduzido; foco de teclado e menus abertos mantêm a navegação disponível.
 - Um único Narrador, que entra com Google.
 - Jogadores entram por Convite para a Crônica:
   - é um link só para a mesa, que o Narrador envia como quiser; não precisa de e-mail;
@@ -124,11 +125,13 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 ## Combate
 
-- O Bestiário é privado do Narrador e guarda Modelos com a ficha simplificada de antagonista do V5: paradas Físico, Social e Mental, paradas excepcionais, Vitalidade, Força de Vontade, Especiais e notas.
+- O Antagonistas é privado do Narrador e guarda Modelos com Ficha Simplificada (paradas Físico, Social e Mental) ou Ficha Completa de Antagonista (Atributos, Habilidades e Disciplinas individuais). Ambos guardam Vitalidade, Força de Vontade, Paradas Excepcionais, Especiais e notas; a Ficha Completa pode informar Humanidade, Potência do Sangue e Fome. O Inimigo no Combate mantém uma cópia independente desses dados.
 - No Combate entram:
   - Personagens;
   - PdNs;
   - Inimigos criados a partir de Modelos, cada um com Vitalidade e Força de Vontade próprias.
+- Os Modelos de Antagonistas têm um Tipo geral (Vampiro, Carniçal, Mortal, Animal, etc.) e Etiquetas livres, como Sabá e Ataque. O filtro principal mostra os Tipos; ao escolher um Tipo, aparecem suas Etiquetas para refinar a busca. Várias Etiquetas selecionadas exigem que o Modelo tenha todas elas. Trocar o Tipo limpa as Etiquetas selecionadas.
+- Ao adicionar um Antagonista ao Combate, o Narrador pode sortear ou escolher seus poderes de Disciplina, Rituais, Cerimônias e Fórmulas. Cada Inimigo guarda sua própria seleção; o Modelo não muda. A escolha respeita nível, quantidade de poderes, amálgamas e dependências entre itens. Condições de Clã, origem ou preparo exigem confirmação explícita do Narrador. A quantidade de Rituais, Cerimônias e Fórmulas é definida pelo Narrador.
 - A ordem de turnos é manual (arrastar), com destaque de quem está agindo e contador de Rodadas.
 - Os Jogadores veem a ordem e os Inimigos. Veem a Vitalidade de um Inimigo só se o Narrador liberar.
 - Os valores da Condição dos Personagens no Combate seguem as mesmas regras de compartilhamento. As tags de saúde e de condições/debuffs permanecem públicas, por decisão do Narrador, mesmo quando os valores estão ocultos.
@@ -137,7 +140,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 ## Sorteios
 
 - O Narrador aperta um botão e recebe o resultado na hora, sem dados visíveis. Há três Sorteios:
-  - **Ressonância**: sorteia tipo e intensidade. Se der Aguda, sorteia também a Discrasia.
+  - **Ressonância**: o Narrador pode escolher o tipo ou deixá-lo aleatório; a intensidade é sorteada. Se der Aguda, sorteia também a Discrasia do tipo escolhido.
   - **Discrasia avulsa**: por tipo de Ressonância escolhido ou de qualquer tipo.
   - **Compulsão**: geral ou de clã.
 - O Narrador pode aplicar o resultado a um Personagem, que passa a ter Ressonância Atual ou Compulsão Ativa até o Narrador encerrar. Se não aplicar, só o Narrador vê.

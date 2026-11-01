@@ -3,6 +3,7 @@ import { randomInt } from 'node:crypto'
 import { createServerFn } from '@tanstack/react-start'
 import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { identificadorSchema } from '#/domain/limites-entrada'
 
 import { db } from '#/db'
 import { account, personagem, session, user } from '#/db/schema'
@@ -70,7 +71,7 @@ const ALFABETO = 'abcdefghjkmnpqrstuvwxyz23456789'
 /** O Narrador gera uma senha nova para um Jogador que esqueceu a dele; as sessões abertas caem. */
 export const gerarSenhaNova = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(z.object({ userId: z.string().min(1) }))
+  .validator(z.object({ userId: identificadorSchema }))
   .handler(async ({ data }) => {
     const jogador = await db.query.user.findFirst({ where: eq(user.id, data.userId) })
     const credencial = await buscarCredencial(data.userId)
@@ -88,7 +89,7 @@ export const gerarSenhaNova = createServerFn({ method: 'POST' })
 /** Remove o Jogador da Crônica: os Personagens dele passam para o Narrador e a conta é apagada. */
 export const removerJogador = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])
-  .validator(z.object({ userId: z.string().min(1) }))
+  .validator(z.object({ userId: identificadorSchema }))
   .handler(({ data, context }) =>
     db.transaction(async (tx) => {
       const [alvo] = await tx.select({ papel: user.papel }).from(user).where(eq(user.id, data.userId))
