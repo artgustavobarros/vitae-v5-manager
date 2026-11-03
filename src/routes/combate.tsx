@@ -823,7 +823,6 @@ function VisaoNarrador({
   const [inimigosParaAdicionar, setInimigosParaAdicionar] = useState<
     Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
   >([])
-  const [personagensTemp, setPersonagensTemp] = useState<string[]>([])
   const [modelosTemp, setModelosTemp] = useState<string[]>([])
 
   const [tipoNovoPart, setTipoNovoPart] = useState<'personagem' | 'inimigo'>('inimigo')
@@ -1126,7 +1125,21 @@ function VisaoNarrador({
         }
       }
 
-      for (const inimigoInfo of inimigosParaAdicionar) {
+      const inimigosFinais = [...inimigosParaAdicionar]
+      for (const mId of modelosTemp) {
+        const modelo = modelos.find((m) => m.id === mId)
+        if (modelo && modelo.id) {
+          const contagem = inimigosFinais.filter((i) => i.modeloId === modelo.id).length + 1
+          const nomeSugerido = `${modelo.nome} #${contagem}`
+          inimigosFinais.push({
+            id: crypto.randomUUID(),
+            modeloId: modelo.id,
+            nome: nomeSugerido,
+          })
+        }
+      }
+
+      for (const inimigoInfo of inimigosFinais) {
         const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
         if (modelo) {
           participantes.push(criarInimigoDeModelo(modelo, { id: inimigoInfo.id, nome: inimigoInfo.nome }, inimigoInfo.recursos ?? sortearRecursosSobrenaturais(modelo)))
@@ -1142,6 +1155,7 @@ function VisaoNarrador({
       setDialogNovoCombate(false)
       setSelecaoPersonagens([])
       setInimigosParaAdicionar([])
+      setModelosTemp([])
       toast.success('Combate iniciado!')
       router.invalidate()
     } catch (err: unknown) {
@@ -1249,7 +1263,6 @@ function VisaoNarrador({
                 onClick={() => {
                   setSelecaoPersonagens([])
                   setInimigosParaAdicionar([])
-                  setPersonagensTemp([])
                   setModelosTemp([])
                   setDialogNovoCombate(true)
                 }}
@@ -1907,29 +1920,11 @@ function VisaoNarrador({
                   valor: p.id,
                   rotulo: p.nome || '(Sem nome)',
                   detalhe: rotuloOrigemPersonagem(p) ?? undefined,
-                  desabilitado: selecaoPersonagens.includes(p.id),
                 }))}
-                valores={personagensTemp}
-                onChange={setPersonagensTemp}
+                valores={selecaoPersonagens}
+                onChange={setSelecaoPersonagens}
                 placeholder="Selecionar personagens..."
               />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={personagensTemp.length === 0}
-                onClick={() => {
-                  setSelecaoPersonagens([
-                    ...selecaoPersonagens,
-                    ...personagensTemp.filter((id) => !selecaoPersonagens.includes(id)),
-                  ])
-                  setPersonagensTemp([])
-                }}
-                className="self-start gap-1"
-              >
-                <Plus className="size-4" />
-                Adicionar {personagensTemp.length > 0 ? `(${personagensTemp.length})` : ''}
-              </Button>
 
               {selecaoPersonagens.length > 0 && (
                 <div className="flex flex-col gap-1 border rounded-md p-2 max-h-40 overflow-y-auto">
