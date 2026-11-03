@@ -54,7 +54,7 @@ const GERACOES = Array.from(
   (_, i) => FAIXAS.geracao.min + i,
 )
 
-export type ValoresFormulario = { nome: string; ficha: Ficha }
+export type ValoresFormulario = { nome: string; jogadorNome?: string | null; ficha: Ficha }
 
 /** Especializações digitadas como "Gatos, Cavalos" viram ["Gatos", "Cavalos"]. */
 function lerEspecializacoes(texto: string): string[] {
@@ -67,6 +67,7 @@ function lerEspecializacoes(texto: string): string[] {
 /** Estado de edição compartilhado pelo formulário inteiro e pelo wizard de criação. */
 export function useEdicaoFicha(inicial: ValoresFormulario) {
   const [nome, setNome] = useState(inicial.nome)
+  const [jogadorNome, setJogadorNome] = useState(inicial.jogadorNome ?? '')
   const [ficha, setFicha] = useState(inicial.ficha)
   // Texto cru das Especializações, para a vírgula não sumir enquanto se digita.
   const [especializacoes, setEspecializacoes] = useState(
@@ -87,10 +88,14 @@ export function useEdicaoFicha(inicial: ValoresFormulario) {
         return [h.id, { valor, especializacoes: valor > 0 ? lerEspecializacoes(especializacoes[h.id]) : [] }]
       }),
     ) as Ficha['habilidades']
-    return { nome: nome.trim(), ficha: { ...ficha, habilidades } }
+    return {
+      nome: nome.trim(),
+      jogadorNome: jogadorNome.trim() || null,
+      ficha: { ...ficha, habilidades },
+    }
   }
 
-  return { nome, setNome, ficha, mudar, especializacoes, setEspecializacoes, valores }
+  return { nome, setNome, jogadorNome, setJogadorNome, ficha, mudar, especializacoes, setEspecializacoes, valores }
 }
 
 export type EdicaoFicha = ReturnType<typeof useEdicaoFicha>
@@ -164,7 +169,7 @@ export function CamposIdentidade({
   podeAlterarCla?: boolean
   opcoesCronica?: OpcoesCriacaoCronica
 }) {
-  const { nome, setNome, ficha, mudar } = edicao
+  const { nome, setNome, jogadorNome, setJogadorNome, ficha, mudar } = edicao
   const clas = regrasCriacao
     ? CLAS.filter((c) => {
         if (opcoesCronica) {
@@ -183,9 +188,18 @@ export function CamposIdentidade({
   const geracoes = regrasCriacao || !podeAlterarCla ? geracoesPermitidas(ficha.cla) : GERACOES
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Campo id="nome" rotulo="Nome">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Campo id="nome" rotulo="Nome do Personagem">
           <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
+        </Campo>
+        <Campo id="jogadorNome" rotulo="Jogador" opcional dica="Preencha se for jogador da mesa sem conta no app">
+          <Input
+            id="jogadorNome"
+            placeholder="Ex.: Geovane"
+            value={jogadorNome}
+            onChange={(e) => setJogadorNome(e.target.value)}
+            maxLength={120}
+          />
         </Campo>
         <Campo id="conceito" rotulo="Conceito" opcional>
           <Input
@@ -444,11 +458,13 @@ function Campo({
   id,
   rotulo,
   opcional = false,
+  dica,
   children,
 }: {
   id: string
   rotulo: string
   opcional?: boolean
+  dica?: string
   children: ReactNode
 }) {
   return (
@@ -458,6 +474,7 @@ function Campo({
         {opcional && <span className="font-normal text-muted-foreground">(opcional)</span>}
       </Label>
       {children}
+      {dica && <p className="text-xs text-muted-foreground">{dica}</p>}
     </div>
   )
 }

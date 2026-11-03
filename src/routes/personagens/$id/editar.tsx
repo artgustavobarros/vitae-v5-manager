@@ -47,7 +47,7 @@ function EditarFicha() {
   const [salvando, setSalvando] = useState(false)
   const id = personagem.id
   const rascunho = personagem.status === 'rascunho'
-  const inicial = { nome: personagem.nome, ficha: personagem.ficha }
+  const inicial = { nome: personagem.nome, jogadorNome: personagem.jogadorNome, ficha: personagem.ficha }
 
   async function salvar(valores: ValoresFormulario): Promise<Ficha | false> {
     setSalvando(true)

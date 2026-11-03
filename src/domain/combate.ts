@@ -298,6 +298,8 @@ export const participantePersonagemSchema = z.object({
   nome: nomeSchema,
   personagemId: z.string().uuid(),
   ehPdn: z.boolean().default(false),
+  ehPdN: z.boolean().optional(),
+  jogadorNome: z.string().trim().max(120).nullable().optional(),
   condicoes: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
 })
 
@@ -700,6 +702,8 @@ export type ParticipanteVisivel = {
   nome: string
   categoria?: string
   ehPdn?: boolean
+  ehPdN?: boolean
+  jogadorNome?: string | null
   personagemId?: string
   ehMeu?: boolean
   condicoes?: string[]
@@ -800,7 +804,9 @@ export function filtrarCombateParaJogador(
         id: p.id,
         tipo: 'personagem',
         nome: p.nome,
-        ehPdn: p.ehPdn,
+        ehPdn: p.ehPdN ?? p.ehPdn,
+        ehPdN: p.ehPdN ?? p.ehPdn,
+        jogadorNome: p.jogadorNome ?? null,
         personagemId: p.personagemId,
         ehMeu,
         condicoes: p.condicoes ?? [],
@@ -820,7 +826,9 @@ export function filtrarCombateParaJogador(
       id: p.id,
       tipo: 'personagem',
       nome: p.nome,
-      ehPdn: p.ehPdn,
+      ehPdn: p.ehPdN ?? p.ehPdn,
+      ehPdN: p.ehPdN ?? p.ehPdn,
+      jogadorNome: p.jogadorNome ?? null,
       personagemId: p.personagemId,
       ehMeu,
       condicoes: p.condicoes ?? [],

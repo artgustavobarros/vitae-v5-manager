@@ -308,7 +308,7 @@ function Revisao({
   onAlterar: (etapa: number) => void
 }) {
   const { valores } = edicao
-  const { nome, ficha } = valores()
+  const { nome, jogadorNome, ficha } = valores()
   const habilidades = gruposHabilidades(ficha, { soComPontos: true })
   const predador = ficha.tipoPredador ? tipoPredador(ficha.tipoPredador) : null
 
@@ -324,6 +324,7 @@ function Revisao({
 
       <BlocoRevisao titulo="Identidade" etapa={1} onAlterar={onAlterar}>
         <Dado rotulo="Nome" valor={nome} />
+        {jogadorNome && <Dado rotulo="Jogador" valor={jogadorNome} />}
         <Dado rotulo="Conceito" valor={ficha.conceito || '—'} />
         <Dado rotulo="Clã" valor={nomeCla(ficha)} />
         <Dado rotulo="Geração" valor={ficha.geracao === null ? '' : rotuloGeracao(ficha.geracao)} />

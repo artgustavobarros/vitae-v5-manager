@@ -78,6 +78,7 @@ function LinhaDescricao({ ficha }: { ficha: Ficha }) {
 export function FichaPersonagem({
   id,
   nome,
+  jogadorNome,
   status,
   ficha,
   revisaoMarcas,
@@ -92,6 +93,7 @@ export function FichaPersonagem({
 }: {
   id: string
   nome: string
+  jogadorNome?: string | null
   status: StatusPersonagem
   ficha: Ficha
   revisaoMarcas: number
@@ -163,6 +165,11 @@ export function FichaPersonagem({
         fome={marcas.fome}
         selo={
           <div className="flex flex-wrap items-center gap-2">
+            {jogadorNome && (
+              <Badge variant="secondary" className="font-normal text-xs">
+                Jogador: <strong className="font-semibold ml-1">{jogadorNome}</strong>
+              </Badge>
+            )}
             {sincronizacao.pendentes > 0 && !sincronizacao.erro && (
               <Badge variant="outline" role="status" aria-live="polite">
                 {sincronizacao.persistindo ? 'Salvando neste dispositivo…' : 'Sincronizando alterações…'}

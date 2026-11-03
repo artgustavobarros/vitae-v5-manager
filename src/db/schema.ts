@@ -74,6 +74,8 @@ export const personagem = pgTable(
     /** Personagem atribuído: o Jogador que ainda vai aceitar ou recusar o Rascunho do Narrador. */
     atribuidoA: text('atribuido_a').references(() => user.id, { onDelete: 'set null' }),
     nome: text().notNull().default(''),
+    /** Nome do Jogador quando ele não tem conta própria no app. */
+    jogadorNome: text('jogador_nome'),
     ficha: jsonb().$type<Ficha>().notNull(),
     /** Incrementada pelo banco sempre que a Ficha muda, inclusive nas ações sem fila. */
     revisaoMarcas: integer('revisao_marcas').notNull().default(0),

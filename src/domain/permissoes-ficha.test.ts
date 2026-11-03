@@ -13,6 +13,7 @@ import {
   podeCancelarAtribuicao,
   podeConcluir,
   podeResponderAtribuicao,
+  rotuloOrigemPersonagem,
   type StatusPersonagem,
 } from './permissoes-ficha'
 
@@ -193,6 +194,24 @@ describe('ehPdN', () => {
   it('Personagem de Jogador não é PdN', () => {
     expect(ehPdN({ papelDono: 'jogador', status: 'ativo' })).toBe(false)
   })
+
+  it('Personagem com jogadorNome não é PdN mesmo sob conta do Narrador', () => {
+    expect(ehPdN({ papelDono: 'narrador', status: 'ativo', jogadorNome: 'Geovane' })).toBe(false)
+  })
+})
+
+describe('nomeJogador', () => {
+  it('prioriza jogadorNome se fornecido', () => {
+    expect(nomeJogador({ papelDono: 'narrador', nomeDono: 'Narrador', jogadorNome: 'Geovane' })).toBe('Geovane')
+  })
+
+  it('usa nomeDono se o dono for jogador', () => {
+    expect(nomeJogador({ papelDono: 'jogador', nomeDono: 'Lucas' })).toBe('Lucas')
+  })
+
+  it('retorna null se for do narrador sem jogadorNome', () => {
+    expect(nomeJogador({ papelDono: 'narrador', nomeDono: 'Narrador' })).toBeNull()
+  })
 })
 
 describe('permissoesPersonagem', () => {
@@ -248,5 +267,28 @@ describe('nomeJogador', () => {
 
   it('fica vazio quando o dono é o Narrador', () => {
     expect(nomeJogador({ papelDono: 'narrador', nomeDono: 'Arthur' })).toBeNull()
+  })
+})
+
+describe('rotuloOrigemPersonagem', () => {
+  it('identifica rascunho sem atribuicao', () => {
+    expect(rotuloOrigemPersonagem({ status: 'rascunho' })).toBe('(Rascunho)')
+  })
+
+  it('identifica rascunho atribuido', () => {
+    expect(rotuloOrigemPersonagem({ status: 'rascunho', atribuidoA: 'user-1' })).toBe('(Rascunho atribuído)')
+  })
+
+  it('identifica PdN', () => {
+    expect(rotuloOrigemPersonagem({ status: 'ativo', ehPdN: true })).toBe('(PdN)')
+    expect(rotuloOrigemPersonagem({ status: 'ativo', ehPdn: true })).toBe('(PdN)')
+  })
+
+  it('identifica jogadorNome quando informado em PJ', () => {
+    expect(rotuloOrigemPersonagem({ status: 'ativo', ehPdN: false, jogadorNome: 'Geovane' })).toBe('(Geovane)')
+  })
+
+  it('retorna null para PJ padrão sem jogadorNome', () => {
+    expect(rotuloOrigemPersonagem({ status: 'ativo', ehPdN: false })).toBeNull()
   })
 })

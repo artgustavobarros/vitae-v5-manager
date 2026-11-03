@@ -1,3 +1,4 @@
+import { rotuloOrigemPersonagem } from '#/domain/permissoes-ficha'
 import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
 import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
 import { ConfigurarPoderesAntagonista, ResumoRecursosSobrenaturais } from '#/components/poderes-antagonista'
@@ -88,20 +89,14 @@ import {
   carregarCombate,
   encerrarCombateServer,
   iniciarCombateServer,
+  listarPersonagensParaCombate,
   removerParticipanteCombateServer,
   reordenarParticipantesCombateServer,
   voltarTurnoCombateServer,
   type EstadoCombateNarrador,
+  type PersonagemCombateOpcao,
 } from '#/server/combate'
 import { marcar } from '#/server/personagens'
-import { listarPersonagensParaSorteio } from '#/server/sorteios'
-
-type PersonagemSorteio = {
-  id: string
-  nome: string
-  ehPdn: boolean
-  donoNome: string
-}
 
 function obterClasseCorEstadoSaude(estado: EstadoSaude): string {
   switch (estado) {
@@ -590,18 +585,18 @@ export const Route = createFileRoute('/combate')({
     if (context.usuario?.papel === 'narrador') {
       const [modelos, personagens] = await Promise.all([
         listarModelosBestiario(),
-        listarPersonagensParaSorteio(),
+        listarPersonagensParaCombate(),
       ])
       return {
         ...dados,
         modelos,
-        personagens: personagens as PersonagemSorteio[],
+        personagens: personagens as PersonagemCombateOpcao[],
       }
     }
     return {
       ...dados,
       modelos: [] as ModeloAntagonista[],
-      personagens: [] as PersonagemSorteio[],
+      personagens: [] as PersonagemCombateOpcao[],
     }
   },
   component: PaginaCombate,
@@ -792,7 +787,7 @@ function VisaoNarrador({
 }: {
   combate: EstadoCombateNarrador | null
   modelos: ModeloAntagonista[]
-  personagens: PersonagemSorteio[]
+  personagens: PersonagemCombateOpcao[]
 }) {
   const router = useRouter()
 
@@ -1122,8 +1117,10 @@ function VisaoNarrador({
             id: crypto.randomUUID(),
             tipo: 'personagem',
             personagemId: char.id,
-            nome: char.nome,
-            ehPdn: char.ehPdn,
+            nome: char.nome || '(Sem nome)',
+            jogadorNome: char.jogadorNome ?? null,
+            ehPdN: char.ehPdN,
+            ehPdn: char.ehPdN,
             condicoes: [],
           })
         }
@@ -1166,8 +1163,10 @@ function VisaoNarrador({
             id: crypto.randomUUID(),
             tipo: 'personagem',
             personagemId: char.id,
-            nome: char.nome,
-            ehPdn: char.ehPdn,
+            nome: char.nome || '(Sem nome)',
+            jogadorNome: char.jogadorNome ?? null,
+            ehPdN: char.ehPdN,
+            ehPdn: char.ehPdN,
             condicoes: [],
           }
           await adicionarParticipanteCombateServer({ data: { participante: part } })
@@ -1432,13 +1431,13 @@ function VisaoNarrador({
                               <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 Inimigo
                               </Badge>
-                            ) : part.ehPdn ? (
+                            ) : part.ehPdN || part.ehPdn ? (
                               <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 PdN
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
-                                Personagem
+                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
                               </Badge>
                             )}
                           </div>
@@ -1615,13 +1614,13 @@ function VisaoNarrador({
                               <Badge variant="outline" className="text-xs shrink-0">
                                 Inimigo
                               </Badge>
-                            ) : part.ehPdn ? (
+                            ) : part.ehPdN || part.ehPdn ? (
                               <Badge variant="outline" className="text-xs shrink-0">
                                 PdN
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="text-xs shrink-0">
-                                Personagem
+                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
                               </Badge>
                             )}
                             {part.tipo === 'inimigo' ? (
@@ -1906,8 +1905,8 @@ function VisaoNarrador({
               <SelectMultiplo
                 opcoes={personagens.map((p) => ({
                   valor: p.id,
-                  rotulo: p.nome,
-                  detalhe: p.ehPdn ? '(PdN)' : undefined,
+                  rotulo: p.nome || '(Sem nome)',
+                  detalhe: rotuloOrigemPersonagem(p) ?? undefined,
                   desabilitado: selecaoPersonagens.includes(p.id),
                 }))}
                 valores={personagensTemp}
@@ -1940,8 +1939,10 @@ function VisaoNarrador({
                     return (
                       <div key={pId} className="flex items-center justify-between text-sm py-1 border-b last:border-b-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{char.nome}</span>
-                          {char.ehPdn && <span className="text-xs text-muted-foreground">(PdN)</span>}
+                          <span className="font-medium">{char.nome || '(Sem nome)'}</span>
+                          {rotuloOrigemPersonagem(char) && (
+                            <span className="text-xs text-muted-foreground">{rotuloOrigemPersonagem(char)}</span>
+                          )}
                         </div>
                         <Button
                           type="button"
@@ -2164,8 +2165,8 @@ function VisaoNarrador({
                 <SelectMultiplo
                   opcoes={personagens.map((p) => ({
                     valor: p.id,
-                    rotulo: p.nome,
-                    detalhe: p.ehPdn ? '(PdN)' : undefined,
+                    rotulo: p.nome || '(Sem nome)',
+                    detalhe: rotuloOrigemPersonagem(p) ?? undefined,
                     desabilitado: combate?.participantes.some(
                       (part) => part.tipo === 'personagem' && part.personagemId === p.id,
                     ),
@@ -2826,13 +2827,13 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                               <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 Inimigo
                               </Badge>
-                            ) : part.ehPdn ? (
+                            ) : part.ehPdN || part.ehPdn ? (
                               <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
                                 PdN
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
-                                Personagem
+                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
                               </Badge>
                             )}
                           </div>
@@ -2954,13 +2955,13 @@ function VisaoJogador({ combate }: { combate: CombateVisivel | null }) {
                               <Badge variant="outline" className="text-xs shrink-0">
                                 Inimigo
                               </Badge>
-                            ) : part.ehPdn ? (
+                            ) : part.ehPdN || part.ehPdn ? (
                               <Badge variant="outline" className="text-xs shrink-0">
                                 PdN
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="text-xs shrink-0">
-                                Personagem
+                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
                               </Badge>
                             )}
                             {part.tipo === 'inimigo' ? (

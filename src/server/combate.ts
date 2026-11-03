@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq, inArray } from 'drizzle-orm'
+import { and, asc, eq, inArray, ne, or } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
@@ -29,6 +29,8 @@ import {
   type InfoVisibilidadeJogador,
   type ParticipanteCombate,
 } from '#/domain/combate'
+import type { Papel } from '#/domain/acesso'
+import { ehPdN } from '#/domain/permissoes-ficha'
 import { vitalidadeMax, vontadeMax } from '#/domain/ficha'
 import { identificadorSchema, LIMITE_ITENS } from '#/domain/limites-entrada'
 import { notificacoesEventos } from '#/domain/notificacoes'
@@ -57,6 +59,58 @@ export type EstadoCombateNarrador = {
 export type RespostaCarregarCombate =
   | { papel: 'narrador'; combate: EstadoCombateNarrador | null }
   | { papel: 'jogador'; combate: CombateVisivel | null }
+
+export type PersonagemCombateOpcao = {
+  id: string
+  nome: string
+  cla: string | null
+  status: 'rascunho' | 'ativo' | 'arquivado'
+  atribuidoA: string | null
+  jogadorNome: string | null
+  ehPdN: boolean
+  ehPdn: boolean
+  donoNome: string
+}
+
+export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
+  .middleware([exigirNarrador])
+  .handler(async (): Promise<PersonagemCombateOpcao[]> => {
+    const linhas = await db
+      .select({
+        id: personagem.id,
+        nome: personagem.nome,
+        status: personagem.status,
+        atribuidoA: personagem.atribuidoA,
+        jogadorNome: personagem.jogadorNome,
+        ficha: personagem.ficha,
+        donoNome: user.name,
+        donoPapel: user.papel,
+      })
+      .from(personagem)
+      .innerJoin(user, eq(personagem.donoId, user.id))
+      .where(
+        or(
+          eq(personagem.status, 'ativo'),
+          and(eq(user.papel, 'narrador'), ne(personagem.status, 'arquivado')),
+        ),
+      )
+      .orderBy(asc(personagem.nome), asc(personagem.criadoEm))
+
+    return linhas.map((l) => {
+      const npc = ehPdN({ papelDono: l.donoPapel as Papel, status: l.status, jogadorNome: l.jogadorNome })
+      return {
+        id: l.id,
+        nome: l.nome,
+        cla: l.ficha.cla,
+        status: l.status,
+        atribuidoA: l.atribuidoA,
+        jogadorNome: l.jogadorNome,
+        donoNome: l.donoNome,
+        ehPdN: npc,
+        ehPdn: npc,
+      }
+    })
+  })
 
 export const carregarCombate = createServerFn({ method: 'GET' })
   .middleware([exigirUsuario])
@@ -92,6 +146,7 @@ export const carregarCombate = createServerFn({ method: 'GET' })
           .select({
             id: personagem.id,
             donoId: personagem.donoId,
+            jogadorNome: personagem.jogadorNome,
             ficha: personagem.ficha,
             compartilhaCondicao: personagem.compartilhaCondicao,
           })
@@ -108,6 +163,7 @@ export const carregarCombate = createServerFn({ method: 'GET' })
           if (p) {
             return {
               ...part,
+              jogadorNome: part.jogadorNome ?? p.jogadorNome ?? null,
               condicaoPersonagem: {
                 vitalidadeMax: vitalidadeMax(p.ficha),
                 vontadeMax: vontadeMax(p.ficha),

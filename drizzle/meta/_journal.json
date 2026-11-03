@@ -155,6 +155,20 @@
       "when": 1793477608611,
       "tag": "0021_outras_criaturas",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793500000000,
+      "tag": "0022_sangue_ralo_rascunhos",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793729446946,
+      "tag": "0023_jogador_nome",
+      "breakpoints": true
     }
   ]
 }

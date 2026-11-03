@@ -13,6 +13,8 @@ type Personagem = {
   nome: string
   /** Jogador a quem o Narrador atribuiu o Rascunho, enquanto ele não responde. */
   atribuidoA: string | null
+  /** Nome do jogador quando a ficha é de um jogador sem conta no app. */
+  jogadorNome?: string | null
 }
 
 /** O que uma pessoa pode fazer na Ficha; null quando ela nem enxerga o Personagem. */
@@ -27,14 +29,53 @@ export function acessoFicha(usuario: Usuario, personagem: Personagem): AcessoFic
   return personagem.status === 'rascunho' ? 'editar' : 'marcar'
 }
 
-/** PdN é Personagem do Narrador já concluído; um Rascunho do Narrador ainda não é PdN. */
-export function ehPdN({ papelDono, status }: { papelDono: Papel; status: StatusPersonagem }): boolean {
+/** PdN é Personagem do Narrador já concluído e sem jogador associado; se tiver jogadorNome ou for de jogador, não é PdN. */
+export function ehPdN({
+  papelDono,
+  status,
+  jogadorNome,
+}: {
+  papelDono: Papel
+  status: StatusPersonagem
+  jogadorNome?: string | null
+}): boolean {
+  if (jogadorNome && jogadorNome.trim()) return false
   return papelDono === 'narrador' && status !== 'rascunho'
 }
 
-/** Nome do Jogador dono para mostrar; null quando o dono é o Narrador (PdN ou Rascunho dele). */
-export function nomeJogador({ papelDono, nomeDono }: { papelDono: Papel; nomeDono: string }): string | null {
+/** Nome do Jogador para mostrar; prioriza jogadorNome se existir, ou o nome do usuário se o dono for jogador. */
+export function nomeJogador({
+  papelDono,
+  nomeDono,
+  jogadorNome,
+}: {
+  papelDono: Papel
+  nomeDono: string
+  jogadorNome?: string | null
+}): string | null {
+  if (jogadorNome && jogadorNome.trim()) return jogadorNome.trim()
   return papelDono === 'jogador' ? nomeDono : null
+}
+
+/** Rótulo explicativo sobre a origem/papel do personagem em listagens (combate, seletores). */
+export function rotuloOrigemPersonagem(p: {
+  status?: string
+  atribuidoA?: string | null
+  ehPdN?: boolean
+  ehPdn?: boolean
+  jogadorNome?: string | null
+}): string | null {
+  if (p.status === 'rascunho') {
+    return p.atribuidoA ? '(Rascunho atribuído)' : '(Rascunho)'
+  }
+  const ehNpc = p.ehPdN ?? p.ehPdn ?? false
+  if (ehNpc) {
+    return '(PdN)'
+  }
+  if (p.jogadorNome && p.jogadorNome.trim()) {
+    return `(${p.jogadorNome.trim()})`
+  }
+  return null
 }
 
 /** Na criação, o Jogador segue as regras (Clã e Geração); as edições do Narrador ignoram a validação. */

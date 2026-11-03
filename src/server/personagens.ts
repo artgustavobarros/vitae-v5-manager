@@ -10,7 +10,15 @@ import { podeAlternarCompartilharCondicao } from '#/domain/condicao'
 import { escolhasInvalidas, removerVantagensIndisponiveis } from '#/domain/catalogo/escolhas'
 import { itemCatalogo, tipoPredador } from '#/domain/catalogo'
 import { potenciaSangueCriacao, validarVantagensDefeitosCriacao } from '#/domain/criacao'
-import { claGeracaoCombinam, fichaNeofito, fichaSchema, marcasDe, marcasSchema, normalizarFicha } from '#/domain/ficha'
+import {
+  claGeracaoCombinam,
+  fichaNeofito,
+  fichaSchema,
+  marcasDe,
+  marcasSchema,
+  normalizarFicha,
+  type Ficha,
+} from '#/domain/ficha'
 import { detectarMudancasCondicao, notificacoesEventos } from '#/domain/notificacoes'
 import { alteracaoMarcasSchema } from '#/domain/sincronizacao-marcas'
 import {
@@ -49,6 +57,7 @@ const colunasPermissao = {
   status: personagem.status,
   nome: personagem.nome,
   atribuidoA: personagem.atribuidoA,
+  jogadorNome: personagem.jogadorNome,
 }
 
 export const listarMeusPersonagens = createServerFn({ method: 'GET' })
@@ -98,9 +107,9 @@ export const listarTodosPersonagens = createServerFn({ method: 'GET' })
         id: p.id,
         nome: p.nome,
         status: p.status,
-        /** Jogador dono; null quando o dono é o Narrador. */
-        jogador: nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.dono }),
-        pdn: ehPdN({ papelDono: p.papelDono as Papel, status: p.status }),
+        /** Jogador dono; null quando o dono é o Narrador sem jogadorNome. */
+        jogador: nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.dono, jogadorNome: p.jogadorNome }),
+        pdn: ehPdN({ papelDono: p.papelDono as Papel, status: p.status, jogadorNome: p.jogadorNome }),
         atribuidoA: p.nomeAtribuido,
         abreNoWizard,
         podeApagar,
@@ -129,6 +138,7 @@ export const buscarFicha = createServerFn({ method: 'GET' })
     return {
       id: p.id,
       nome: p.nome,
+      jogadorNome: p.jogadorNome,
       status: p.status,
       ficha: p.ficha,
       revisaoMarcas: p.revisaoMarcas,
@@ -162,7 +172,14 @@ export const criarRascunho = createServerFn({ method: 'POST' })
 
 export const salvarFicha = createServerFn({ method: 'POST' })
   .middleware([exigirUsuario])
-  .validator(z.object({ id: z.string().uuid(), nome: z.string().trim().max(120), ficha: fichaSchema }))
+  .validator(
+    z.object({
+      id: z.string().uuid(),
+      nome: z.string().trim().max(120),
+      jogadorNome: z.string().trim().max(120).nullish(),
+      ficha: fichaSchema,
+    }),
+  )
   .handler(async ({ data, context }) => {
     const { p, ficha, perdas } = await db.transaction(async (tx) => {
       const p = await carregar(context.usuario, data.id, ['editar'], tx)
@@ -191,9 +208,16 @@ export const salvarFicha = createServerFn({ method: 'POST' })
       }
       const { ficha, perdas } = removerVantagensIndisponiveis(proposta, contextoVantagens)
       const normalizada = normalizarFicha(ficha)
+      const camposAtualizar: { nome: string; ficha: Ficha; jogadorNome?: string | null } = {
+        nome: data.nome,
+        ficha: normalizada,
+      }
+      if (data.jogadorNome !== undefined) {
+        camposAtualizar.jogadorNome = data.jogadorNome ? data.jogadorNome.trim() : null
+      }
       await tx
         .update(personagem)
-        .set({ nome: data.nome, ficha: normalizada })
+        .set(camposAtualizar)
         .where(eq(personagem.id, data.id))
       return { p, ficha: normalizada, perdas }
     })

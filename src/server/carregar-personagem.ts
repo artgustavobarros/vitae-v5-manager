@@ -25,8 +25,8 @@ export async function carregar(
   return { ...p, acesso }
 }
 
-/** PdN depende do papel do dono, que fica na tabela de usuários. */
-export async function ehPdNNoBanco(p: { donoId: string; status: StatusPersonagem }) {
+/** PdN depende do papel do dono e da ausência de jogadorNome. */
+export async function ehPdNNoBanco(p: { donoId: string; status: StatusPersonagem; jogadorNome?: string | null }) {
   const [dono] = await db.select({ papel: user.papel }).from(user).where(eq(user.id, p.donoId))
-  return !!dono && ehPdN({ papelDono: dono.papel as Papel, status: p.status })
+  return !!dono && ehPdN({ papelDono: dono.papel as Papel, status: p.status, jogadorNome: p.jogadorNome })
 }
