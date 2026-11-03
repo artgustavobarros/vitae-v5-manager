@@ -16,7 +16,17 @@ import {
 
 type BancoBestiario = Pick<typeof db, 'select' | 'insert' | 'update' | 'transaction'>
 
+function normalizarLinhaModelo<T extends { fichaCompleta?: unknown; paradaFisico?: number | null; paradaSocial?: number | null; paradaMental?: number | null }>(linha: T): T {
+  if (linha.fichaCompleta) {
+    linha.paradaFisico = null
+    linha.paradaSocial = null
+    linha.paradaMental = null
+  }
+  return linha
+}
+
 function paraRevisao(linha: typeof modeloAntagonista.$inferSelect): ModeloParaRevisao {
+  normalizarLinhaModelo(linha)
   const { statusRevisao, notaRevisao, criadoEm: _criadoEm, atualizadoEm: _atualizadoEm, ...modelo } = linha
   return { ...modelo, ...modeloAntagonistaSchema.parse(modelo), id: modelo.id, fonte: FONTES_MODELOS_BESTIARIO[modelo.id] ?? null, revisao: { status: statusRevisao, nota: notaRevisao } }
 }
@@ -24,7 +34,7 @@ function paraRevisao(linha: typeof modeloAntagonista.$inferSelect): ModeloParaRe
 export async function listarModelosBestiarioNoBanco(banco: BancoBestiario = db): Promise<ModeloAntagonista[]> {
   const linhas = await banco.select().from(modeloAntagonista)
     .where(eq(modeloAntagonista.incluido, true)).orderBy(asc(modeloAntagonista.nome))
-  return linhas.map((linha) => modeloAntagonistaSchema.parse(linha))
+  return linhas.map((linha) => modeloAntagonistaSchema.parse(normalizarLinhaModelo(linha)))
 }
 
 export async function listarModelosParaRevisaoNoBanco(banco: BancoBestiario = db) {

@@ -20,6 +20,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -45,6 +49,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 7,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -70,6 +78,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -95,6 +107,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 5,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -120,6 +136,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 4,
+  "parada_mental" = 5,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -145,6 +165,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 3,
+  "parada_mental" = 3,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -170,6 +194,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 4,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -195,6 +223,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 5,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -220,6 +252,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 6,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -245,6 +281,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 6,
+  "parada_social" = 4,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -270,6 +310,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 5,
+  "parada_social" = 4,
+  "parada_mental" = 5,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -295,6 +339,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 3,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -320,6 +368,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -345,6 +397,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 6,
+  "parada_social" = 1,
+  "parada_mental" = 1,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -370,6 +426,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 5,
+  "parada_social" = 1,
+  "parada_mental" = 2,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -382,9 +442,9 @@ INSERT INTO "modelo_antagonista" (
   'Revolucionário Anarquista',
   'Vampiro',
   '[]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   6,
   6,
   '[]'::jsonb,
@@ -395,6 +455,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":4,"destreza":3,"vigor":3,"carisma":3,"manipulacao":3,"autocontrole":2,"inteligencia":2,"raciocinio":4,"determinacao":4},"habilidades":{"Briga":4,"Condução":3,"Armas Brancas":3,"Ocultismo":1,"Sagacidade":2,"Ladroagem":4,"Ciência":2,"Furtividade":2,"Armas de Fogo":3,"Política":3,"Sobrevivência":3,"Erudição":1,"Etiqueta com Animais":2,"Atletismo":4,"Percepção":3,"Etiqueta":1,"Liderança":3,"Persuasão":1,"Manha":4,"Subterfúgio":1,"Tecnologia":3,"Intimidação":2,"Investigação":1},"disciplinas":{"Potência":2,"Proteanismo":1,"Celeridade":2,"Animalismo":2,"Fortitude":3},"humanidade":7,"potenciaSangue":2,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -407,9 +471,9 @@ INSERT INTO "modelo_antagonista" (
   'Xerife sanguinário',
   'Vampiro',
   '[]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   7,
   7,
   '[]'::jsonb,
@@ -420,6 +484,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":4,"destreza":5,"vigor":4,"carisma":2,"manipulacao":1,"autocontrole":3,"inteligencia":3,"raciocinio":4,"determinacao":4},"habilidades":{"Briga":3,"Condução":2,"Armas Brancas":3,"Finanças":1,"Sagacidade":1,"Ladroagem":3,"Furtividade":4,"Armas de Fogo":4,"Política":2,"Sobrevivência":3,"Erudição":1,"Etiqueta com Animais":2,"Atletismo":4,"Percepção":3,"Etiqueta":1,"Liderança":1,"Persuasão":1,"Manha":3,"Tecnologia":2,"Intimidação":5,"Investigação":4},"disciplinas":{"Potência":4,"Celeridade":3,"Animalismo":2,"Ofuscação":3},"humanidade":5,"potenciaSangue":4,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -432,9 +500,9 @@ INSERT INTO "modelo_antagonista" (
   'Harpia do Elísio',
   'Vampiro',
   '[]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   5,
   6,
   '[]'::jsonb,
@@ -445,6 +513,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":2,"destreza":3,"vigor":2,"carisma":3,"manipulacao":4,"autocontrole":3,"inteligencia":2,"raciocinio":3,"determinacao":3},"habilidades":{"Briga":1,"Ofícios":1,"Condução":2,"Ocultismo":1,"Finanças":2,"Sagacidade":4,"Política":4,"Erudição":2,"Atletismo":1,"Percepção":4,"Etiqueta":5,"Liderança":1,"Persuasão":4,"Manha":3,"Subterfúgio":4,"Performance":3,"Intimidação":3,"Investigação":3},"disciplinas":{"Auspícios":3,"Celeridade":2,"Presença":3,"Fortitude":1},"humanidade":6,"potenciaSangue":3,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -457,9 +529,9 @@ INSERT INTO "modelo_antagonista" (
   'Fada',
   'Outras criaturas',
   '["Fada"]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   6,
   7,
   '[]'::jsonb,
@@ -470,6 +542,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":2,"destreza":4,"vigor":3,"carisma":7,"manipulacao":5,"autocontrole":3,"inteligencia":3,"raciocinio":4,"determinacao":4},"habilidades":{"Armas Brancas":4,"Ocultismo":4,"Empatia":3,"Atletismo":2,"Percepção":2,"Etiqueta":4,"Liderança":4,"Subterfúgio":2,"Performance":4,"Intimidação":3},"disciplinas":{"Celeridade":1,"Dominação":4,"Presença":5,"Ofuscação":4},"humanidade":null,"potenciaSangue":null,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -482,9 +558,9 @@ INSERT INTO "modelo_antagonista" (
   'Mago',
   'Outras criaturas',
   '["Mago"]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   5,
   10,
   '[]'::jsonb,
@@ -495,6 +571,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":2,"destreza":3,"vigor":2,"carisma":3,"manipulacao":4,"autocontrole":5,"inteligencia":5,"raciocinio":4,"determinacao":5},"habilidades":{"Ofícios":3,"Condução":1,"Armas Brancas":1,"Ocultismo":5,"Finanças":1,"Sagacidade":4,"Ciência":2,"Armas de Fogo":1,"Medicina":2,"Política":1,"Erudição":5,"Atletismo":1,"Percepção":3,"Etiqueta":3,"Liderança":4,"Persuasão":4,"Manha":1,"Subterfúgio":3,"Tecnologia":1,"Performance":3,"Intimidação":4,"Investigação":2},"disciplinas":{"Auspícios":4,"Dominação":4,"Presença":2,"Ofuscação":3,"Feitiçaria de Sangue":5},"humanidade":null,"potenciaSangue":null,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -507,9 +587,9 @@ INSERT INTO "modelo_antagonista" (
   'Bispo nodista',
   'Vampiro',
   '[]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   8,
   9,
   '[]'::jsonb,
@@ -520,6 +600,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":2,"destreza":2,"vigor":5,"carisma":5,"manipulacao":3,"autocontrole":4,"inteligencia":5,"raciocinio":3,"determinacao":5},"habilidades":{"Armas Brancas":2,"Ocultismo":5,"Finanças":1,"Sagacidade":3,"Ladroagem":1,"Ciência":1,"Furtividade":2,"Medicina":2,"Política":4,"Erudição":4,"Etiqueta com Animais":1,"Percepção":2,"Etiqueta":4,"Liderança":4,"Persuasão":5,"Subterfúgio":4,"Performance":2,"Intimidação":3,"Investigação":2},"disciplinas":{"Auspícios":2,"Dominação":2,"Presença":4,"Fortitude":3},"humanidade":5,"potenciaSangue":3,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -532,9 +616,9 @@ INSERT INTO "modelo_antagonista" (
   'Espectro',
   'Outras criaturas',
   '["Espectro"]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   7,
   4,
   '[]'::jsonb,
@@ -545,6 +629,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":4,"destreza":4,"vigor":4,"carisma":1,"manipulacao":3,"autocontrole":2,"inteligencia":3,"raciocinio":3,"determinacao":2},"habilidades":{"Briga":3,"Condução":4,"Ocultismo":4,"Sagacidade":2,"Ladroagem":2,"Furtividade":5,"Medicina":2,"Sobrevivência":2,"Erudição":1,"Atletismo":3,"Percepção":5,"Persuasão":1,"Subterfúgio":2,"Intimidação":3,"Investigação":1},"disciplinas":{"Auspícios":4,"Celeridade":2,"Dominação":2,"Ofuscação":2},"humanidade":null,"potenciaSangue":null,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -557,9 +645,9 @@ INSERT INTO "modelo_antagonista" (
   'Lobisomem',
   'Outras criaturas',
   '["Lobisomem"]'::jsonb,
-  1,
-  1,
-  1,
+  NULL,
+  NULL,
+  NULL,
   7,
   6,
   '[]'::jsonb,
@@ -570,6 +658,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = NULL,
+  "parada_social" = NULL,
+  "parada_mental" = NULL,
+  "ficha_completa" = '{"atributos":{"forca":3,"destreza":3,"vigor":4,"carisma":3,"manipulacao":3,"autocontrole":2,"inteligencia":3,"raciocinio":4,"determinacao":4},"habilidades":{"Erudição":2,"Percepção":4,"Investigação":1,"Medicina":1,"Política":1,"Ocultismo":3,"Ciência":2,"Atletismo":4,"Briga":5,"Condução":1,"Armas de Fogo":1,"Armas Brancas":4,"Ladroagem":2,"Furtividade":4,"Sobrevivência":5,"Empatia com Animais":5,"Etiqueta":1,"Sagacidade":2,"Intimidação":5,"Liderança":1,"Manha":3},"disciplinas":{"Animalismo":5,"Auspícios":2,"Celeridade":4,"Fortitude":5,"Ofuscação":1,"Potência":5},"humanidade":null,"potenciaSangue":null,"fome":null}'::jsonb,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -595,6 +687,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 6,
+  "parada_social" = 2,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -620,6 +716,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 8,
+  "parada_social" = 3,
+  "parada_mental" = 5,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -645,6 +745,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 5,
+  "parada_mental" = 2,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -670,6 +774,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 5,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -695,6 +803,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 7,
+  "parada_mental" = 5,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -720,6 +832,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 2,
+  "parada_social" = 3,
+  "parada_mental" = 5,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -745,6 +861,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 3,
+  "parada_mental" = 6,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -770,6 +890,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 5,
+  "parada_mental" = 8,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -795,6 +919,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 3,
+  "parada_social" = 4,
+  "parada_mental" = 3,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -820,6 +948,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 5,
+  "parada_social" = 4,
+  "parada_mental" = 3,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -845,6 +977,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 6,
+  "parada_social" = 6,
+  "parada_mental" = 6,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -870,6 +1006,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 4,
+  "parada_mental" = 3,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -895,6 +1035,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 4,
+  "parada_social" = 4,
+  "parada_mental" = 2,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -920,6 +1064,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 5,
+  "parada_social" = 1,
+  "parada_mental" = 2,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -945,6 +1093,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 2,
+  "parada_social" = 3,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -970,6 +1122,10 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 5,
+  "parada_social" = 3,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;
 --> statement-breakpoint
@@ -995,5 +1151,9 @@ INSERT INTO "modelo_antagonista" (
   '',
   TRUE
 ) ON CONFLICT ("id") DO UPDATE SET
+  "parada_fisico" = 9,
+  "parada_social" = 0,
+  "parada_mental" = 4,
+  "ficha_completa" = NULL,
   "status_revisao" = 'aprovado',
   "incluido" = TRUE;

@@ -176,6 +176,13 @@
       "when": 1793730000000,
       "tag": "0024_povoar_antagonistas",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793730500000,
+      "tag": "0025_corrigir_paradas_ficha_completa",
+      "breakpoints": true
     }
   ]
 }
