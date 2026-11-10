@@ -62,6 +62,14 @@ describe('Relógios', () => {
     expect(relogioSchema.safeParse({ ...relogio, efeitos: [efeito, efeito] }).success).toBe(false)
   })
 
+  it('explica em PT-BR o limite do tipo de evento criado pelo Narrador', () => {
+    expect(relogioSchema.safeParse({ ...relogio, tipo: 'A'.repeat(60) }).success).toBe(true)
+    const resultado = relogioSchema.safeParse({ ...relogio, tipo: 'A'.repeat(61) })
+    expect(resultado.error?.issues).toEqual([
+      expect.objectContaining({ path: ['tipo'], message: 'Use até 60 caracteres no tipo de evento.' }),
+    ])
+  })
+
   it('avalia efeitos já ativos ao criar ou editar um relógio', () => {
     expect(transicoesEfeitos(null, { ...relogio, atual: 4 })[0]?.ativo).toBe(true)
     expect(transicoesEfeitos(relogio, { ...relogio, efeitos: [{ ...efeito, etapa: 2 }] })[0]?.ativo).toBe(true)

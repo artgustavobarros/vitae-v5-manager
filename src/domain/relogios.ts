@@ -12,7 +12,7 @@ export const efeitoRelogioSchema = z.object({
 export const relogioSchema = z.object({
   id: z.string().uuid(),
   nome: z.string().trim().min(1, 'Dê um nome ao Relógio.').max(120),
-  tipo: z.string().trim().min(1, 'Informe o tipo de evento.').max(60),
+  tipo: z.string().trim().min(1, 'Informe o tipo de evento.').max(60, 'Use até 60 caracteres no tipo de evento.'),
   descricao: z.string().trim().max(2000),
   total: z.number().int().min(1, 'Use pelo menos uma etapa.').max(100, 'Use até 100 etapas.'),
   atual: z.number().int().min(0),
