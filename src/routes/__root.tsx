@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState, useSyncExternalStore } from 'react'
 
 import { ProvedorMarcas } from '#/components/provedor-marcas'
+import { ProvedorAvisosRelogios } from '#/components/provedor-avisos-relogios'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
@@ -66,7 +67,9 @@ export const Route = createRootRoute({
 function ConteudoApp() {
   const { usuario } = Route.useRouteContext()
   return usuario ? (
-    <ProvedorMarcas key={usuario.id} usuarioId={usuario.id}><Outlet /></ProvedorMarcas>
+    <ProvedorMarcas key={usuario.id} usuarioId={usuario.id}>
+      <ProvedorAvisosRelogios><Outlet /></ProvedorAvisosRelogios>
+    </ProvedorMarcas>
   ) : <Outlet />
 }
 

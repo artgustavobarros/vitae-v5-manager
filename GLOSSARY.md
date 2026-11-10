@@ -70,6 +70,16 @@ _Avoid_: Observação, comentário, diário
 Coleção de Modelos de inimigos criada pelo Narrador; nenhum Jogador tem acesso a ela.
 _Avoid_: Bestiário, Monstruário, lista de NPCs
 
+## Relógios
+
+**Relógio**:
+Marcador de uma situação da Crônica, com etapas que o Narrador aumenta ou diminui. Permanece em uso até o Narrador retirá-lo, inclusive em zero ou no limite.
+_Avoid_: Countdown, clock, cronômetro
+
+**Efeito de Relógio**:
+Condição narrativa ativa enquanto o Relógio estiver em uma faixa de etapas. O Narrador escreve os avisos de ativação e desativação que a mesa recebe.
+_Avoid_: Evento único, marco irreversível
+
 ## Combate
 
 **Combate**:

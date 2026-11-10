@@ -1,11 +1,14 @@
+import type { AvisoRelogio } from './relogios'
+
 export type EventoReal =
   | {
       tipo: 'mudanca'
-      escopo: 'personagem' | 'coterie' | 'painel' | 'notificacao' | 'combate' | 'paradas'
+      escopo: 'personagem' | 'coterie' | 'painel' | 'notificacao' | 'combate' | 'paradas' | 'relogios'
       id?: string
       paraUsuarioId?: string
       apenasNarrador?: boolean
     }
+  | { tipo: 'efeitos-relogio'; apenasNarrador: boolean; avisos: AvisoRelogio[] }
   | {
       tipo: 'notificacao'
       paraUsuarioId: string

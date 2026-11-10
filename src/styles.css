@@ -79,12 +79,25 @@
   --color-saude-ferido: var(--color-amber-400);
   --color-saude-torpor: var(--color-purple-300);
   --color-condicao-chamas: var(--color-orange-400);
+  --color-relogio-perigo: var(--fome);
+  --color-relogio-tranquilo: var(--color-emerald-400);
 
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+}
+
+.relogio-movimento[data-tendencia='piora'] { --relogio-realce: var(--color-relogio-perigo); }
+.relogio-movimento[data-tendencia='melhora'] { --relogio-realce: var(--color-relogio-tranquilo); }
+.relogio-movimento[data-tendencia] { animation: relogio-realce 600ms ease-out; }
+@keyframes relogio-realce {
+  from { background-color: color-mix(in oklab, var(--relogio-realce) 24%, var(--card)); }
+  to { background-color: var(--card); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relogio-movimento[data-tendencia] { animation: none; }
 }
 
 /* O topo da Ficha aquece com a Fome: --fome-nivel vai de 0 a 5. */

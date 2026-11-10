@@ -14,6 +14,7 @@ import { Route as CombateRouteImport } from './routes/combate'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ParadasRouteImport } from './routes/paradas'
+import { Route as RelogiosRouteImport } from './routes/relogios'
 import { Route as ApiTempoRealRouteImport } from './routes/api/tempo-real'
 import { Route as ConviteTokenRouteImport } from './routes/convite/$token'
 import { Route as CoteriesIndexRouteImport } from './routes/coteries/index'
@@ -55,6 +56,11 @@ const EntrarRoute = EntrarRouteImport.update({
 const ParadasRoute = ParadasRouteImport.update({
   id: '/paradas',
   path: '/paradas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelogiosRoute = RelogiosRouteImport.update({
+  id: '/relogios',
+  path: '/relogios',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTempoRealRoute = ApiTempoRealRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
   '/paradas': typeof ParadasRoute
+  '/relogios': typeof RelogiosRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
   '/paradas': typeof ParadasRoute
+  '/relogios': typeof RelogiosRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/conta': typeof ContaRoute
   '/entrar': typeof EntrarRoute
   '/paradas': typeof ParadasRoute
+  '/relogios': typeof RelogiosRoute
   '/api/tempo-real': typeof ApiTempoRealRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/coteries/$id': typeof CoteriesIdRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/entrar'
     | '/paradas'
+    | '/relogios'
     | '/api/tempo-real'
     | '/convite/$token'
     | '/coteries/$id'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/entrar'
     | '/paradas'
+    | '/relogios'
     | '/api/tempo-real'
     | '/convite/$token'
     | '/coteries/$id'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/entrar'
     | '/paradas'
+    | '/relogios'
     | '/api/tempo-real'
     | '/convite/$token'
     | '/coteries/$id'
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   ContaRoute: typeof ContaRoute
   EntrarRoute: typeof EntrarRoute
   ParadasRoute: typeof ParadasRoute
+  RelogiosRoute: typeof RelogiosRoute
   ApiTempoRealRoute: typeof ApiTempoRealRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   CoteriesIdRoute: typeof CoteriesIdRoute
@@ -353,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/paradas'
       fullPath: '/paradas'
       preLoaderRoute: typeof ParadasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relogios': {
+      id: '/relogios'
+      path: '/relogios'
+      fullPath: '/relogios'
+      preLoaderRoute: typeof RelogiosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tempo-real': {
@@ -483,6 +503,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContaRoute: ContaRoute,
   EntrarRoute: EntrarRoute,
   ParadasRoute: ParadasRoute,
+  RelogiosRoute: RelogiosRoute,
   ApiTempoRealRoute: ApiTempoRealRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   CoteriesIdRoute: CoteriesIdRoute,
