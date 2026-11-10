@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { PointerDownOutsideEvent } from 'radix-ui'
+import type { ReactElement } from 'react'
 import { DialogContent } from './dialog'
+
+interface ContentProps {
+  onPointerDownOutside: (e: { preventDefault: () => void }) => void
+  onInteractOutside: (e: { preventDefault: () => void }) => void
+}
 
 describe('DialogContent', () => {
   it('impede fechamento no click fora por padrão (onPointerDownOutside e onInteractOutside)', () => {
@@ -9,14 +14,14 @@ describe('DialogContent', () => {
       preventDefault: () => {
         pointerPrevented = true
       },
-    } as unknown as PointerDownOutsideEvent
+    }
 
     let interactPrevented = false
     const mockInteractEvent = {
       preventDefault: () => {
         interactPrevented = true
       },
-    } as unknown as CustomEvent
+    }
 
     const customPointerDownOutside = vi.fn()
     const customInteractOutside = vi.fn()
@@ -28,7 +33,7 @@ describe('DialogContent', () => {
     })
 
     // vdom é DialogPortal -> children tem [DialogOverlay, DialogPrimitive.Content]
-    const content = (vdom.props as { children: React.ReactElement[] }).children[1]
+    const content = (vdom.props as { children: ReactElement<ContentProps>[] }).children[1]
 
     content.props.onPointerDownOutside(mockPointerEvent)
     expect(customPointerDownOutside).toHaveBeenCalledWith(mockPointerEvent)
@@ -45,16 +50,34 @@ describe('DialogContent', () => {
       preventDefault: () => {
         pointerPrevented = true
       },
-    } as unknown as PointerDownOutsideEvent
+    }
 
     const vdom = DialogContent({
       closeOnOutsideClick: true,
       children: null,
     })
 
-    const content = (vdom.props as { children: React.ReactElement[] }).children[1]
+    const content = (vdom.props as { children: ReactElement<ContentProps>[] }).children[1]
 
     content.props.onPointerDownOutside(mockPointerEvent)
     expect(pointerPrevented).toBe(false)
   })
+
+  it.each(['onPointerDownOutside', 'onInteractOutside'] as const)(
+    'preserva a decisão de %s quando o fechamento externo está liberado',
+    (nome) => {
+      let impedido = false
+      const evento = { preventDefault: () => { impedido = true } }
+      const vdom = DialogContent({
+        closeOnOutsideClick: true,
+        [nome]: (recebido: Pick<Event, 'preventDefault'>) => recebido.preventDefault(),
+        children: null,
+      })
+      const content = (vdom.props as { children: ReactElement<ContentProps>[] }).children[1]
+
+      content.props[nome](evento)
+
+      expect(impedido).toBe(true)
+    },
+  )
 })
