@@ -52,6 +52,7 @@ export function SelectMultiplo({
   const [focado, setFocado] = useState(false)
   const [termo, setTermo] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const selecionadosOpcoes = opcoes.filter((o) => valores.includes(o.valor))
 
@@ -98,7 +99,7 @@ export function SelectMultiplo({
       <Command shouldFilter={false} className="overflow-visible bg-transparent">
         <Popover open={aberto} onOpenChange={setAberto}>
           <PopoverAnchor asChild>
-            <div className="relative flex w-full items-center">
+            <div ref={containerRef} className="relative flex w-full items-center">
               <CommandPrimitive.Input
                 ref={inputRef}
                 id={id}
@@ -117,6 +118,12 @@ export function SelectMultiplo({
                   setFocado(true)
                   setAberto(true)
                   e.currentTarget.select()
+                }}
+                onClick={() => {
+                  if (!aberto) {
+                    setAberto(true)
+                  }
+                  inputRef.current?.select()
                 }}
                 onBlur={() => {
                   setFocado(false)
@@ -140,13 +147,18 @@ export function SelectMultiplo({
                 tabIndex={-1}
                 aria-label={aberto ? 'Fechar opções' : 'Abrir opções'}
                 disabled={disabled}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                }}
                 onClick={() => {
-                  if (aberto) {
-                    setAberto(false)
-                  } else {
-                    setAberto(true)
-                    inputRef.current?.focus()
-                  }
+                  setAberto((prev) => {
+                    const proximo = !prev
+                    if (proximo) {
+                      inputRef.current?.focus()
+                      inputRef.current?.select()
+                    }
+                    return proximo
+                  })
                 }}
                 className="absolute right-0 top-0 bottom-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -159,6 +171,12 @@ export function SelectMultiplo({
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => {
+              const target = e.target as HTMLElement | null
+              if (containerRef.current?.contains(target)) {
+                e.preventDefault()
+              }
+            }}
             className="w-[var(--radix-popover-trigger-width)] min-w-[240px] p-0"
           >
             {opcoes.length > 1 && (

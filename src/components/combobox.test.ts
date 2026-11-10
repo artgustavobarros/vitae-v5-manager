@@ -40,4 +40,22 @@ describe('Combobox', () => {
     expect(html).toContain('<input')
     expect(html).toContain('placeholder="Escolha um clã"')
   })
+
+  it('exibe a descrição da opção selecionada abaixo do campo', () => {
+    const html = renderToStaticMarkup(
+      createElement(Combobox, {
+        opcoes: [
+          {
+            valor: 'celeridade-1-reflexos-rapidos',
+            rotulo: 'Reflexos Rápidos (Nível 1)',
+            descricao: 'Reage mais rápido e ignora penalidades de cobertura.',
+          },
+        ],
+        valor: 'celeridade-1-reflexos-rapidos',
+        onChange: () => {},
+      }),
+    )
+
+    expect(html).toContain('Reage mais rápido e ignora penalidades de cobertura.')
+  })
 })

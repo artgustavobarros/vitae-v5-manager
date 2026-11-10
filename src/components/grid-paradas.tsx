@@ -95,7 +95,14 @@ function CartaoParada({ parada: p, indice, editavel, salvando, podeGerenciar, on
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: p.id, index: indice, disabled: !editavel || salvando })
   return (
-    <Card ref={editavel ? ref : undefined} data-parada-id={p.id} className={cn('gap-2 p-3', isDragging && 'border-primary opacity-70')}>
+    <Card
+      ref={editavel ? ref : undefined}
+      data-parada-id={p.id}
+      className={cn(
+        'gap-2 p-3 transition-transform duration-150',
+        isDragging && 'border-2 border-dashed border-primary/60 bg-primary/5 opacity-50 shadow-inner'
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-1">
           {editavel && (

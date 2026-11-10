@@ -27,8 +27,30 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import { Accessibility, defaultPreset } from '@dnd-kit/dom'
+import { OptimisticSortingPlugin } from '@dnd-kit/dom/sortable'
+import { DragDropProvider, DragOverlay, type DragEndEvent, type DragOverEvent } from '@dnd-kit/react'
+import { isSortable, useSortable } from '@dnd-kit/react/sortable'
 import { useState } from 'react'
 import { toast } from 'sonner'
+
+const pluginsCombate = [
+  ...defaultPreset.plugins.filter((plugin) => plugin !== Accessibility),
+  OptimisticSortingPlugin,
+  Accessibility.configure({
+    screenReaderInstructions: {
+      draggable:
+        'Pressione Espaço para selecionar o participante. Use as setas para mover, Espaço para soltar e Escape para cancelar.',
+    },
+    announcements: {
+      dragstart: () => 'Participante selecionado para reordenar.',
+      dragover: ({ operation }: DragOverEvent) =>
+        isSortable(operation.source) ? `Posição ${operation.source.index + 1}.` : undefined,
+      dragend: ({ canceled }: DragEndEvent) =>
+        canceled ? 'Reordenação cancelada.' : 'Participante reposicionado.',
+    },
+  }),
+]
 
 import { BarraApp } from '#/components/barra-app'
 import { BadgeEspecial } from '#/components/badge-especial'
@@ -777,6 +799,587 @@ function PaginaCombate() {
   return <VisaoJogador combate={dados.combate} />
 }
 
+type ParticipanteNarrador = EstadoCombateNarrador['participantes'][number]
+
+interface PropsCardConteudoNarrador {
+  part: ParticipanteNarrador
+  index: number
+  totalParticipantes: number
+  ehTurnoAtual: boolean
+  ehProximoTurno: boolean
+  minimizado: boolean
+  handleRef?: (el: HTMLElement | null) => void
+  onAlternarMinimizado: (id: string) => void
+  onReordenar: (id: string, direcao: 'cima' | 'baixo') => void
+  onEditarInimigo: (part: ParticipanteInimigo) => void
+  onAlternarRevelar: (id: string) => void
+  onRemover: (id: string) => void
+  onAlterarDanoInimigo: (partId: string, tipo: 'vitalidade' | 'vontade', novoDano: Dano) => void
+  onAlterarDanoPersonagem: (personagemId: string, tipo: 'vitalidade' | 'vontade', novoDano: Dano) => void
+  onAlterarFomePersonagem: (personagemId: string, novaFome: number) => void
+  onAlternarCondicao: (partId: string, condicaoId: string) => Promise<void>
+}
+
+function CardConteudoNarrador({
+  part,
+  index,
+  totalParticipantes,
+  ehTurnoAtual,
+  ehProximoTurno,
+  minimizado,
+  handleRef,
+  onAlternarMinimizado,
+  onReordenar,
+  onEditarInimigo,
+  onAlternarRevelar,
+  onRemover,
+  onAlterarDanoInimigo,
+  onAlterarDanoPersonagem,
+  onAlterarFomePersonagem,
+  onAlternarCondicao,
+}: PropsCardConteudoNarrador) {
+  const resumoInimigo = part.tipo === 'inimigo' ? separarDificuldadeGeral(part.notas) : null
+
+  if (minimizado) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col rounded-xl border bg-card transition-all shadow-xs overflow-hidden',
+          ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/2',
+          ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 bg-dano-superficial/2',
+          !ehTurnoAtual && !ehProximoTurno && 'border-border/80 hover:border-border',
+        )}
+      >
+        {/* LINHA 1: IDENTIDADE / VEZ / ESTADO DE SAÚDE / AÇÕES */}
+        <div className="flex items-start justify-between gap-3 px-4 py-2">
+          <div className="flex items-start gap-2 min-w-0">
+            <div
+              ref={handleRef}
+              className="cursor-grab active:cursor-grabbing p-1.5 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-0.5 touch-none rounded-md hover:bg-muted/50"
+              title="Arraste para reordenar a iniciativa"
+            >
+              <GripVertical className="size-4 pointer-events-none" />
+            </div>
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
+              {index + 1}
+            </span>
+            <div className="flex flex-wrap items-start gap-2 min-w-0 pt-1">
+              <div className="flex max-w-full min-w-0 items-center gap-2">
+                <span className="font-serif font-bold text-base text-foreground truncate leading-tight" title={part.nome}>
+                  {part.nome}
+                </span>
+
+                {ehTurnoAtual && (
+                  <span
+                    className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
+                    title="Agindo agora"
+                  >
+                    <span className="size-2 rounded-full bg-vinho animate-pulse" />
+                  </span>
+                )}
+                {ehProximoTurno && !ehTurnoAtual && (
+                  <span
+                    className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-dano-superficial/20 border border-dano-superficial/40"
+                    title="Próximo a agir"
+                  >
+                    <span className="size-2 rounded-full bg-dano-superficial" />
+                  </span>
+                )}
+              </div>
+
+              {part.tipo === 'inimigo' ? (
+                <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
+                  Inimigo
+                </Badge>
+              ) : part.ehPdN || part.ehPdn ? (
+                <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
+                  PdN
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
+                  {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Direita: Dot de Saúde + Ações Narrador + Maximizar */}
+          <div className="flex items-center gap-1 shrink-0 pt-1">
+            {part.tipo === 'inimigo' ? (
+              <BadgeSaude
+                vitalidadeMax={part.vitalidadeMax}
+                dano={part.danoVitalidade}
+                condicoes={part.condicoes}
+                ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
+                soTag={true}
+              />
+            ) : part.condicaoPersonagem ? (
+              <BadgeSaude
+                vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
+                dano={part.condicaoPersonagem.danoVitalidade}
+                condicoes={part.condicoes}
+                ehVampiro={true}
+                soTag={true}
+              />
+            ) : null}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={index === 0}
+              onClick={() => onReordenar(part.id, 'cima')}
+              className="size-7"
+              aria-label="Mover para cima"
+            >
+              <ArrowUp className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={index === totalParticipantes - 1}
+              onClick={() => onReordenar(part.id, 'baixo')}
+              className="size-7"
+              aria-label="Mover para baixo"
+            >
+              <ArrowDown className="size-4" />
+            </Button>
+            {part.tipo === 'inimigo' && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEditarInimigo(part as ParticipanteInimigo)}
+                  className="size-7"
+                  title="Editar este inimigo no combate"
+                >
+                  <Edit3 className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onAlternarRevelar(part.id)}
+                  className="size-7"
+                  title={
+                    part.revelarVitalidade
+                      ? 'Ocultar Vitalidade dos Jogadores'
+                      : 'Revelar Vitalidade aos Jogadores'
+                  }
+                >
+                  {part.revelarVitalidade ? (
+                    <Eye className="size-4 text-vinho" />
+                  ) : (
+                    <EyeOff className="size-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onAlternarMinimizado(part.id)}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Expandir card completo"
+            >
+              <Maximize2 className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemover(part.id)}
+              className="size-7 text-destructive hover:text-destructive"
+              aria-label="Remover participante"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* LINHA 2: TRACKERS EM VALORES NUMÉRICOS (CARROSSEL DRAG-FREE) */}
+        <div className="flex items-center px-4 py-1 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
+          {part.tipo === 'inimigo' ? (
+            <TrackersNumericosLinha
+              danoVitalidade={part.danoVitalidade}
+              vitalidadeMax={part.vitalidadeMax}
+              danoVontade={part.danoVontade}
+              vontadeMax={part.vontadeMax}
+            />
+          ) : part.condicaoPersonagem ? (
+            <TrackersNumericosLinha
+              danoVitalidade={part.condicaoPersonagem.danoVitalidade}
+              vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
+              danoVontade={part.condicaoPersonagem.danoVontade}
+              vontadeMax={part.condicaoPersonagem.vontadeMax}
+              fome={part.condicaoPersonagem.fome}
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground italic px-1 py-1">
+              Condição indisponível
+            </span>
+          )}
+        </div>
+
+        {part.tipo === 'inimigo' && (part.recursosSobrenaturais || resumoInimigo?.dificuldade) && (
+          <div className="flex flex-wrap items-center gap-2 px-4 py-1">
+            <ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} />
+            <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
+          </div>
+        )}
+
+        {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
+        <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
+          <BadgesCondicoes
+            participanteId={part.id}
+            ehVampiro={ehParticipanteVampiro(part)}
+            condicoes={part.condicoes}
+            podeEditar={true}
+            onAlternarCondicao={onAlternarCondicao}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Card
+      className={cn(
+        'py-4 transition-all duration-150',
+        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
+        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
+        !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
+      )}
+    >
+      <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
+        <div className="flex items-start gap-2 min-w-0">
+          <div
+            ref={handleRef}
+            className="cursor-grab active:cursor-grabbing p-1.5 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-0.5 touch-none rounded-md hover:bg-muted/50"
+            title="Arraste para reordenar a iniciativa"
+          >
+            <GripVertical className="size-4 pointer-events-none" />
+          </div>
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
+            {index + 1}
+          </span>
+          <div className="flex flex-wrap items-start gap-2 pt-1 min-w-0">
+            <CardTitle className="font-serif text-xl truncate leading-tight">{part.nome}</CardTitle>
+            {ehTurnoAtual && (
+              <Badge className="bg-vinho text-primary-foreground border-0 text-xs font-semibold shrink-0">
+                Agindo agora
+              </Badge>
+            )}
+            {ehProximoTurno && !ehTurnoAtual && (
+              <Badge
+                variant="outline"
+                className="border-dano-superficial/80 bg-dano-superficial/10 text-dano-superficial font-semibold text-xs flex items-center gap-1 shrink-0"
+              >
+                <ArrowRight className="size-3" />
+                Próximo a agir
+              </Badge>
+            )}
+            {part.tipo === 'inimigo' ? (
+              <Badge variant="outline" className="text-xs shrink-0">
+                Inimigo
+              </Badge>
+            ) : part.ehPdN || part.ehPdn ? (
+              <Badge variant="outline" className="text-xs shrink-0">
+                PdN
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs shrink-0">
+                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
+              </Badge>
+            )}
+            {part.tipo === 'inimigo' ? (
+              <BadgeSaude
+                vitalidadeMax={part.vitalidadeMax}
+                dano={part.danoVitalidade}
+                condicoes={part.condicoes}
+                ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
+              />
+            ) : part.condicaoPersonagem ? (
+              <BadgeSaude
+                vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
+                dano={part.condicaoPersonagem.danoVitalidade}
+                condicoes={part.condicoes}
+                ehVampiro={true}
+              />
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0 pt-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={index === 0}
+            onClick={() => onReordenar(part.id, 'cima')}
+            className="size-8"
+            aria-label="Mover para cima"
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={index === totalParticipantes - 1}
+            onClick={() => onReordenar(part.id, 'baixo')}
+            className="size-8"
+            aria-label="Mover para baixo"
+          >
+            <ArrowDown className="size-4" />
+          </Button>
+          {part.tipo === 'inimigo' && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEditarInimigo(part as ParticipanteInimigo)}
+                className="size-8"
+                title="Editar este inimigo no combate (status, especiais, notas)"
+              >
+                <Edit3 className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onAlternarRevelar(part.id)}
+                className="size-8"
+                title={
+                  part.revelarVitalidade
+                    ? 'Ocultar Vitalidade dos Jogadores'
+                    : 'Revelar Vitalidade aos Jogadores'
+                }
+              >
+                {part.revelarVitalidade ? (
+                  <Eye className="size-4 text-vinho" />
+                ) : (
+                  <EyeOff className="size-4 text-muted-foreground" />
+                )}
+              </Button>
+            </>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onAlternarMinimizado(part.id)}
+            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Minimizar card"
+          >
+            <Minimize2 className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemover(part.id)}
+            className="size-8 text-destructive hover:text-destructive"
+            aria-label="Remover participante"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2">
+        {part.tipo === 'inimigo' ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="flex flex-col gap-2 items-start min-w-0">
+                <TrilhaTatilExpandida
+                  rotulo="Vitalidade"
+                  dano={part.danoVitalidade}
+                  max={part.vitalidadeMax}
+                  podeEditar={true}
+                  onChange={(dano) =>
+                    onAlterarDanoInimigo(part.id, 'vitalidade', dano)
+                  }
+                />
+                <TrilhaTatilExpandida
+                  rotulo="Força de Vontade"
+                  dano={part.danoVontade}
+                  max={part.vontadeMax}
+                  podeEditar={true}
+                  onChange={(dano) =>
+                    onAlterarDanoInimigo(part.id, 'vontade', dano)
+                  }
+                />
+              </div>
+            </div>
+
+            {part.fichaCompleta && <ResumoFichaAntagonistaCompleta ficha={part.fichaCompleta} nome={part.nome} />}
+            <ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} />
+            <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
+            {!part.fichaCompleta && part.paradas && (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1 border-t">
+                <span>
+                  Físico: <strong className="text-foreground">{part.paradas.fisico}</strong>
+                </span>
+                <span>&bull;</span>
+                <span>
+                  Social: <strong className="text-foreground">{part.paradas.social}</strong>
+                </span>
+                <span>&bull;</span>
+                <span>
+                  Mental: <strong className="text-foreground">{part.paradas.mental}</strong>
+                </span>
+              </div>
+            )}
+
+            {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-t pt-1">
+                <span className="text-xs font-medium text-muted-foreground">Paradas Excepcionais:</span>
+                {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).map((pe, i) => (
+                  <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />
+                ))}
+              </div>
+            )}
+
+            {resumoInimigo?.notas && (
+              <div className="text-xs text-muted-foreground italic">
+                <VisualizadorMarkdown markdown={resumoInimigo.notas} />
+              </div>
+            )}
+
+            {part.especiais && part.especiais.length > 0 && (
+              <div className="flex items-center gap-1 pt-1 border-t min-w-0">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
+                <CarrosselBadges>
+                  {part.especiais.map((esp, i) => (
+                    <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />
+                  ))}
+                </CarrosselBadges>
+              </div>
+            )}
+
+            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
+              <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
+              <BadgesCondicoes
+                participanteId={part.id}
+                ehVampiro={ehParticipanteVampiro(part)}
+                condicoes={part.condicoes}
+                podeEditar={true}
+                onAlternarCondicao={onAlternarCondicao}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {part.condicaoPersonagem ? (
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div className="flex flex-col gap-2 items-start min-w-0">
+                  <TrilhaTatilExpandida
+                    rotulo="Vitalidade"
+                    dano={part.condicaoPersonagem.danoVitalidade}
+                    max={part.condicaoPersonagem.vitalidadeMax}
+                    podeEditar={true}
+                    onChange={(dano) =>
+                      onAlterarDanoPersonagem(part.personagemId, 'vitalidade', dano)
+                    }
+                  />
+                  <TrilhaTatilExpandida
+                    rotulo="Força de Vontade"
+                    dano={part.condicaoPersonagem.danoVontade}
+                    max={part.condicaoPersonagem.vontadeMax}
+                    podeEditar={true}
+                    onChange={(dano) =>
+                      onAlterarDanoPersonagem(part.personagemId, 'vontade', dano)
+                    }
+                  />
+                </div>
+
+                <FomeTatilExpandida
+                  fome={part.condicaoPersonagem.fome}
+                  podeEditar={true}
+                  onChange={(novaFome) =>
+                    onAlterarFomePersonagem(part.personagemId, novaFome)
+                  }
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Condição indisponível.</p>
+            )}
+
+            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
+              <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
+              <BadgesCondicoes
+                participanteId={part.id}
+                ehVampiro={ehParticipanteVampiro(part)}
+                condicoes={part.condicoes}
+                podeEditar={true}
+                onAlternarCondicao={onAlternarCondicao}
+              />
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function CardParticipanteSortavel({
+  part,
+  index,
+  totalParticipantes,
+  ehTurnoAtual,
+  ehProximoTurno,
+  minimizado,
+  salvandoOrdem,
+  onAlternarMinimizado,
+  onReordenar,
+  onEditarInimigo,
+  onAlternarRevelar,
+  onRemover,
+  onAlterarDanoInimigo,
+  onAlterarDanoPersonagem,
+  onAlterarFomePersonagem,
+  onAlternarCondicao,
+}: PropsCardConteudoNarrador & { salvandoOrdem: boolean }) {
+  const { ref, handleRef, isDragging } = useSortable({
+    id: part.id,
+    index,
+    disabled: salvandoOrdem,
+  })
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        minHeight: isDragging ? (minimizado ? 72 : 136) : undefined,
+      }}
+      className={cn(
+        'relative transition-transform duration-200 ease-out',
+        isDragging &&
+          'rounded-xl border-2 border-dashed border-vinho bg-vinho/10 shadow-inner rotate-0 flex items-center justify-center select-none',
+      )}
+    >
+      {isDragging ? (
+        <div className="flex items-center gap-2.5 text-xs font-semibold text-vinho uppercase tracking-wider py-8">
+          <GripVertical className="size-4 animate-pulse" />
+          <span>Posição na iniciativa</span>
+        </div>
+      ) : (
+        <CardConteudoNarrador
+          part={part}
+          index={index}
+          totalParticipantes={totalParticipantes}
+          ehTurnoAtual={ehTurnoAtual}
+          ehProximoTurno={ehProximoTurno}
+          minimizado={minimizado}
+          handleRef={handleRef}
+          onAlternarMinimizado={onAlternarMinimizado}
+          onReordenar={onReordenar}
+          onEditarInimigo={onEditarInimigo}
+          onAlternarRevelar={onAlternarRevelar}
+          onRemover={onRemover}
+          onAlterarDanoInimigo={onAlterarDanoInimigo}
+          onAlterarDanoPersonagem={onAlterarDanoPersonagem}
+          onAlterarFomePersonagem={onAlterarFomePersonagem}
+          onAlternarCondicao={onAlternarCondicao}
+        />
+      )}
+    </div>
+  )
+}
+
 // ==========================================
 // VISÃO DO NARRADOR
 // ==========================================
@@ -832,7 +1435,8 @@ function VisaoNarrador({
   const [recursosAvulsos, setRecursosAvulsos] = useState<Record<string, RecursosSobrenaturais>>({})
 
   const [arrastandoId, setArrastandoId] = useState<string | null>(null)
-  const [destinoId, setDestinoId] = useState<string | null>(null)
+  const [locaisParticipantes, setLocaisParticipantes] = useState<EstadoCombateNarrador['participantes'] | null>(null)
+  const [salvandoOrdem, setSalvandoOrdem] = useState(false)
 
   const [cardsMinimizados, setCardsMinimizados] = useState<Record<string, boolean>>({})
   const [modoCompactoGeral, setModoCompactoGeral] = useState(false)
@@ -860,6 +1464,11 @@ function VisaoNarrador({
   const inimigosIncapacitados = combate
     ? combate.participantes.filter((p) => ehInimigoIncapacitado(p))
     : []
+
+  const participantesExibidos = locaisParticipantes ?? participantesAtivos
+  const arrastandoPart = arrastandoId
+    ? participantesExibidos.find((p) => p.id === arrastandoId)
+    : null
 
   const participanteAtual = combate?.participantes[combate.turnoAtual]
   const proximoIndex = combate ? obterProximoIndiceAtivo(combate) : -1
@@ -973,36 +1582,44 @@ function VisaoNarrador({
     }
   }
 
-  async function handleDropCard(partIdDestino: string) {
-    if (!combate || !arrastandoId || arrastandoId === partIdDestino) {
-      setArrastandoId(null)
-      setDestinoId(null)
+  async function handleDragEnd(event: DragEndEvent) {
+    const { source } = event.operation
+    setArrastandoId(null)
+
+    if (event.canceled || !isSortable(source) || source.initialIndex === source.index) {
+      setLocaisParticipantes(null)
       return
     }
 
-    const idsAtivos = participantesAtivos.map((p) => p.id)
-    const indexOrigem = idsAtivos.indexOf(arrastandoId)
-    const indexDestino = idsAtivos.indexOf(partIdDestino)
-    if (indexOrigem === -1 || indexDestino === -1) {
-      setArrastandoId(null)
-      setDestinoId(null)
+    const lista = locaisParticipantes ?? participantesAtivos
+    const origem = lista[source.initialIndex]
+    const destino = lista[source.index]
+    if (!origem || !destino) {
+      setLocaisParticipantes(null)
       return
     }
 
-    const novosIds = [...idsAtivos]
-    const [removido] = novosIds.splice(indexOrigem, 1)
-    novosIds.splice(indexDestino, 0, removido)
+    const novaOrdem = [...lista]
+    const [removido] = novaOrdem.splice(source.initialIndex, 1)
+    novaOrdem.splice(source.index, 0, removido)
 
-    const todosIds = [...novosIds, ...inimigosIncapacitados.map((p) => p.id)]
+    setLocaisParticipantes(novaOrdem)
+    setSalvandoOrdem(true)
+
+    const todosIds = [
+      ...novaOrdem.map((p) => p.id),
+      ...inimigosIncapacitados.map((p) => p.id),
+    ]
 
     try {
       await reordenarParticipantesCombateServer({ data: { ordemIds: todosIds } })
-      router.invalidate()
+      await router.invalidate()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Falha ao reordenar.')
+      await router.invalidate()
     } finally {
-      setArrastandoId(null)
-      setDestinoId(null)
+      setSalvandoOrdem(false)
+      setLocaisParticipantes(null)
     }
   }
 
@@ -1354,515 +1971,82 @@ function VisaoNarrador({
         )}
 
         {combate && (
-          <div className="flex flex-col gap-3">
-            {participantesAtivos.map((part, index) => {
-              const resumoInimigo = part.tipo === 'inimigo' ? separarDificuldadeGeral(part.notas) : null
-              const ehTurnoAtual = combate ? part.id === combate.participantes[combate.turnoAtual]?.id : false
-              const ehProximoTurno = combate && proximoIndex !== -1 ? part.id === combate.participantes[proximoIndex]?.id : false
+          <DragDropProvider
+            plugins={pluginsCombate}
+            onDragStart={(event) => {
+              if (event.operation.source) {
+                setArrastandoId(String(event.operation.source.id))
+                setLocaisParticipantes(participantesAtivos)
+              }
+            }}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex flex-col gap-3" aria-busy={salvandoOrdem}>
+              {participantesExibidos.map((part, index) => {
+                const ehTurnoAtual = combate
+                  ? part.id === combate.participantes[combate.turnoAtual]?.id
+                  : false
+                const ehProximoTurno =
+                  combate && proximoIndex !== -1
+                    ? part.id === combate.participantes[proximoIndex]?.id
+                    : false
 
-              return (
+                return (
+                  <CardParticipanteSortavel
+                    key={part.id}
+                    part={part}
+                    index={index}
+                    totalParticipantes={participantesExibidos.length}
+                    ehTurnoAtual={ehTurnoAtual}
+                    ehProximoTurno={ehProximoTurno}
+                    minimizado={estaMinimizado(part.id)}
+                    salvandoOrdem={salvandoOrdem}
+                    onAlternarMinimizado={alternarMinimizado}
+                    onReordenar={handleReordenar}
+                    onEditarInimigo={abrirEditarInimigo}
+                    onAlternarRevelar={handleAlternarRevelar}
+                    onRemover={handleRemoverParticipante}
+                    onAlterarDanoInimigo={handleAlterarDanoInimigo}
+                    onAlterarDanoPersonagem={handleAlterarDanoPersonagem}
+                    onAlterarFomePersonagem={handleAlterarFomePersonagem}
+                    onAlternarCondicao={handleAlternarCondicao}
+                  />
+                )
+              })}
+            </div>
+
+            <DragOverlay>
+              {arrastandoPart ? (
                 <div
-                  key={part.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData('text/plain', part.id)
-                    e.dataTransfer.effectAllowed = 'move'
-                    setArrastandoId(part.id)
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    e.dataTransfer.dropEffect = 'move'
-                    if (destinoId !== part.id) {
-                      setDestinoId(part.id)
-                    }
-                  }}
-                  onDragLeave={(e) => {
-                    if (e.currentTarget.contains(e.relatedTarget as Node)) return
-                    if (destinoId === part.id) {
-                      setDestinoId(null)
-                    }
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault()
-                    handleDropCard(part.id)
-                  }}
-                  onDragEnd={() => {
-                    setArrastandoId(null)
-                    setDestinoId(null)
-                  }}
-                  className="relative"
+                  style={{ transform: 'rotate(2.5deg)', transformOrigin: 'center center' }}
+                  className="shadow-2xl ring-2 ring-vinho/70 rounded-xl bg-card overflow-hidden select-none cursor-grabbing pointer-events-none"
                 >
-                  {estaMinimizado(part.id) ? (
-                    /* MODO MINIMIZADO: FITA TÁTICA (3 LINHAS) - NARRADOR */
-                    <div
-                      className={cn(
-                        'flex flex-col rounded-xl border bg-card transition-all shadow-xs overflow-hidden',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/2',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 bg-dano-superficial/2',
-                        !ehTurnoAtual && !ehProximoTurno && 'border-border/80 hover:border-border',
-                        arrastandoId === part.id && 'opacity-40 border-dashed border-primary scale-100',
-                        destinoId === part.id && arrastandoId !== part.id && 'ring-2 ring-primary ring-offset-2',
-                      )}
-                    >
-                      {/* LINHA 1: IDENTIDADE / VEZ / ESTADO DE SAÚDE / AÇÕES */}
-                      <div className="flex items-start justify-between gap-3 px-4 py-2">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <div
-                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-1"
-                            title="Arraste para reordenar a iniciativa"
-                          >
-                            <GripVertical className="size-4" />
-                          </div>
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
-                            {index + 1}
-                          </span>
-                          <div className="flex flex-wrap items-start gap-2 min-w-0 pt-1">
-                            <div className="flex max-w-full min-w-0 items-center gap-2">
-                              <span className="font-serif font-bold text-base text-foreground truncate leading-tight" title={part.nome}>
-                                {part.nome}
-                              </span>
-
-                              {ehTurnoAtual && (
-                                <span
-                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
-                                  title="Agindo agora"
-                                >
-                                  <span className="size-2 rounded-full bg-vinho animate-pulse" />
-                                </span>
-                              )}
-                              {ehProximoTurno && !ehTurnoAtual && (
-                                <span
-                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-dano-superficial/20 border border-dano-superficial/40"
-                                  title="Próximo a agir"
-                                >
-                                  <span className="size-2 rounded-full bg-dano-superficial" />
-                                </span>
-                              )}
-                            </div>
-
-                            {part.tipo === 'inimigo' ? (
-                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
-                                Inimigo
-                              </Badge>
-                            ) : part.ehPdN || part.ehPdn ? (
-                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
-                                PdN
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
-                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Direita: Dot de Saúde + Ações Narrador + Maximizar */}
-                        <div className="flex items-center gap-1 shrink-0 pt-1">
-                          {part.tipo === 'inimigo' ? (
-                            <BadgeSaude
-                              vitalidadeMax={part.vitalidadeMax}
-                              dano={part.danoVitalidade}
-                              condicoes={part.condicoes}
-                              ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
-                              soTag={true}
-                            />
-                          ) : part.condicaoPersonagem ? (
-                            <BadgeSaude
-                              vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
-                              dano={part.condicaoPersonagem.danoVitalidade}
-                              condicoes={part.condicoes}
-                              ehVampiro={true}
-                              soTag={true}
-                            />
-                          ) : null}
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={index === 0}
-                            onClick={() => handleReordenar(part.id, 'cima')}
-                            className="size-7"
-                            aria-label="Mover para cima"
-                          >
-                            <ArrowUp className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={index === participantesAtivos.length - 1}
-                            onClick={() => handleReordenar(part.id, 'baixo')}
-                            className="size-7"
-                            aria-label="Mover para baixo"
-                          >
-                            <ArrowDown className="size-4" />
-                          </Button>
-                          {part.tipo === 'inimigo' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => abrirEditarInimigo(part)}
-                                className="size-7"
-                                title="Editar este inimigo no combate"
-                              >
-                                <Edit3 className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleAlternarRevelar(part.id)}
-                                className="size-7"
-                                title={
-                                  part.revelarVitalidade
-                                    ? 'Ocultar Vitalidade dos Jogadores'
-                                    : 'Revelar Vitalidade aos Jogadores'
-                                }
-                              >
-                                {part.revelarVitalidade ? (
-                                  <Eye className="size-4 text-vinho" />
-                                ) : (
-                                  <EyeOff className="size-4 text-muted-foreground" />
-                                )}
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => alternarMinimizado(part.id)}
-                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="Expandir card completo"
-                          >
-                            <Maximize2 className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoverParticipante(part.id)}
-                            className="size-7 text-destructive hover:text-destructive"
-                            aria-label="Remover participante"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* LINHA 2: TRACKERS EM VALORES NUMÉRICOS (CARROSSEL DRAG-FREE) */}
-                      <div className="flex items-center px-4 py-1 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
-                        {part.tipo === 'inimigo' ? (
-                          <TrackersNumericosLinha
-                            danoVitalidade={part.danoVitalidade}
-                            vitalidadeMax={part.vitalidadeMax}
-                            danoVontade={part.danoVontade}
-                            vontadeMax={part.vontadeMax}
-                          />
-                        ) : part.condicaoPersonagem ? (
-                          <TrackersNumericosLinha
-                            danoVitalidade={part.condicaoPersonagem.danoVitalidade}
-                            vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
-                            danoVontade={part.condicaoPersonagem.danoVontade}
-                            vontadeMax={part.condicaoPersonagem.vontadeMax}
-                            fome={part.condicaoPersonagem.fome}
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground italic px-1 py-1">
-                            Condição indisponível
-                          </span>
-                        )}
-                      </div>
-
-                      {part.tipo === 'inimigo' && (part.recursosSobrenaturais || resumoInimigo?.dificuldade) && <div className="flex flex-wrap items-center gap-2 px-4 py-1"><ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} /><ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} /></div>}
-
-                      {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
-                      <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
-                        <BadgesCondicoes
-                          participanteId={part.id}
-                          ehVampiro={ehParticipanteVampiro(part)}
-                          condicoes={part.condicoes}
-                          podeEditar={true}
-                          onAlternarCondicao={handleAlternarCondicao}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    /* MODO MAXIMIZADO: CARD COMPLETO COM py-4 */
-                    <Card
-                      className={cn(
-                        'py-4 transition-all duration-150',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
-                        !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
-                        arrastandoId === part.id && 'opacity-40 border-dashed border-primary scale-100',
-                        destinoId === part.id && arrastandoId !== part.id && 'ring-2 ring-primary ring-offset-2',
-                      )}
-                    >
-                      <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <div
-                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-1"
-                            title="Arraste para reordenar a iniciativa"
-                          >
-                            <GripVertical className="size-4" />
-                          </div>
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
-                            {index + 1}
-                          </span>
-                          <div className="flex flex-wrap items-start gap-2 pt-1 min-w-0">
-                            <CardTitle className="font-serif text-xl truncate leading-tight">{part.nome}</CardTitle>
-                            {ehTurnoAtual && (
-                              <Badge className="bg-vinho text-primary-foreground border-0 text-xs font-semibold shrink-0">
-                                Agindo agora
-                              </Badge>
-                            )}
-                            {ehProximoTurno && !ehTurnoAtual && (
-                              <Badge
-                                variant="outline"
-                                className="border-dano-superficial/80 bg-dano-superficial/10 text-dano-superficial font-semibold text-xs flex items-center gap-1 shrink-0"
-                              >
-                                <ArrowRight className="size-3" />
-                                Próximo a agir
-                              </Badge>
-                            )}
-                            {part.tipo === 'inimigo' ? (
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                Inimigo
-                              </Badge>
-                            ) : part.ehPdN || part.ehPdn ? (
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                PdN
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs shrink-0">
-                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
-                              </Badge>
-                            )}
-                            {part.tipo === 'inimigo' ? (
-                              <BadgeSaude
-                                vitalidadeMax={part.vitalidadeMax}
-                                dano={part.danoVitalidade}
-                                condicoes={part.condicoes}
-                                ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
-                              />
-                            ) : part.condicaoPersonagem ? (
-                              <BadgeSaude
-                                vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
-                                dano={part.condicaoPersonagem.danoVitalidade}
-                                condicoes={part.condicoes}
-                                ehVampiro={true}
-                              />
-                            ) : null}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 shrink-0 pt-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={index === 0}
-                            onClick={() => handleReordenar(part.id, 'cima')}
-                            className="size-8"
-                            aria-label="Mover para cima"
-                          >
-                            <ArrowUp className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={index === participantesAtivos.length - 1}
-                            onClick={() => handleReordenar(part.id, 'baixo')}
-                            className="size-8"
-                            aria-label="Mover para baixo"
-                          >
-                            <ArrowDown className="size-4" />
-                          </Button>
-                          {part.tipo === 'inimigo' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => abrirEditarInimigo(part)}
-                                className="size-8"
-                                title="Editar este inimigo no combate (status, especiais, notas)"
-                              >
-                                <Edit3 className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleAlternarRevelar(part.id)}
-                                className="size-8"
-                                title={
-                                  part.revelarVitalidade
-                                    ? 'Ocultar Vitalidade dos Jogadores'
-                                    : 'Revelar Vitalidade aos Jogadores'
-                                }
-                              >
-                                {part.revelarVitalidade ? (
-                                  <Eye className="size-4 text-vinho" />
-                                ) : (
-                                  <EyeOff className="size-4 text-muted-foreground" />
-                                )}
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => alternarMinimizado(part.id)}
-                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="Minimizar card"
-                          >
-                            <Minimize2 className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoverParticipante(part.id)}
-                            className="size-8 text-destructive hover:text-destructive"
-                            aria-label="Remover participante"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2">
-                        {part.tipo === 'inimigo' ? (
-                          <div className="flex flex-col gap-3">
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                              <div className="flex flex-col gap-2 items-start min-w-0">
-                                <TrilhaTatilExpandida
-                                  rotulo="Vitalidade"
-                                  dano={part.danoVitalidade}
-                                  max={part.vitalidadeMax}
-                                  podeEditar={true}
-                                  onChange={(dano) =>
-                                    handleAlterarDanoInimigo(part.id, 'vitalidade', dano)
-                                  }
-                                />
-                                <TrilhaTatilExpandida
-                                  rotulo="Força de Vontade"
-                                  dano={part.danoVontade}
-                                  max={part.vontadeMax}
-                                  podeEditar={true}
-                                  onChange={(dano) =>
-                                    handleAlterarDanoInimigo(part.id, 'vontade', dano)
-                                  }
-                                />
-                              </div>
-                            </div>
-
-                            {part.fichaCompleta && <ResumoFichaAntagonistaCompleta ficha={part.fichaCompleta} nome={part.nome} />}
-                            <ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} />
-                            <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
-                            {!part.fichaCompleta && part.paradas && (
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1 border-t">
-                                <span>
-                                  Físico: <strong className="text-foreground">{part.paradas.fisico}</strong>
-                                </span>
-                                <span>&bull;</span>
-                                <span>
-                                  Social: <strong className="text-foreground">{part.paradas.social}</strong>
-                                </span>
-                                <span>&bull;</span>
-                                <span>
-                                  Mental: <strong className="text-foreground">{part.paradas.mental}</strong>
-                                </span>
-                              </div>
-                            )}
-
-                            {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).length > 0 && (
-                              <div className="flex flex-wrap items-center gap-2 border-t pt-1">
-                                <span className="text-xs font-medium text-muted-foreground">Paradas Excepcionais:</span>
-                                {((part.paradas.excepcionais ?? part.paradas.especiais) ?? []).map((pe, i) => (
-                                  <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />
-                                ))}
-                              </div>
-                            )}
-
-                            {resumoInimigo?.notas && (
-                              <div className="text-xs text-muted-foreground italic">
-                                <VisualizadorMarkdown markdown={resumoInimigo.notas} />
-                              </div>
-                            )}
-
-                            {part.especiais && part.especiais.length > 0 && (
-                              <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-                                <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
-                                <CarrosselBadges>
-                                  {part.especiais.map((esp, i) => (
-                                    <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />
-                                  ))}
-                                </CarrosselBadges>
-                              </div>
-                            )}
-
-                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-                              <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
-                              <BadgesCondicoes
-                                participanteId={part.id}
-                                ehVampiro={ehParticipanteVampiro(part)}
-                                condicoes={part.condicoes}
-                                podeEditar={true}
-                                onAlternarCondicao={handleAlternarCondicao}
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-3">
-                            {part.condicaoPersonagem ? (
-                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                                <div className="flex flex-col gap-2 items-start min-w-0">
-                                  <TrilhaTatilExpandida
-                                    rotulo="Vitalidade"
-                                    dano={part.condicaoPersonagem.danoVitalidade}
-                                    max={part.condicaoPersonagem.vitalidadeMax}
-                                    podeEditar={true}
-                                    onChange={(dano) =>
-                                      handleAlterarDanoPersonagem(part.personagemId, 'vitalidade', dano)
-                                    }
-                                  />
-                                  <TrilhaTatilExpandida
-                                    rotulo="Força de Vontade"
-                                    dano={part.condicaoPersonagem.danoVontade}
-                                    max={part.condicaoPersonagem.vontadeMax}
-                                    podeEditar={true}
-                                    onChange={(dano) =>
-                                      handleAlterarDanoPersonagem(part.personagemId, 'vontade', dano)
-                                    }
-                                  />
-                                </div>
-
-                                <FomeTatilExpandida
-                                  fome={part.condicaoPersonagem.fome}
-                                  podeEditar={true}
-                                  onChange={(novaFome) =>
-                                    handleAlterarFomePersonagem(part.personagemId, novaFome)
-                                  }
-                                />
-                              </div>
-                            ) : (
-                              <p className="text-xs text-muted-foreground">Condição indisponível.</p>
-                            )}
-
-                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-                              <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
-                              <BadgesCondicoes
-                                participanteId={part.id}
-                                ehVampiro={ehParticipanteVampiro(part)}
-                                condicoes={part.condicoes}
-                                podeEditar={true}
-                                onAlternarCondicao={handleAlternarCondicao}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
+                  <CardConteudoNarrador
+                    part={arrastandoPart}
+                    index={participantesExibidos.findIndex((p) => p.id === arrastandoPart.id)}
+                    totalParticipantes={participantesExibidos.length}
+                    ehTurnoAtual={
+                      combate ? arrastandoPart.id === combate.participantes[combate.turnoAtual]?.id : false
+                    }
+                    ehProximoTurno={
+                      combate && proximoIndex !== -1
+                        ? arrastandoPart.id === combate.participantes[proximoIndex]?.id
+                        : false
+                    }
+                    minimizado={estaMinimizado(arrastandoPart.id)}
+                    onAlternarMinimizado={() => {}}
+                    onReordenar={() => {}}
+                    onEditarInimigo={() => {}}
+                    onAlternarRevelar={() => {}}
+                    onRemover={() => {}}
+                    onAlterarDanoInimigo={() => {}}
+                    onAlterarDanoPersonagem={() => {}}
+                    onAlterarFomePersonagem={() => {}}
+                    onAlternarCondicao={async () => {}}
+                  />
                 </div>
-              )
-            })}
+              ) : null}
+            </DragOverlay>
 
             {/* SEÇÃO INFERIOR: INIMIGOS FORA DE COMBATE (INCAPACITADOS / MORTOS / TORPOR) */}
             {inimigosIncapacitados.length > 0 && (
@@ -1892,7 +2076,7 @@ function VisaoNarrador({
                 </div>
               </div>
             )}
-          </div>
+          </DragDropProvider>
         )}
       </div>
 

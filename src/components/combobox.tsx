@@ -1,6 +1,6 @@
 import { cn } from 'cn'
 import { Command as CommandPrimitive } from 'cmdk'
-import { Check, ChevronsUpDown, Plus } from 'lucide-react'
+import { Check, ChevronsUpDown, Info, Plus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -46,6 +46,7 @@ export function Combobox({
   className,
   permiteCriar = false,
   textoCriar,
+  mostrarDescricao = true,
 }: {
   opcoes: readonly OpcaoCombobox[]
   /** null mostra o placeholder; num seletor de "Adicionar", fica sempre null. */
@@ -63,6 +64,8 @@ export function Combobox({
   permiteCriar?: boolean
   /** Mensagem customizada para criar novo item. Padrão: (termo) => `Usar "${termo}"` */
   textoCriar?: (termo: string) => string
+  /** Se true, exibe a descrição da opção selecionada abaixo do campo. Padrão: true */
+  mostrarDescricao?: boolean
 }) {
   const [aberto, setAberto] = useState(false)
   const [focado, setFocado] = useState(false)
@@ -70,6 +73,7 @@ export function Combobox({
   const [textoInput, setTextoInput] = useState(escolhida?.rotulo ?? (permiteCriar ? valor ?? '' : ''))
   const [termo, setTermo] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Sincroniza com mudanças externas de `valor` quando o usuário não estiver digitando
   useEffect(() => {
@@ -116,7 +120,7 @@ export function Combobox({
       <Command shouldFilter={false} className="overflow-visible bg-transparent">
         <Popover open={aberto} onOpenChange={setAberto}>
           <PopoverAnchor asChild>
-            <div className="relative flex w-full items-center">
+            <div ref={containerRef} className="relative flex w-full items-center">
               <CommandPrimitive.Input
                 ref={inputRef}
                 id={id}
@@ -135,6 +139,12 @@ export function Combobox({
                   setFocado(true)
                   setAberto(true)
                   e.currentTarget.select()
+                }}
+                onClick={() => {
+                  if (!aberto) {
+                    setAberto(true)
+                  }
+                  inputRef.current?.select()
                 }}
                 onBlur={() => {
                   setFocado(false)
@@ -158,13 +168,18 @@ export function Combobox({
                 tabIndex={-1}
                 aria-label={aberto ? 'Fechar opções' : 'Abrir opções'}
                 disabled={disabled}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                }}
                 onClick={() => {
-                  if (aberto) {
-                    setAberto(false)
-                  } else {
-                    setAberto(true)
-                    inputRef.current?.focus()
-                  }
+                  setAberto((prev) => {
+                    const proximo = !prev
+                    if (proximo) {
+                      inputRef.current?.focus()
+                      inputRef.current?.select()
+                    }
+                    return proximo
+                  })
                 }}
                 className="absolute right-0 top-0 bottom-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -177,6 +192,12 @@ export function Combobox({
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => {
+              const target = e.target as HTMLElement | null
+              if (containerRef.current?.contains(target)) {
+                e.preventDefault()
+              }
+            }}
             className="w-[var(--radix-popover-trigger-width)] p-0"
           >
             <CommandList>
@@ -218,6 +239,16 @@ export function Combobox({
           </PopoverContent>
         </Popover>
       </Command>
+
+      {mostrarDescricao && escolhida?.descricao && (
+        <div className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground leading-relaxed">
+          <Info className="size-3.5 shrink-0 mt-0.5 text-muted-foreground/70" />
+          <span className="flex-1">{escolhida.descricao}</span>
+        </div>
+      )}
+      {escolhida?.aviso && (
+        <p className="mt-1 text-xs text-vinho leading-relaxed">{escolhida.aviso}</p>
+      )}
     </div>
   )
 }
