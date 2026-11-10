@@ -7,6 +7,7 @@ import { STATUS_REVISAO_BESTIARIO } from '#/domain/revisao-bestiario'
 import type { ParticipanteCombate } from '#/domain/combate'
 import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import type { ParadaPersonalizada } from '#/domain/paradas'
+import type { EfeitoRelogio, Relogio, TendenciaRelogio } from '#/domain/relogios'
 import { OPCOES_CRIACAO_CRONICA_PADRAO, type OpcoesCriacaoCronica } from '#/domain/cronica'
 import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
 import type { AlteracaoMarcas, ResultadoMarcacao } from '#/domain/sincronizacao-marcas'
@@ -121,6 +122,21 @@ export const paradaCompartilhada = pgTable('parada_compartilhada', {
 export const preferenciaParadas = pgTable('preferencia_paradas', {
   usuarioId: text('usuario_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
   ordem: jsonb().$type<string[]>().notNull().default([]),
+})
+
+export const relogio = pgTable('relogio', {
+  id: uuid().primaryKey().defaultRandom(),
+  nome: text().notNull(),
+  tipo: text().notNull(),
+  descricao: text().notNull().default(''),
+  total: integer().notNull(),
+  atual: integer().notNull(),
+  perigo: text().$type<Relogio['perigo']>().notNull(),
+  visivel: boolean().notNull().default(true),
+  efeitos: jsonb().$type<EfeitoRelogio[]>().notNull().default([]),
+  revisao: integer().notNull().default(1),
+  ultimaTendencia: text('ultima_tendencia').$type<TendenciaRelogio | null>(),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
 })
 
 /**

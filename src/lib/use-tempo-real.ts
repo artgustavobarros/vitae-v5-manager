@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 
 import type { EventoReal } from '#/domain/eventos'
+import { useAvisosRelogios } from '#/components/provedor-avisos-relogios'
 
 /**
  * Conecta ao fluxo SSE em /api/tempo-real enquanto o usuário estiver autenticado.
@@ -10,6 +11,7 @@ import type { EventoReal } from '#/domain/eventos'
  */
 export function useTempoReal(usuarioLogado: boolean) {
   const router = useRouter()
+  const receberAvisos = useAvisosRelogios()
 
   useEffect(() => {
     if (!usuarioLogado || typeof window === 'undefined') return
@@ -25,7 +27,9 @@ export function useTempoReal(usuarioLogado: boolean) {
       try {
         const dados: EventoReal = JSON.parse(event.data)
 
-        if (dados.tipo === 'notificacao') {
+        if (dados.tipo === 'efeitos-relogio') {
+          receberAvisos?.(dados.avisos)
+        } else if (dados.tipo === 'notificacao') {
           toast(dados.notificacao.texto)
           router.invalidate()
         } else if (dados.tipo === 'mudanca') {
@@ -43,5 +47,5 @@ export function useTempoReal(usuarioLogado: boolean) {
     return () => {
       fonte.close()
     }
-  }, [usuarioLogado, router])
+  }, [usuarioLogado, router, receberAvisos])
 }

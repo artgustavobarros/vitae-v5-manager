@@ -183,6 +183,13 @@
       "when": 1793730500000,
       "tag": "0025_corrigir_paradas_ficha_completa",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794320978538,
+      "tag": "0026_relogios_narrativos",
+      "breakpoints": true
     }
   ]
 }

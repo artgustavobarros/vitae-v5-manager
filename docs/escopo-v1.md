@@ -137,6 +137,18 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - Os valores da Condição dos Personagens no Combate seguem as mesmas regras de compartilhamento. As tags de saúde e de condições/debuffs permanecem públicas, por decisão do Narrador, mesmo quando os valores estão ocultos.
 - Há um Combate ativo por vez, descartado ao encerrar.
 
+## Relógios
+
+- Página própria, acessível a Narrador e Jogadores, com cartões de situações da Crônica.
+- Só o Narrador cria, edita, aumenta, diminui e retira Relógios. Ele escolhe nome, tipo de evento, descrição, total de etapas e etapa inicial entre zero e o total.
+- Chegar a zero ou ao total não encerra, oculta nem retira o Relógio. Os controles não ultrapassam esses limites.
+- O Narrador pode ocultar um cartão inteiro. Quando visível, todos os Jogadores da Crônica o consultam; não há seleção por Coterie nesta entrega.
+- Cada Efeito de Relógio define uma condição inclusiva (etapa ou acima; etapa ou abaixo), um título e textos próprios de ativação e desativação. Os efeitos são reavaliados em cada mudança, inclusive quando o valor pula uma etapa.
+- Entrar ou sair da condição mostra o modal correspondente para todos que veem o Relógio, com o site aberto, inclusive em outras páginas. Permanecer na mesma faixa não repete o aviso; entrar novamente repete. Os efeitos ativos ficam no cartão. Ao criar um Relógio em uma etapa com efeitos ativos, seus avisos de ativação também são exibidos.
+- O Narrador escolhe se aumentar ou diminuir o valor eleva o perigo. A piora recebe destaque vinho/vermelho; a melhora recebe verde. Texto e ícone acompanham a cor; movimento reduzido desliga o realce animado.
+- A atualização é manual e compartilhada via SSE. Reconectar atualiza os valores e efeitos ativos; não reproduz modais perdidos durante a desconexão. Sem vínculo automático com Fichas, Combate, dados ou tempo real de relógio.
+- Limites de entrada: até 100 etapas e 30 Efeitos por Relógio. A retirada manual exige confirmação.
+
 ## Sorteios
 
 - O Narrador aperta um botão e recebe o resultado na hora, sem dados visíveis. Há três Sorteios:
