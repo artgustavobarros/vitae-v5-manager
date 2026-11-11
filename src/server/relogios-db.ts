@@ -11,7 +11,7 @@ function exigirNarrador(papel: Papel) {
   if (papel !== 'narrador') throw new Error('Acesso negado')
 }
 
-export async function listarRelogiosNoBanco(papel: Papel, banco: BancoRelogios = db): Promise<RelogioSalvo[]> {
+export async function listarRelogiosNoBanco(papel: Papel, banco: Pick<BancoRelogios, 'select'> = db): Promise<RelogioSalvo[]> {
   return banco.select().from(relogio).where(papel === 'narrador' ? undefined : eq(relogio.visivel, true))
     .orderBy(asc(relogio.criadoEm), asc(relogio.id))
 }

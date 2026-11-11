@@ -41,14 +41,16 @@ vi.mock('#/server/sessao', () => ({ exigirUsuario: {}, exigirNarrador: {} }))
 vi.mock('#/server/enviar-notificacao', () => ({ enviarNotificacao: async () => {} }))
 vi.mock('#/db', async () => {
   const schema = await import('#/db/schema')
-  return {
-    db: {
+  const banco = {
+      transaction: async (executar: (tx: unknown) => Promise<unknown>) => executar(banco),
       select: () => ({
         from: (tabela: unknown) => {
           const linhas = tabela === schema.combate ? [memoria.combate] : [memoria.personagem]
           const consulta = {
             innerJoin: () => consulta,
-            where: () => Object.assign(Promise.resolve(linhas), { limit: async () => linhas }),
+            for: () => consulta,
+            limit: async () => linhas,
+            where: () => Object.assign(Promise.resolve(linhas), { limit: async () => linhas, for: () => consulta }),
           }
           return consulta
         },
@@ -61,14 +63,15 @@ vi.mock('#/db', async () => {
           ),
         }),
       }),
-    },
   }
+  return { db: banco }
 })
 
 import {
   alternarCondicaoParticipanteCombateServer,
   aplicarDanoInimigoCombateServer,
   avancarTurnoCombateServer,
+  definirRevelarCondicaoCombateServer,
 } from './combate'
 import { aplicarRessonanciaPersonagemServer } from './sorteios'
 
@@ -94,6 +97,25 @@ beforeEach(() => {
 })
 
 describe('Ações de Combate no servidor', () => {
+  it('persiste a escolha pública do Narrador sem devolver dados privados', async () => {
+    memoria.usuario.papel = 'narrador'
+    const resposta = await definirRevelarCondicaoCombateServer({
+      data: { participanteId: participante.id, revelar: true },
+    })
+    expect(resposta).toEqual({ ok: true })
+    expect(memoria.combate?.participantes[0]).toHaveProperty('revelarCondicao', true)
+    expect(memoria.combate?.participantes[1]).toEqual(inimigo)
+    await definirRevelarCondicaoCombateServer({ data: { participanteId: participante.id, revelar: false } })
+    expect(memoria.combate?.participantes[0]).toHaveProperty('revelarCondicao', false)
+  })
+
+  it('recusa mudar a divulgação sem Combate ativo', async () => {
+    memoria.usuario.papel = 'narrador'
+    memoria.combate = undefined
+    await expect(definirRevelarCondicaoCombateServer({ data: { participanteId: participante.id, revelar: true } }))
+      .rejects.toThrow('Nenhum combate ativo')
+  })
+
   it('passa o próprio turno sem enviar os dados privados dos inimigos', async () => {
     const resposta = await avancarTurnoCombateServer()
     expect(resposta).toEqual({ ok: true })

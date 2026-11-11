@@ -4,14 +4,15 @@ import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '#/components/ui/card'
 import { efeitosAtivos, type RelogioSalvo } from '#/domain/relogios'
+import type { RelogioPublico } from '#/domain/exibicao-publica'
 
 type Props = {
-  relogio: RelogioSalvo
+  relogio: RelogioSalvo | RelogioPublico
   narrador: boolean
-  ocupado: boolean
-  onMover: (delta: -1 | 1) => void
-  onEditar: () => void
-  onRetirar: () => void
+  ocupado?: boolean
+  onMover?: (delta: -1 | 1) => void
+  onEditar?: () => void
+  onRetirar?: () => void
 }
 
 export function CardRelogio({ relogio, narrador, ocupado, onMover, onEditar, onRetirar }: Props) {
@@ -60,10 +61,10 @@ export function CardRelogio({ relogio, narrador, ocupado, onMover, onEditar, onR
             <div className="flex gap-4">
               <Button variant="outline" size="icon-lg" aria-label={`Diminuir ${relogio.nome}`}
                 aria-disabled={ocupado} className="aria-disabled:opacity-50" disabled={relogio.atual === 0}
-                onClick={() => { if (!ocupado) onMover(-1) }}><Minus className="size-5" /></Button>
+                onClick={() => { if (!ocupado) onMover?.(-1) }}><Minus className="size-5" /></Button>
               <Button variant="outline" size="icon-lg" aria-label={`Aumentar ${relogio.nome}`}
                 aria-disabled={ocupado} className="aria-disabled:opacity-50" disabled={relogio.atual === relogio.total}
-                onClick={() => { if (!ocupado) onMover(1) }}><Plus className="size-5" /></Button>
+                onClick={() => { if (!ocupado) onMover?.(1) }}><Plus className="size-5" /></Button>
             </div>
           )}
         </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
+import { LinkExibicaoPublica } from '#/components/exibicao-publica/link-exibicao-publica'
 import { CardRelogio } from '#/components/relogios/card-relogio'
 import { FormularioRelogio } from '#/components/relogios/formulario-relogio'
 import {
@@ -18,6 +19,7 @@ import { carregarRelogios, moverRelogio, retirarRelogio, salvarRelogio } from '#
 export const Route = createFileRoute('/relogios')({
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
+    if (context.usuario.papel === 'narrador') throw redirect({ to: '/narrador/relogios' })
     return { usuario: context.usuario }
   },
   loader: () => carregarRelogios(),
@@ -28,8 +30,11 @@ export const Route = createFileRoute('/relogios')({
 function PaginaRelogios() {
   const relogios = Route.useLoaderData()
   const { usuario } = Route.useRouteContext()
+  return <TelaRelogios relogios={relogios} narrador={usuario.papel === 'narrador'} />
+}
+
+export function TelaRelogios({ relogios, narrador }: { relogios: RelogioSalvo[]; narrador: boolean }) {
   const router = useRouter()
-  const narrador = usuario.papel === 'narrador'
   const [edicao, setEdicao] = useState<{ relogio: Relogio; revisao: number | null } | null>(null)
   const [retirada, setRetirada] = useState<RelogioSalvo | null>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -69,7 +74,10 @@ function PaginaRelogios() {
             <h1 className="font-serif text-4xl">Relógios</h1>
             <p className="max-w-2xl text-sm text-muted-foreground">Ameaças, objetivos e prazos da Crônica. Os efeitos acompanham cada avanço ou recuo.</p>
           </div>
-          {narrador && <Button disabled={ocupado} onClick={criar}><Plus className="size-4" />Novo Relógio</Button>}
+          {narrador && <div className="flex flex-wrap gap-2">
+            <LinkExibicaoPublica recurso="relogios" />
+            <Button disabled={ocupado} onClick={criar}><Plus className="size-4" />Novo Relógio</Button>
+          </div>}
         </div>
         {relogios.length === 0 ? (
           <Card>

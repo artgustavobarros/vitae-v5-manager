@@ -1,0 +1,83 @@
+.card-combate-ferimento {
+  --ferimento-cor: var(--vinho);
+  --ferimento-fundo: 0%;
+  --ferimento-borda-opacidade: 0;
+  transition: background-color 180ms ease-out, border-color 180ms ease-out;
+}
+
+.card-combate-ferimento[data-ferimento='escoriado'] {
+  --ferimento-fundo: 4%;
+  --ferimento-borda-opacidade: 0.18;
+}
+
+.card-combate-ferimento[data-ferimento='ferido'] {
+  --ferimento-fundo: 9%;
+  --ferimento-borda-opacidade: 0.3;
+}
+
+.card-combate-ferimento[data-ferimento='debilitado'] {
+  --ferimento-fundo: 16%;
+  --ferimento-borda-opacidade: 0.48;
+}
+
+.card-combate-ferimento[data-ferimento='torpor'] {
+  --ferimento-cor: var(--marcador);
+  --ferimento-fundo: 12%;
+  --ferimento-borda-opacidade: 0.42;
+}
+
+.card-combate-ferimento[data-ferimento='morto'] {
+  --ferimento-cor: var(--muted-foreground);
+  --ferimento-fundo: 8%;
+  --ferimento-borda-opacidade: 0.36;
+}
+
+.card-combate-ferimento[data-ferimento]:not([data-ferimento='saudavel']) {
+  background-color: color-mix(in oklab, var(--ferimento-cor) var(--ferimento-fundo), var(--card));
+}
+
+.card-combate-ferimento[data-ferimento]:not([data-ferimento='saudavel'])::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background-color: var(--ferimento-cor);
+  opacity: var(--ferimento-borda-opacidade);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-combate-ferimento { transition: none; }
+}
+
+/* O elemento ordenável é o próprio slide, mantendo os participantes como irmãos no DOM. */
+.carrossel-combate [data-slide-combate] {
+  flex: 0 0 20rem;
+  min-width: 0;
+  max-width: 100%;
+  padding-left: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .carrossel-combate [data-slide-combate] { flex-basis: 24rem; }
+}
+
+.carrossel-combate [data-slide-combate] > div,
+.carrossel-combate [data-slot='card'] {
+  height: 100%;
+}
+
+.carrossel-combate [data-trilha-combate],
+.carrossel-combate [data-condicao-combate] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.carrossel-combate [data-trilha-combate] {
+  gap: 4px;
+}
+
+.carrossel-combate [data-trilha-combate] > span {
+  width: auto;
+  padding-top: 0;
+}

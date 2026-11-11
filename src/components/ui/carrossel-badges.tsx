@@ -31,6 +31,7 @@ export function CarrosselBadges({
   return (
     <div
       ref={emblaRef}
+      data-carrossel-badges=""
       className={cn(
         'overflow-hidden w-full min-w-0 cursor-grab active:cursor-grabbing select-none',
         className,

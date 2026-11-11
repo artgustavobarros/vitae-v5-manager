@@ -32,6 +32,12 @@ O projeto segue o escopo da v1. Entre as escolhas de produto estão a evolução
 
 O app é um monólito em TypeScript: interface e backend usam TanStack Start; PostgreSQL persiste os dados; Drizzle gerencia o esquema e as migrations. Regras do domínio ficam em `src/domain/`, separadas das funções de servidor em `src/server/`. Os painéis recebem atualizações em tempo real via SSE.
 
+## Testes
+
+Instale o Chromium de testes uma vez com `pnpm exec playwright install chromium` (em CI Linux, use `pnpm exec playwright install --with-deps chromium`).
+
+`pnpm test` executa a suíte completa, incluindo as regressões do Combate em Chromium nas larguras de celular e desktop. Para executar somente essas interações, use `pnpm test:browser`. Os testes usam dados fictícios e substituem as chamadas ao servidor; não acessam a Crônica nem o banco.
+
 ## Documentação
 
 Para adicionar os 40 Modelos iniciais de Antagonistas, execute `pnpm antagonistas:povoar` após aplicar as migrations existentes. A carga preserva Modelos e edições existentes e pode ser repetida sem duplicar suas entradas. As fontes comunitárias e os nomes originais ficam nos documentos de pesquisa. A revisão inicial foi encerrada: os candidatos recusados não fazem parte da carga e ficam fora de Antagonistas e do seletor do Combate. As antigas URLs de aprovação redirecionam para Antagonistas.

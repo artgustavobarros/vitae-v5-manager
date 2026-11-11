@@ -17,6 +17,7 @@ import {
   atualizarParticipanteInimigo,
   atualizacaoInimigoSchema,
   avancarTurno,
+  definirRevelarCondicao,
   filtrarCombateParaJogador,
   iniciarCombate,
   participanteCombateSchema,
@@ -616,6 +617,20 @@ export const alternarRevelarVitalidadeCombateServer = createServerFn({ method: '
       return atualizado
     },
   )
+
+export const definirRevelarCondicaoCombateServer = createServerFn({ method: 'POST' })
+  .middleware([exigirNarrador])
+  .validator(z.object({ participanteId: identificadorSchema, revelar: z.boolean() }))
+  .handler(async ({ data }) => {
+    await db.transaction(async (tx) => {
+      const [ativo] = await tx.select().from(combate).where(eq(combate.ativo, true)).for('update').limit(1)
+      if (!ativo) throw new Error('Nenhum combate ativo')
+      const atualizado = definirRevelarCondicao(ativo, data.participanteId, data.revelar)
+      await tx.update(combate).set({ participantes: atualizado.participantes }).where(eq(combate.id, ativo.id))
+    })
+    barramento.emitir({ tipo: 'mudanca', escopo: 'combate' })
+    return { ok: true }
+  })
 
 export const atualizarParticipanteInimigoServer = createServerFn({ method: 'POST' })
   .middleware([exigirNarrador])

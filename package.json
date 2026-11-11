@@ -20,6 +20,7 @@
     "antagonistas:povoar": "tsx scripts/povoar-bestiario.ts",
     "bestiario:povoar": "pnpm antagonistas:povoar",
     "test": "vitest run",
+    "test:browser": "vitest run --project browser",
     "check:production-assets": "tsx scripts/check-production-assets.ts",
     "lint": "react-doctor --yes --no-score --no-supply-chain --blocking error 'src/routes/convite/$token.tsx' src/routes/paradas.tsx",
     "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit"
@@ -65,8 +66,10 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/browser-playwright": "5.0.5",
     "dotenv": "^17.3.1",
     "fake-indexeddb": "^6.2.6",
+    "playwright": "1.64.1",
     "react-doctor": "0.9.18",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",

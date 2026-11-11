@@ -6,6 +6,9 @@ config({ path: ['.env.local', '.env'] })
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+    projects: [
+      { test: { name: 'unit', include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'] } },
+      './vitest.browser.config.ts',
+    ],
   },
 })

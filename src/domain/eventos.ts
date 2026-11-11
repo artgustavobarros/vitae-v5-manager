@@ -3,7 +3,7 @@ import type { AvisoRelogio } from './relogios'
 export type EventoReal =
   | {
       tipo: 'mudanca'
-      escopo: 'personagem' | 'coterie' | 'painel' | 'notificacao' | 'combate' | 'paradas' | 'relogios'
+      escopo: 'personagem' | 'coterie' | 'painel' | 'notificacao' | 'combate' | 'paradas' | 'relogios' | 'link-publico'
       id?: string
       paraUsuarioId?: string
       apenasNarrador?: boolean

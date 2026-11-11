@@ -16,8 +16,8 @@ export type AcaoTela = { rotulo: string; link: LinkOptions }
 const ITENS: Record<Papel, ItemNavegacao[]> = {
   narrador: [
     { rotulo: 'Painel', to: '/' },
-    { rotulo: 'Combate', to: '/combate' },
-    { rotulo: 'Relógios', to: '/relogios' },
+    { rotulo: 'Combate', to: '/narrador/combate' },
+    { rotulo: 'Relógios', to: '/narrador/relogios' },
     { rotulo: 'Rolagens', to: '/narrador/rolagens' },
     { rotulo: 'Paradas', to: '/paradas' },
     { rotulo: 'Antagonistas', to: '/narrador/antagonistas' },

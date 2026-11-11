@@ -58,6 +58,13 @@ export const conviteCronica = pgTable('convite_cronica', {
   substituidoEm: timestamp('substituido_em', { withTimezone: true }),
 })
 
+/** Um único link de exibição da Crônica. O token original só é entregue ao gerar. */
+export const linkPublico = pgTable('link_publico', {
+  id: text().primaryKey(),
+  tokenHash: text('token_hash'),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const statusPersonagem = pgEnum('status_personagem', STATUS_PERSONAGEM)
 
 /**

@@ -47,6 +47,9 @@ jobs:
       - name: Aplicar migrations
         run: pnpm db:migrate
 
+      - name: Instalar Chromium para testes de interface
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Testes
         run: pnpm test
 

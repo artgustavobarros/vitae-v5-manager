@@ -300,6 +300,7 @@ export const participantePersonagemSchema = z.object({
   ehPdn: z.boolean().default(false),
   ehPdN: z.boolean().optional(),
   jogadorNome: z.string().trim().max(120).nullable().optional(),
+  revelarCondicao: z.boolean().optional(),
   condicoes: z.array(identificadorSchema).max(LIMITE_ITENS).default([]),
 })
 
@@ -587,6 +588,15 @@ export function alternarRevelarVitalidade(
   }
 }
 
+export function definirRevelarCondicao(combate: Combate, participanteId: string, revelar: boolean): Combate {
+  const participante = combate.participantes.find((p) => p.id === participanteId)
+  if (!participante || participante.tipo !== 'personagem') throw new Error('Personagem não encontrado no Combate')
+  return {
+    ...combate,
+    participantes: combate.participantes.map((p) => p.id === participanteId ? { ...p, revelarCondicao: revelar } : p),
+  }
+}
+
 export function alternarCondicaoParticipante(
   combate: Combate,
   participanteId: string,
@@ -797,7 +807,7 @@ export function filtrarCombateParaJogador(
       : undefined
 
     const podeVerCondicao =
-      ehMeu || (divideCoterie && condicaoInfo?.compartilhaCondicao === true)
+      p.revelarCondicao === true || ehMeu || (divideCoterie && condicaoInfo?.compartilhaCondicao === true)
 
     if (podeVerCondicao && condicaoInfo) {
       return {

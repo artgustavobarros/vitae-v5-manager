@@ -38,11 +38,11 @@ export type AvisoRelogio = AvisoEfeitoRelogio & {
   id: string; relogioId: string; nomeRelogio: string; tendencia: TendenciaRelogio | null
 }
 
-function efeitoAtivo(efeito: EfeitoRelogio, valor: number) {
+function efeitoAtivo(efeito: Pick<EfeitoRelogio, 'etapa' | 'condicao'>, valor: number) {
   return efeito.condicao === 'a_partir_de' ? valor >= efeito.etapa : valor <= efeito.etapa
 }
 
-export function efeitosAtivos(relogio: Relogio) {
+export function efeitosAtivos<T extends Pick<EfeitoRelogio, 'etapa' | 'condicao'>>(relogio: { atual: number; efeitos: T[] }) {
   return relogio.efeitos.filter((efeito) => efeitoAtivo(efeito, relogio.atual))
 }
 
