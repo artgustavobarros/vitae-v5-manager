@@ -43,21 +43,15 @@ function Entrar() {
       style={{ '--fome-nivel': 2 } as CSSProperties}
     >
       <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
-        <div>
-          <h1 aria-label="Vitae"><MarcaVitae tamanho="grande" /></h1>
-          <p className="mt-1 text-sm text-muted-foreground">Fichas da Crônica</p>
-        </div>
+        <h1 aria-label="Vitae"><MarcaVitae tamanho="grande" /></h1>
         {mensagem && (
           <Alert variant="destructive">
             <AlertDescription>{mensagem}</AlertDescription>
           </Alert>
         )}
-        <Button size="lg" disabled={entrando} onClick={() => void entrar()}>
+        <Button className="rounded-full" size="lg" disabled={entrando} onClick={() => void entrar()}>
           Entrar com Google
         </Button>
-        <p className="text-sm text-muted-foreground">
-          O acesso é somente pelo Google. Ainda não tem conta? Use o link de Convite para a Crônica que o Narrador envia.
-        </p>
       </div>
     </main>
   )
