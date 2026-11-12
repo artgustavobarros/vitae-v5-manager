@@ -29,23 +29,16 @@ export function iniciais(nome: string): string {
 /**
  * Decide com qual papel uma pessoa cria conta no site.
  * Retorna null quando ela não pode: não é o Narrador e não tem Convite para a Crônica válido.
- * Fora do dev, o Narrador só cria conta pelo Google: por senha, bastaria saber o e-mail dele.
+ * A autenticação é exclusivamente pelo Google, inclusive em desenvolvimento.
  */
 export function decidirPapel(params: {
   email: string
   narradorEmail: string
   temConvite: boolean
-  metodo?: 'google' | 'senha'
-  dev?: boolean
 }): Papel | null {
   const narrador = normalizarEmail(params.narradorEmail)
   const ehNarrador = narrador !== '' && normalizarEmail(params.email) === narrador
-  if (ehNarrador && (params.metodo !== 'senha' || params.dev)) return 'narrador'
+  if (ehNarrador) return 'narrador'
   if (params.temConvite) return 'jogador'
   return null
-}
-
-/** Só desconecta o Google quem ainda entra por senha; senão a pessoa ficaria sem como entrar. */
-export function podeDesconectarGoogle(conta: { temSenha: boolean; temGoogle: boolean }): boolean {
-  return conta.temSenha && conta.temGoogle
 }

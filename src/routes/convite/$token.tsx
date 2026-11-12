@@ -1,16 +1,10 @@
-import { Link, createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { useState, type CSSProperties } from 'react'
 import { z } from 'zod'
 
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { MarcaVitae } from '#/components/marca-vitae'
-import { Input } from '#/components/ui/input'
-import { InputSenha } from '#/components/ui/input-senha'
-import { Label } from '#/components/ui/label'
-import { Separator } from '#/components/ui/separator'
-import { validarNomeUsuario } from '#/domain/convite'
-import { DOMINIO_EMAIL_SINTETICO } from '#/lib/cadastro'
 import { authClient } from '#/lib/auth-client'
 import { mensagemErroAuth } from '#/lib/erros-auth'
 import { prepararCadastro, verConvite } from '#/server/convites'
@@ -79,55 +73,21 @@ function Convite() {
 }
 
 function Cadastro({ token }: { token: string }) {
-  const router = useRouter()
-  const [nomeUsuario, setNomeUsuario] = useState('')
-  const [senha, setSenha] = useState('')
-  const [confirmacao, setConfirmacao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  async function criar() {
+  async function google() {
     setErro(null)
-    const invalido = validarNomeUsuario(nomeUsuario)
-    if (invalido) return setErro(invalido)
-    if (senha !== confirmacao) return setErro('As duas senhas não são iguais.')
     setEnviando(true)
     try {
       await prepararCadastro({ data: { token } })
-      // O e-mail é sintético: o servidor troca por um aleatório e ele nunca aparece.
-      const { error } = await authClient.signUp.email({
-        email: `cadastro@${DOMINIO_EMAIL_SINTETICO}`,
-        password: senha,
-        name: nomeUsuario,
-        username: nomeUsuario,
-      })
-      if (error) return setErro(mensagemErroAuth(error))
-      await router.navigate({ to: '/' })
-    } catch (e) {
-      console.error('Erro ao criar conta:', e)
-      setErro(
-        e instanceof Error && e.message === 'Failed to fetch'
-          ? 'Erro de conexão com o servidor. Recarregue a página (F5) e tente novamente.'
-          : e instanceof Error
-            ? e.message
-            : 'Não deu para criar a conta.',
-      )
-    } finally {
-      setEnviando(false)
-    }
-  }
-
-  async function google() {
-    setErro(null)
-    try {
-      await prepararCadastro({ data: { token } })
-      await authClient.signIn.social({
+      const { error } = await authClient.signIn.social({
         provider: 'google',
         callbackURL: '/',
         errorCallbackURL: `/convite/${token}`,
       })
+      if (error) setErro(mensagemErroAuth(error))
     } catch (e) {
-      console.error('Erro ao entrar com Google:', e)
       setErro(
         e instanceof Error && e.message === 'Failed to fetch'
           ? 'Erro de conexão com o servidor. Recarregue a página (F5) e tente novamente.'
@@ -135,67 +95,20 @@ function Cadastro({ token }: { token: string }) {
             ? e.message
             : 'Não deu para entrar com Google.',
       )
+    } finally {
+      setEnviando(false)
     }
   }
 
   return (
     <>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault()
-          void criar()
-        }}
-      >
-        <div className="grid gap-2">
-          <Label htmlFor="nome-usuario">Nome de usuário</Label>
-          <Input
-            id="nome-usuario"
-            autoComplete="username"
-            autoCapitalize="none"
-            required
-            value={nomeUsuario}
-            onChange={(e) => setNomeUsuario(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">Letras sem acento, números, ponto ou sublinhado.</p>
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="senha">Senha</Label>
-          <InputSenha
-            id="senha"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="confirmacao">Confirme a senha</Label>
-          <InputSenha
-            id="confirmacao"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            value={confirmacao}
-            onChange={(e) => setConfirmacao(e.target.value)}
-          />
-        </div>
-        {erro && (
-          <Alert variant="destructive">
-            <AlertDescription>{erro}</AlertDescription>
-          </Alert>
-        )}
-        <Button type="submit" size="lg" disabled={enviando}>
-          Criar conta
-        </Button>
-      </form>
-      <div className="flex items-center gap-2">
-        <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">ou</span>
-        <Separator className="flex-1" />
-      </div>
-      <Button size="lg" variant="secondary" disabled={enviando} onClick={() => void google()}>
+      <p className="text-sm text-muted-foreground">Crie sua conta com o Google para entrar na Crônica.</p>
+      {erro && (
+        <Alert variant="destructive">
+          <AlertDescription>{erro}</AlertDescription>
+        </Alert>
+      )}
+      <Button size="lg" disabled={enviando} onClick={() => void google()}>
         Entrar com Google
       </Button>
     </>

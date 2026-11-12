@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
-import { Copy, KeyRound, RefreshCw, UserMinus } from 'lucide-react'
+import { Copy, RefreshCw, UserMinus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -18,7 +18,7 @@ import {
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { gerarSenhaNova, listarJogadores, removerJogador } from '#/server/conta'
+import { listarJogadores, removerJogador } from '#/server/conta'
 import { buscarLinkDaCronica, gerarNovoLink } from '#/server/convites'
 
 export const Route = createFileRoute('/narrador/convites')({
@@ -49,7 +49,6 @@ function Jogadores() {
   const { link, jogadores } = Route.useLoaderData()
   const router = useRouter()
   const [gerando, setGerando] = useState(false)
-  const [senhaGerada, setSenhaGerada] = useState<{ nome: string; senha: string } | null>(null)
 
   async function gerar() {
     setGerando(true)
@@ -70,7 +69,7 @@ function Jogadores() {
 
         <h2 className="mt-4 font-serif text-2xl">Convite para a Crônica</h2>
         <p className="text-sm text-muted-foreground">
-          Um link só para a mesa: quem tiver o link cria conta como Jogador. Se ele vazar, gere um novo e o anterior para de
+          Um link só para a mesa: quem tiver o link cria conta como Jogador pelo Google. Se ele vazar, gere um novo e o anterior para de
           valer.
         </p>
         {link ? (
@@ -133,28 +132,11 @@ function Jogadores() {
                   <span className="min-w-0">
                     <span className="block truncate text-base">{j.nome}</span>
                     <span className="block truncate text-sm text-muted-foreground">
-                      {!j.temSenha ? 'Entra com Google' : j.nomeUsuario ? `@${j.nomeUsuario}` : 'Sem nome de usuário'}
+                      Entra com Google
                     </span>
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                {j.temSenha && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        const { senha } = await gerarSenhaNova({ data: { userId: j.id } })
-                        setSenhaGerada({ nome: j.nome, senha })
-                      } catch (e) {
-                        toast.error(e instanceof Error ? e.message : 'Não deu para gerar a senha.')
-                      }
-                    }}
-                  >
-                    <KeyRound />
-                    Senha nova
-                  </Button>
-                )}
                 <RemoverJogador
                   id={j.id}
                   nome={j.nome}
@@ -167,25 +149,6 @@ function Jogadores() {
         )}
       </div>
 
-      <AlertDialog open={senhaGerada !== null} onOpenChange={(aberto) => !aberto && setSenhaGerada(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Senha nova de {senhaGerada?.nome}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Ela aparece só agora. Passe para o Jogador; ele pode trocar em Configurações.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <p className="rounded-md border p-4 text-center font-mono text-xl tracking-widest select-all">
-            {senhaGerada?.senha}
-          </p>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => senhaGerada && void copiar(senhaGerada.senha, 'Senha copiada.')}>
-              Copiar
-            </AlertDialogCancel>
-            <AlertDialogAction>Pronto</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </main>
   )
 }

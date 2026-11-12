@@ -1,21 +1,16 @@
-import { randomUUID } from 'node:crypto'
-
 import { betterAuth } from 'better-auth'
-import { APIError } from 'better-auth/api'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { username } from 'better-auth/plugins'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { eq } from 'drizzle-orm'
 
 import { db } from '#/db'
 import * as schema from '#/db/schema'
 import { decidirPapel, nomeCurto, normalizarEmail } from '#/domain/acesso'
-import { estadoConvite, validarNomeUsuario } from '#/domain/convite'
-import { COOKIE_CONVITE, DOMINIO_EMAIL_SINTETICO } from '#/lib/cadastro'
+import { estadoConvite } from '#/domain/convite'
+import { COOKIE_CONVITE } from '#/lib/cadastro'
 import { notificacoesEventos } from '#/domain/notificacoes'
 import { notificarNarradores } from '#/server/enviar-notificacao'
-
-const DEV = import.meta.env?.DEV ?? false
 
 export const auth = betterAuth({
   appName: 'Vitae',
@@ -23,8 +18,12 @@ export const auth = betterAuth({
   // A origem de BETTER_AUTH_URL já é confiável; outras (ex.: http://127.0.0.1:3005) vêm de
   // BETTER_AUTH_TRUSTED_ORIGINS, separadas por vírgula, que o better-auth lê do ambiente.
   baseURL: process.env.BETTER_AUTH_URL,
-  // Jogadores entram por nome de usuário e senha; quem cria a conta é o hook abaixo, com Convite para a Crônica.
-  emailAndPassword: { enabled: true },
+  emailAndPassword: { enabled: false },
+  // Bloqueia também chamadas diretas às antigas rotas e impede remover o único meio de entrada.
+  disabledPaths: [
+    '/sign-up/email', '/sign-in/email', '/sign-in/username',
+    '/change-password', '/request-password-reset', '/reset-password', '/unlink-account',
+  ],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
@@ -33,13 +32,7 @@ export const auth = betterAuth({
   },
   account: {
     encryptOAuthTokens: true,
-    accountLinking: {
-      // Quem entra por nome de usuário conecta o Google em /conta. O e-mail dessas contas é sintético
-      // e nunca bate com o do Google, por isso aceita e-mails diferentes. Nome e foto não mudam ao conectar.
-      enabled: true,
-      trustedProviders: ['google'],
-      allowDifferentEmails: true,
-    },
+    accountLinking: { enabled: false },
   },
   user: {
     additionalFields: {
@@ -48,6 +41,17 @@ export const auth = betterAuth({
     },
   },
   advanced: { ipAddress: { ipAddressHeaders: ['x-real-ip'] } },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/get-session' || !ctx.context.session) return
+      const { session, user } = ctx.context.session
+      const contas = await ctx.context.internalAdapter.findAccounts(user.id)
+      if (contas.some((conta) => conta.providerId === 'google')) return
+      // Sessões anteriores à entrada exclusiva pelo Google também precisam respeitar o corte.
+      await ctx.context.internalAdapter.deleteSession(session.token)
+      return ctx.json(null)
+    }),
+  },
   databaseHooks: {
     user: {
       create: {
@@ -57,21 +61,17 @@ export const auth = betterAuth({
           const convite = token
             ? await db.query.conviteCronica.findFirst({ where: eq(schema.conviteCronica.token, token) })
             : undefined
-          const porSenha = ctx?.path === '/sign-up/email'
-          const sintetico = user.email.endsWith(`@${DOMINIO_EMAIL_SINTETICO}`)
-          const email = sintetico ? `${randomUUID()}@${DOMINIO_EMAIL_SINTETICO}` : normalizarEmail(user.email)
+          const email = normalizarEmail(user.email)
           const papel = decidirPapel({
             email,
             narradorEmail: process.env.NARRADOR_EMAIL ?? '',
             temConvite: estadoConvite(convite) === 'valido',
-            metodo: porSenha ? 'senha' : 'google',
-            dev: DEV,
           })
           if (!papel) {
             throw new APIError('FORBIDDEN', { message: 'sem_convite' })
           }
           // Com Google, o nome na Crônica começa com os dois primeiros nomes; a pessoa troca em /conta.
-          const name = porSenha ? user.name : nomeCurto(user.name)
+          const name = nomeCurto(user.name)
           return { data: { ...user, email, papel, name } }
         },
         // O link da mesa continua valendo para os próximos; só limpa o cookie de quem acabou de entrar.
@@ -85,8 +85,5 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [
-    username({ usernameValidator: (nome) => validarNomeUsuario(nome) === null }),
-    tanstackStartCookies(),
-  ],
+  plugins: [tanstackStartCookies()],
 })

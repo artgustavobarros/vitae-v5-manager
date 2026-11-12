@@ -20,7 +20,7 @@ O Vitae apoia a mesa durante a sessão. Ele não substitui a conversa presencial
 
 ## Modelo de uso
 
-Cada instalação atende uma Crônica e um Narrador. O Narrador convida Jogadores por um link da Crônica. Cada Personagem pertence a um Jogador ou é um PdN controlado pelo Narrador. Uma Ficha pode ficar bloqueada para proteger os valores definidos na mesa; o Jogador continua atualizando dano, Fome e Manchas.
+Cada instalação atende uma Crônica e um Narrador. Todos entram exclusivamente pelo Google, inclusive em desenvolvimento. O Narrador convida Jogadores por um link da Crônica; sem esse link, somente o e-mail Google configurado em `NARRADOR_EMAIL` pode criar conta. Cada Personagem pertence a um Jogador ou é um PdN controlado pelo Narrador. Uma Ficha pode ficar bloqueada para proteger os valores definidos na mesa; o Jogador continua atualizando dano, Fome e Manchas.
 
 O uso principal é em celular, com interface em português brasileiro. O Vitae requer conexão: não oferece modo offline nem notificações push quando o site está fechado.
 
@@ -36,7 +36,7 @@ O app é um monólito em TypeScript: interface e backend usam TanStack Start; Po
 
 Instale o Chromium de testes uma vez com `pnpm exec playwright install chromium` (em CI Linux, use `pnpm exec playwright install --with-deps chromium`).
 
-`pnpm test` executa a suíte completa, incluindo as regressões do Combate em Chromium nas larguras de celular e desktop. Para executar somente essas interações, use `pnpm test:browser`. Os testes usam dados fictícios e substituem as chamadas ao servidor; não acessam a Crônica nem o banco.
+`pnpm test` executa a suíte completa, incluindo as regressões do Combate e das telas de acesso em Chromium nas larguras de celular e desktop. Para executar somente as interações no navegador, use `pnpm test:browser`. Os testes de navegador usam dados fictícios e substituem as chamadas ao servidor; não acessam a Crônica nem o banco.
 
 ## Documentação
 

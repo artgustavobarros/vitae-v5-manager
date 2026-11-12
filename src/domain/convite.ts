@@ -16,10 +16,3 @@ export function estadoConvite(convite: { substituidoEm: Date | null } | undefine
 export function podeRemoverJogador(usuario: { papel: Papel }, alvo: { papel: Papel }): boolean {
   return usuario.papel === 'narrador' && alvo.papel === 'jogador'
 }
-
-export const REGRA_NOME_USUARIO = 'Use de 3 a 30 letras sem acento, números, ponto ou sublinhado.'
-
-/** Nome de usuário com que o Jogador entra; retorna a mensagem de erro, ou null se valer. */
-export function validarNomeUsuario(nome: string): string | null {
-  return /^[a-zA-Z0-9._]{3,30}$/.test(nome) ? null : REGRA_NOME_USUARIO
-}

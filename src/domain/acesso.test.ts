@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { decidirPapel, iniciais, nomeCurto, normalizarEmail, podeDesconectarGoogle } from './acesso'
+import { decidirPapel, iniciais, nomeCurto, normalizarEmail } from './acesso'
 
 const narradorEmail = 'narrador@exemplo.com'
 
@@ -27,21 +27,6 @@ describe('decidirPapel', () => {
     expect(
       decidirPapel({ email: 'intruso@exemplo.com', narradorEmail, temConvite: false }),
     ).toBeNull()
-  })
-
-  it('fora do dev, o Narrador não cria conta por senha, só pelo Google', () => {
-    expect(
-      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail, temConvite: false, metodo: 'senha', dev: false }),
-    ).toBeNull()
-    expect(
-      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail, temConvite: false, metodo: 'senha', dev: true }),
-    ).toBe('narrador')
-  })
-
-  it('com convite, a conta por senha vira Jogador mesmo fora do dev', () => {
-    expect(
-      decidirPapel({ email: 'x@jogador.umbra.invalid', narradorEmail, temConvite: true, metodo: 'senha', dev: false }),
-    ).toBe('jogador')
   })
 
   it('recusa todo mundo sem convite quando o Narrador não está configurado', () => {
@@ -88,19 +73,5 @@ describe('iniciais', () => {
   it('lida com string vazia', () => {
     expect(iniciais('')).toBe('')
     expect(iniciais('   ')).toBe('')
-  })
-})
-
-describe('podeDesconectarGoogle', () => {
-  it('deixa desconectar quem ainda tem senha', () => {
-    expect(podeDesconectarGoogle({ temSenha: true, temGoogle: true })).toBe(true)
-  })
-
-  it('não deixa conta só Google ficar sem como entrar', () => {
-    expect(podeDesconectarGoogle({ temSenha: false, temGoogle: true })).toBe(false)
-  })
-
-  it('não há o que desconectar sem Google conectado', () => {
-    expect(podeDesconectarGoogle({ temSenha: true, temGoogle: false })).toBe(false)
   })
 })

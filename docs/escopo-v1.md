@@ -12,10 +12,12 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   - é um link só para a mesa, que o Narrador envia como quiser; não precisa de e-mail;
   - quem tiver o link cria conta como Jogador, quantas pessoas forem;
   - "Gerar novo link" faz o anterior parar de valer, para quando o link vazar;
-  - pelo link, a pessoa cria conta com nome de usuário e senha, ou entra com Google; com Google, o nome começa com os dois primeiros nomes da conta;
+  - pelo link, a pessoa cria conta exclusivamente com Google; o nome começa com os dois primeiros nomes da conta;
   - sem link, ninguém cria conta. A tela de entrar só serve a quem já tem conta.
 - O Narrador remove da Crônica quem não é da mesa: a conta é apagada.
-- Uma página de configurações deixa a pessoa trocar o nome (também com Google), o nome de usuário e a senha. Não há recuperação de senha por e-mail: o Narrador gera uma senha nova para o Jogador.
+- O acesso de Narrador e Jogadores é exclusivamente pelo Google, inclusive em desenvolvimento. Não há nome de usuário, senha local, recuperação de senha nem desconexão do Google.
+- Sessões anteriores sem vínculo Google são recusadas e revogadas na consulta da sessão, preservando contas e Fichas.
+- Uma página de configurações deixa a pessoa trocar o nome na Crônica. A senha é gerenciada na própria conta Google.
 - Stack: ver `docs/adr/0001-monolito-tanstack-start-postgres-vps.md`. Tempo real via SSE.
 
 ## Personagens e Fichas

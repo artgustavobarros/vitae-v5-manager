@@ -33,9 +33,8 @@ export function MenuUsuario({ usuario }: { usuario: Usuario }) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <span className="block truncate text-sm">{usuario.nome}</span>
-          {/* Conta por nome de usuário tem e-mail sintético, que nunca aparece. */}
           <span className="block truncate text-xs text-muted-foreground">
-            {usuario.nomeUsuario ? `@${usuario.nomeUsuario}` : usuario.email}
+            {usuario.email}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

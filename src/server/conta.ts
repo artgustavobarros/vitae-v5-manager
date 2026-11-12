@@ -1,51 +1,22 @@
-import { randomInt } from 'node:crypto'
-
 import { createServerFn } from '@tanstack/react-start'
 import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { identificadorSchema } from '#/domain/limites-entrada'
 
 import { db } from '#/db'
-import { account, personagem, session, user } from '#/db/schema'
-import { podeDesconectarGoogle } from '#/domain/acesso'
+import { personagem, user } from '#/db/schema'
 import { podeRemoverJogador } from '#/domain/convite'
-import { auth } from '#/lib/auth'
-import { buscarContaGoogle, buscarCredencial, idsComSenha } from '#/server/credencial'
 import { exigirNarrador, exigirUsuario } from '#/server/sessao'
 
-/** Dados da página de configurações; `temSenha` é false para conta só Google, `temGoogle` diz se o Google está conectado. */
+/** Nome exibido na Crônica; a autenticação é gerenciada pela conta Google. */
 export const buscarConta = createServerFn({ method: 'GET' })
   .middleware([exigirUsuario])
   .handler(async ({ context }) => {
     const [dados] = await db
-      .select({ nome: user.name, nomeUsuario: user.displayUsername, usuarioNormalizado: user.username })
+      .select({ nome: user.name })
       .from(user)
       .where(eq(user.id, context.usuario.id))
-    const [senha, google] = await Promise.all([
-      buscarCredencial(context.usuario.id),
-      buscarContaGoogle(context.usuario.id),
-    ])
-    return {
-      nome: dados.nome,
-      nomeUsuario: dados.nomeUsuario ?? dados.usuarioNormalizado,
-      temSenha: senha !== undefined,
-      temGoogle: google !== undefined,
-    }
-  })
-
-/** Desconecta o Google de quem entra por senha; a pessoa volta a entrar só com nome de usuário. */
-export const desconectarGoogle = createServerFn({ method: 'POST' })
-  .middleware([exigirUsuario])
-  .handler(async ({ context }) => {
-    const [senha, google] = await Promise.all([
-      buscarCredencial(context.usuario.id),
-      buscarContaGoogle(context.usuario.id),
-    ])
-    if (!google) throw new Error('O Google já está desconectado.')
-    if (!podeDesconectarGoogle({ temSenha: senha !== undefined, temGoogle: true })) {
-      throw new Error('Sua conta só entra pelo Google, então ele não pode ser desconectado.')
-    }
-    await db.delete(account).where(eq(account.id, google.id))
+    return dados
   })
 
 export const listarJogadores = createServerFn({ method: 'GET' })
@@ -55,35 +26,12 @@ export const listarJogadores = createServerFn({ method: 'GET' })
       .select({
         id: user.id,
         nome: user.name,
-        nomeUsuario: user.displayUsername,
         imagem: user.image,
       })
       .from(user)
       .where(eq(user.papel, 'jogador'))
       .orderBy(asc(user.name))
-    const comSenha = await idsComSenha()
-    return jogadores.map((j) => ({ ...j, temSenha: comSenha.has(j.id) }))
-  })
-
-// Sem 0/O e 1/l/I, para ditar a senha na mesa sem confusão.
-const ALFABETO = 'abcdefghjkmnpqrstuvwxyz23456789'
-
-/** O Narrador gera uma senha nova para um Jogador que esqueceu a dele; as sessões abertas caem. */
-export const gerarSenhaNova = createServerFn({ method: 'POST' })
-  .middleware([exigirNarrador])
-  .validator(z.object({ userId: identificadorSchema }))
-  .handler(async ({ data }) => {
-    const jogador = await db.query.user.findFirst({ where: eq(user.id, data.userId) })
-    const credencial = await buscarCredencial(data.userId)
-    if (jogador?.papel !== 'jogador' || !credencial) throw new Error('Esse Jogador entra pelo Google, sem senha.')
-    const senha = Array.from({ length: 12 }, () => ALFABETO[randomInt(ALFABETO.length)]).join('')
-    const contexto = await auth.$context
-    await db
-      .update(account)
-      .set({ password: await contexto.password.hash(senha) })
-      .where(eq(account.id, credencial.id))
-    await db.delete(session).where(eq(session.userId, data.userId))
-    return { senha }
+    return jogadores
   })
 
 /** Remove o Jogador da Crônica: os Personagens dele passam para o Narrador e a conta é apagada. */

@@ -9,23 +9,20 @@ export type Usuario = {
   id: string
   nome: string
   email: string
-  /** Foto da conta Google; null em conta por nome de usuário. */
+  /** Foto da conta Google; null quando não houver foto. */
   imagem: string | null
-  /** Nome de usuário com que entra; null em conta só Google. O e-mail dessas contas é sintético e não aparece. */
-  nomeUsuario: string | null
   papel: Papel
 }
 
 async function lerUsuario(): Promise<Usuario | null> {
   const sessao = await auth.api.getSession({ headers: getRequestHeaders() })
   if (!sessao) return null
-  const { id, name, email, image, papel, username, displayUsername } = sessao.user
+  const { id, name, email, image, papel } = sessao.user
   return {
     id,
     nome: name,
     email,
     imagem: image ?? null,
-    nomeUsuario: displayUsername ?? username ?? null,
     papel: papel as Papel,
   }
 }

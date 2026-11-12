@@ -19,7 +19,7 @@ let entrada: AlteracaoMarcas
 beforeEach(async () => {
   jogador = {
     id: randomUUID(), nome: 'Jogador de teste', email: `${randomUUID()}@teste.local`,
-    papel: 'jogador', imagem: null, nomeUsuario: null,
+    papel: 'jogador', imagem: null,
   }
   narradorId = randomUUID()
   await db.insert(user).values([
