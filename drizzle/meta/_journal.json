@@ -197,6 +197,13 @@
       "when": 1794335487798,
       "tag": "0027_link-publico",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794518815455,
+      "tag": "0028_pre_combate",
+      "breakpoints": true
     }
   ]
 }

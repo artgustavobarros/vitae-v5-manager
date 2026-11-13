@@ -13,14 +13,17 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
+  Download,
   Edit3,
   Eye,
   EyeOff,
   GripVertical,
+  Library,
   Maximize2,
   Minimize2,
   Play,
   Plus,
+  Save,
   Skull,
   Swords,
   Trash2,
@@ -69,9 +72,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '#/components/ui/alert-dialog'
+import { Combobox } from '#/components/combobox'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { CarrosselBadges } from '#/components/ui/carrossel-badges'
 import {
   Dialog,
@@ -99,6 +103,8 @@ import {
 } from '#/domain/combate'
 import type { Dano } from '#/domain/trilhas'
 import { listarModelosBestiario } from '#/server/bestiario'
+import { listarPreCombates, salvarPreCombate, excluirPreCombate } from '#/server/pre-combate'
+import type { PreCombate } from '#/domain/pre-combate'
 import {
   adicionarParticipanteCombateServer,
   alternarCondicaoParticipanteCombateServer,
@@ -110,10 +116,12 @@ import {
   carregarCombate,
   encerrarCombateServer,
   iniciarCombateServer,
+  listarCoteriesParaCombate,
   listarPersonagensParaCombate,
   removerParticipanteCombateServer,
   reordenarParticipantesCombateServer,
   voltarTurnoCombateServer,
+  type CoterieCombateOpcao,
   type EstadoCombateNarrador,
   type PersonagemCombateOpcao,
 } from '#/server/combate'
@@ -129,24 +137,114 @@ export const Route = createFileRoute('/combate')({
   loader: async ({ context }) => {
     const dados = await carregarCombate()
     if (context.usuario?.papel === 'narrador') {
-      const [modelos, personagens] = await Promise.all([
+      const [modelos, personagens, preCombates, coteries] = await Promise.all([
         listarModelosBestiario(),
         listarPersonagensParaCombate(),
+        listarPreCombates(),
+        listarCoteriesParaCombate(),
       ])
       return {
         ...dados,
         modelos,
         personagens: personagens as PersonagemCombateOpcao[],
+        preCombates,
+        coteries,
       }
     }
     return {
       ...dados,
       modelos: [] as ModeloAntagonista[],
       personagens: [] as PersonagemCombateOpcao[],
+      preCombates: [] as PreCombate[],
+      coteries: [] as CoterieCombateOpcao[],
     }
   },
   component: PaginaCombate,
 })
+
+type InimigoPreCombateRascunho = { id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }
+
+/** Card de Inimigo dentro do carrossel de edição de um Pré-Combate: mesma linguagem visual do Combate real. */
+function CardInimigoPreCombate({
+  inimigo, modelo, onRenomear, onAlterarRecursos, onRemover,
+}: {
+  inimigo: InimigoPreCombateRascunho
+  modelo: ModeloAntagonista | undefined
+  onRenomear: (nome: string) => void
+  onAlterarRecursos: (recursos: RecursosSobrenaturais) => void
+  onRemover: () => void
+}) {
+  const [nomeLocal, setNomeLocal] = useState(inimigo.nome)
+  const resumo = modelo ? separarDificuldadeGeral(modelo.notas) : null
+
+  return (
+    <div data-slide-combate="">
+      <CardCombate className="gap-0 py-0 flex h-full flex-col rounded-xl border bg-card overflow-hidden">
+        <div className="flex items-start justify-between gap-2 px-4 py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Skull className="size-4 shrink-0 text-muted-foreground" />
+            <Input
+              value={nomeLocal}
+              onChange={(e) => setNomeLocal(e.target.value)}
+              onBlur={() => { if (nomeLocal.trim() && nomeLocal.trim() !== inimigo.nome) onRenomear(nomeLocal.trim()) }}
+              aria-label="Nome do Inimigo"
+              className="h-8 -ml-1 border-0 px-1 font-serif text-base font-bold shadow-none focus-visible:ring-1"
+            />
+          </div>
+          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-destructive hover:text-destructive" title="Remover do Pré-Combate" onClick={onRemover}>
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 px-4 pb-2">
+          {modelo?.categoria && <Badge variant="outline" className="text-xs">{modelo.categoria}</Badge>}
+          {modelo && <Badge variant="secondary" className="text-xs">Vit {modelo.vitalidade} · Vont {modelo.vontade}</Badge>}
+          <ChipDificuldadeAntagonista dificuldade={resumo?.dificuldade ?? null} />
+        </div>
+
+        <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
+          {!modelo ? (
+            <p className="text-xs text-destructive">Modelo não encontrado no Bestiário (pode ter sido excluído).</p>
+          ) : (
+            <>
+              {modelo.fichaCompleta ? (
+                <ResumoFichaAntagonistaCompleta ficha={modelo.fichaCompleta} nome={modelo.nome} />
+              ) : (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>Físico: <strong className="text-foreground">{modelo.paradaFisico}</strong></span>
+                  <span>&bull;</span>
+                  <span>Social: <strong className="text-foreground">{modelo.paradaSocial}</strong></span>
+                  <span>&bull;</span>
+                  <span>Mental: <strong className="text-foreground">{modelo.paradaMental}</strong></span>
+                </div>
+              )}
+
+              {modelo.paradasExcepcionais.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 border-t pt-2">
+                  {modelo.paradasExcepcionais.map((pe, i) => <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />)}
+                </div>
+              )}
+
+              <div className="border-t pt-2">
+                <ConfigurarPoderesAntagonista modelo={modelo} valor={inimigo.recursos} onChange={onAlterarRecursos} />
+                <ResumoRecursosSobrenaturais recursos={inimigo.recursos} />
+              </div>
+
+              {modelo.especiais.length > 0 && (
+                <div className="flex min-w-0 items-center gap-1 border-t pt-2">
+                  <span className="shrink-0 text-xs font-medium text-muted-foreground">Especiais:</span>
+                  <CarrosselBadges>
+                    {modelo.especiais.map((esp, i) => <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />)}
+                  </CarrosselBadges>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </CardCombate>
+    </div>
+  )
+}
 
 function CardInimigoIncapacitadoNarrador({
   part,
@@ -262,6 +360,8 @@ function PaginaCombate() {
         combate={dados.combate}
         modelos={dados.modelos}
         personagens={dados.personagens}
+        preCombates={dados.preCombates}
+        coteries={dados.coteries}
       />
     )
   }
@@ -884,10 +984,14 @@ export function VisaoNarrador({
   combate,
   modelos,
   personagens,
+  preCombates,
+  coteries,
 }: {
   combate: EstadoCombateNarrador | null
   modelos: ModeloAntagonista[]
   personagens: PersonagemCombateOpcao[]
+  preCombates: PreCombate[]
+  coteries: CoterieCombateOpcao[]
 }) {
   const router = useRouter()
 
@@ -924,6 +1028,19 @@ export function VisaoNarrador({
     Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
   >([])
   const [modelosTemp, setModelosTemp] = useState<string[]>([])
+
+  const [dialogPreCombates, setDialogPreCombates] = useState(false)
+  const [preCombateEmEdicao, setPreCombateEmEdicao] = useState<{
+    id?: string
+    nome: string
+    inimigos: Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
+  } | null>(null)
+  const [modelosPreCombateTemp, setModelosPreCombateTemp] = useState<string[]>([])
+  const [salvandoPreCombate, setSalvandoPreCombate] = useState(false)
+  const [preCombateParaExcluir, setPreCombateParaExcluir] = useState<{ id: string; nome: string } | null>(null)
+  const [preCombateParaCarregar, setPreCombateParaCarregar] = useState<string>('')
+  const [coterieParaAdicionarNovoCombate, setCoterieParaAdicionarNovoCombate] = useState<string>('')
+  const [coterieParaAdicionarAvulso, setCoterieParaAdicionarAvulso] = useState<string>('')
 
   const [tipoNovoPart, setTipoNovoPart] = useState<'personagem' | 'inimigo'>('inimigo')
   const [nomeInimigoAvulso, setNomeInimigoAvulso] = useState<string>('')
@@ -1275,11 +1392,224 @@ export function VisaoNarrador({
       setSelecaoPersonagens([])
       setInimigosParaAdicionar([])
       setModelosTemp([])
+      setPreCombateEmEdicao(null) // Se veio do carrossel de edição de um Pré-Combate, sai dele.
       toast.success('Combate iniciado!')
       router.invalidate()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Falha ao iniciar combate.')
     }
+  }
+
+  function handleAdicionarCoterieNaSelecao(
+    coterieId: string,
+    atual: string[],
+    setter: (ids: string[]) => void,
+    idsIndisponiveis: string[] = [],
+  ) {
+    const cot = coteries.find((c) => c.id === coterieId)
+    if (!cot) return
+    const idsDisponiveis = cot.personagemIds.filter(
+      (id) => personagens.some((p) => p.id === id) && !idsIndisponiveis.includes(id),
+    )
+    const novos = idsDisponiveis.filter((id) => !atual.includes(id))
+    if (novos.length === 0) {
+      toast.error(`Todos os personagens de "${cot.nome}" já estão em uso.`)
+      return
+    }
+    setter([...atual, ...novos])
+    toast.success(`${novos.length} personagem(ns) de "${cot.nome}" adicionado(s).`)
+  }
+
+  function handleCarregarPreCombate(preCombateId: string) {
+    const pc = preCombates.find((p) => p.id === preCombateId)
+    if (!pc) return
+
+    const novosInimigos = pc.inimigos.map((inimigo) => ({
+      id: crypto.randomUUID(),
+      modeloId: inimigo.modeloId,
+      nome: inimigo.nome,
+      recursos: inimigo.recursosSobrenaturais,
+    }))
+
+    setInimigosParaAdicionar([...inimigosParaAdicionar, ...novosInimigos])
+    setPreCombateParaCarregar('')
+    toast.success(`"${pc.nome}" carregado (${novosInimigos.length} inimigo(s)).`)
+  }
+
+  // Passo 1: só o nome. Depois de criado, o mesmo diálogo abre a lista de Inimigos
+  // (igual a "Iniciar Combate") e vira edição normal.
+  // Passo 1: só o nome, num diálogo rápido. Passo 2 (abaixo) já fica na própria página,
+  // igual o Combate real — cada mudança salva na hora, sem botão "Salvar" separado.
+  function abrirNovoPreCombate() {
+    setPreCombateEmEdicao({ nome: '', inimigos: [] })
+    setModelosPreCombateTemp([])
+  }
+
+  function abrirEditarPreCombate(pc: PreCombate) {
+    setPreCombateEmEdicao({
+      id: pc.id,
+      nome: pc.nome,
+      inimigos: pc.inimigos.map((i) => ({
+        id: crypto.randomUUID(),
+        modeloId: i.modeloId,
+        nome: i.nome,
+        recursos: i.recursosSobrenaturais,
+      })),
+    })
+    setModelosPreCombateTemp([])
+    setDialogPreCombates(false)
+  }
+
+  async function persistirPreCombateEmEdicao(novo: {
+    id: string
+    nome: string
+    inimigos: Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
+  }) {
+    try {
+      await salvarPreCombate({
+        data: {
+          id: novo.id,
+          nome: novo.nome,
+          inimigos: novo.inimigos.map((i) => ({
+            id: i.id, modeloId: i.modeloId, nome: i.nome, recursosSobrenaturais: i.recursos,
+          })),
+        },
+      })
+      router.invalidate()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao salvar Pré-Combate.')
+    }
+  }
+
+  function atualizarInimigosPreCombateEmEdicao(
+    mutar: (atual: NonNullable<typeof preCombateEmEdicao>['inimigos']) => NonNullable<typeof preCombateEmEdicao>['inimigos'],
+  ) {
+    if (!preCombateEmEdicao?.id) return
+    const atualizado = { ...preCombateEmEdicao, inimigos: mutar(preCombateEmEdicao.inimigos) }
+    setPreCombateEmEdicao(atualizado)
+    void persistirPreCombateEmEdicao(atualizado as { id: string; nome: string; inimigos: typeof atualizado.inimigos })
+  }
+
+  function renomearPreCombateEmEdicao(nome: string) {
+    if (!preCombateEmEdicao?.id || nome === preCombateEmEdicao.nome) return
+    const atualizado = { ...preCombateEmEdicao, nome }
+    setPreCombateEmEdicao(atualizado)
+    void persistirPreCombateEmEdicao(atualizado as { id: string; nome: string; inimigos: typeof atualizado.inimigos })
+  }
+
+  function renomearInimigoPreCombateEmEdicao(inimigoId: string, nome: string) {
+    atualizarInimigosPreCombateEmEdicao((atual) => atual.map((i) => i.id === inimigoId ? { ...i, nome } : i))
+  }
+
+  function alterarRecursosInimigoPreCombateEmEdicao(inimigoId: string, recursos: RecursosSobrenaturais) {
+    atualizarInimigosPreCombateEmEdicao((atual) => atual.map((i) => i.id === inimigoId ? { ...i, recursos } : i))
+  }
+
+  function removerInimigoPreCombateEmEdicao(inimigoId: string) {
+    atualizarInimigosPreCombateEmEdicao((atual) => atual.filter((i) => i.id !== inimigoId))
+  }
+
+  function adicionarModelosAoPreCombateEmEdicao() {
+    if (!preCombateEmEdicao || modelosPreCombateTemp.length === 0) return
+    if (!preCombateEmEdicao.id) return // ainda no Passo 1 (só o nome); isso some assim que criar.
+    atualizarInimigosPreCombateEmEdicao((atual) => {
+      const novos = [...atual]
+      for (const mId of modelosPreCombateTemp) {
+        const modelo = modelos.find((m) => m.id === mId)
+        if (modelo && modelo.id) {
+          const contagem = novos.filter((i) => i.modeloId === modelo.id).length + 1
+          novos.push({ id: crypto.randomUUID(), modeloId: modelo.id, nome: `${modelo.nome} #${contagem}` })
+        }
+      }
+      return novos
+    })
+    setModelosPreCombateTemp([])
+  }
+
+  // Passo 1 → 2: salva só o nome (já cria no banco, com os Inimigos que já estiverem no rascunho)
+  // e a própria página passa a mostrar o carrossel de edição.
+  async function handleCriarPreCombateBase() {
+    if (!preCombateEmEdicao) return
+    if (!preCombateEmEdicao.nome.trim()) {
+      toast.error('Dê um nome ao Pré-Combate.')
+      return
+    }
+    setSalvandoPreCombate(true)
+    try {
+      const salvo = await salvarPreCombate({
+        data: {
+          nome: preCombateEmEdicao.nome.trim(),
+          inimigos: preCombateEmEdicao.inimigos.map((i) => ({
+            id: i.id, modeloId: i.modeloId, nome: i.nome, recursosSobrenaturais: i.recursos,
+          })),
+        },
+      })
+      setDialogPreCombates(false)
+      setPreCombateEmEdicao({
+        id: salvo.id,
+        nome: salvo.nome,
+        inimigos: salvo.inimigos.map((i) => ({ id: i.id, modeloId: i.modeloId, nome: i.nome, recursos: i.recursosSobrenaturais })),
+      })
+      router.invalidate()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao criar Pré-Combate.')
+    } finally {
+      setSalvandoPreCombate(false)
+    }
+  }
+
+  // Fecha a edição; se ficou um Pré-Combate sem nenhum Inimigo, descarta o rascunho.
+  async function handleFecharEdicaoPreCombate() {
+    if (preCombateEmEdicao?.id && preCombateEmEdicao.inimigos.length === 0) {
+      try {
+        await excluirPreCombate({ data: { id: preCombateEmEdicao.id } })
+        router.invalidate()
+      } catch {
+        // Rascunho vazio: falha silenciosa não impede o Narrador de continuar.
+      }
+    }
+    setPreCombateEmEdicao(null)
+    setModelosPreCombateTemp([])
+    setDialogPreCombates(false)
+  }
+
+  async function handleExcluirPreCombate() {
+    if (!preCombateParaExcluir) return
+    try {
+      await excluirPreCombate({ data: { id: preCombateParaExcluir.id } })
+      setPreCombateParaExcluir(null)
+      toast.success('Pré-Combate excluído.')
+      router.invalidate()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao excluir Pré-Combate.')
+    }
+  }
+
+  function handleIniciarAPartirDoPreCombate(pc: PreCombate) {
+    setSelecaoPersonagens([])
+    setInimigosParaAdicionar(
+      pc.inimigos.map((i) => ({
+        id: crypto.randomUUID(),
+        modeloId: i.modeloId,
+        nome: i.nome,
+        recursos: i.recursosSobrenaturais,
+      })),
+    )
+    setModelosTemp([])
+    setPreCombateParaCarregar('')
+    setCoterieParaAdicionarNovoCombate('')
+    setDialogNovoCombate(true)
+  }
+
+  // Botão "Ativar Combate" dentro do carrossel de edição: usa os Inimigos já salvos no rascunho.
+  function handleAtivarCombateAPartirDoPreCombateEmEdicao() {
+    if (!preCombateEmEdicao) return
+    setSelecaoPersonagens([])
+    setInimigosParaAdicionar(preCombateEmEdicao.inimigos.map((i) => ({ ...i })))
+    setModelosTemp([])
+    setPreCombateParaCarregar('')
+    setCoterieParaAdicionarNovoCombate('')
+    setDialogNovoCombate(true)
   }
 
   async function handleConfirmarAdicionarAvulso() {
@@ -1345,6 +1675,86 @@ export function VisaoNarrador({
   return (
     <main className="container-app mx-auto min-h-dvh">
       <BarraApp />
+      {preCombateEmEdicao?.id ? (
+        <div className="flex flex-col gap-6 pt-2 pb-12">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <Library className="size-5 shrink-0 text-muted-foreground" />
+              <Input
+                key={preCombateEmEdicao.id}
+                defaultValue={preCombateEmEdicao.nome}
+                aria-label="Nome do Pré-Combate"
+                onBlur={(e) => renomearPreCombateEmEdicao(e.target.value.trim() || preCombateEmEdicao!.nome)}
+                className="h-auto max-w-sm border-0 px-1 font-serif text-2xl font-bold shadow-none focus-visible:ring-1"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={handleFecharEdicaoPreCombate}>Voltar</Button>
+              <Button onClick={handleAtivarCombateAPartirDoPreCombateEmEdicao} disabled={preCombateEmEdicao.inimigos.length === 0} className="gap-2">
+                <Swords className="size-4" />
+                Ativar Combate
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Edição salva automaticamente. Monte os Inimigos aqui, igual na tela de Combate, e ative quando quiser.
+          </p>
+
+          {preCombateEmEdicao.inimigos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+              <Skull className="size-10 text-muted-foreground/60 mb-3" />
+              <h3 className="font-serif text-xl font-medium">Nenhum Inimigo ainda</h3>
+              <p className="max-w-sm text-sm text-muted-foreground mt-1">Escolha modelos da lista de Antagonistas abaixo para adicionar.</p>
+            </div>
+          ) : (
+            <CarrosselCombate>
+              {preCombateEmEdicao.inimigos.map((inimigo) => (
+                <CardInimigoPreCombate
+                  key={inimigo.id}
+                  inimigo={inimigo}
+                  modelo={modelos.find((m) => m.id === inimigo.modeloId)}
+                  onRenomear={(nome) => renomearInimigoPreCombateEmEdicao(inimigo.id, nome)}
+                  onAlterarRecursos={(recursos) => alterarRecursosInimigoPreCombateEmEdicao(inimigo.id, recursos)}
+                  onRemover={() => removerInimigoPreCombateEmEdicao(inimigo.id)}
+                />
+              ))}
+            </CarrosselCombate>
+          )}
+
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed p-4">
+            <Label className="font-semibold flex items-center gap-1">
+              <Plus className="size-4" />
+              Adicionar Inimigo da lista de Antagonistas
+            </Label>
+            {modelos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Nenhum modelo cadastrado em Antagonistas.</p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <SelectMultiplo
+                  opcoes={modelos.map((m) => ({
+                    valor: m.id ?? '',
+                    rotulo: m.nome,
+                    detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                  }))}
+                  valores={modelosPreCombateTemp}
+                  onChange={setModelosPreCombateTemp}
+                  placeholder="Selecionar modelos de inimigo..."
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={modelosPreCombateTemp.length === 0}
+                  onClick={adicionarModelosAoPreCombateEmEdicao}
+                  className="shrink-0 gap-1"
+                >
+                  <Plus className="size-4" />
+                  Adicionar {modelosPreCombateTemp.length > 0 ? `(${modelosPreCombateTemp.length})` : ''}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
       <div className="flex flex-col gap-6 pt-2 pb-12">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
@@ -1380,10 +1790,20 @@ export function VisaoNarrador({
           {!combate ? (
             <div className="flex flex-wrap items-center gap-2">
               <Button
+                variant="outline"
+                onClick={() => setDialogPreCombates(true)}
+                className="gap-2 self-start sm:self-auto"
+              >
+                <Library className="size-4" />
+                Pré-Combates
+              </Button>
+              <Button
                 onClick={() => {
                   setSelecaoPersonagens([])
                   setInimigosParaAdicionar([])
                   setModelosTemp([])
+                  setPreCombateParaCarregar('')
+                  setCoterieParaAdicionarNovoCombate('')
                   setDialogNovoCombate(true)
                 }}
                 className="gap-2 self-start sm:self-auto"
@@ -1434,11 +1854,21 @@ export function VisaoNarrador({
                   setModelosAvulsosTemp([])
                   setPersonagensAvulsosTemp([])
                   setNomeInimigoAvulso('')
+                  setCoterieParaAdicionarAvulso('')
                   setDialogAdicionarParticipante(true)
                 }}
               >
                 <Plus className="size-4 mr-1" />
                 Participante
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDialogPreCombates(true)}
+                className="gap-1"
+              >
+                <Library className="size-4" />
+                Pré-Combates
               </Button>
               <Button
                 variant="ghost"
@@ -1452,7 +1882,7 @@ export function VisaoNarrador({
           )}
         </div>
 
-        {!combate && (
+        {!combate && preCombates.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center">
             <Swords className="size-12 text-muted-foreground/60 mb-3" />
             <h3 className="font-serif text-2xl font-medium">Nenhum Combate em andamento</h3>
@@ -1463,6 +1893,8 @@ export function VisaoNarrador({
               onClick={() => {
                 setSelecaoPersonagens([])
                 setInimigosParaAdicionar([])
+                setPreCombateParaCarregar('')
+                setCoterieParaAdicionarNovoCombate('')
                 setDialogNovoCombate(true)
               }}
               className="gap-2"
@@ -1470,6 +1902,78 @@ export function VisaoNarrador({
               <Swords className="size-4" />
               Iniciar Novo Combate
             </Button>
+          </div>
+        )}
+
+        {!combate && preCombates.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pré-Combates salvos
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {preCombates.map((pc) => (
+                <Card key={pc.id} className="gap-3 py-4">
+                  <CardHeader className="px-4">
+                    <CardTitle className="font-serif text-base flex items-center gap-2 min-w-0">
+                      <Skull className="size-4 text-muted-foreground shrink-0" />
+                      <span className="truncate" title={pc.nome}>{pc.nome}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {pc.inimigos.length} inimigo(s)
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleIniciarAPartirDoPreCombate(pc)}
+                        className="gap-1"
+                      >
+                        <Play className="size-3.5 fill-current" />
+                        Iniciar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        title="Editar Pré-Combate"
+                        onClick={() => abrirEditarPreCombate(pc)}
+                      >
+                        <Edit3 className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:text-destructive"
+                        title="Excluir Pré-Combate"
+                        onClick={() => pc.id && setPreCombateParaExcluir({ id: pc.id, nome: pc.nome })}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSelecaoPersonagens([])
+                  setInimigosParaAdicionar([])
+                  setPreCombateParaCarregar('')
+                  setCoterieParaAdicionarNovoCombate('')
+                  setDialogNovoCombate(true)
+                }}
+                className="h-full min-h-24 flex-col gap-2 border-2 border-dashed text-muted-foreground hover:text-vinho hover:border-vinho/60 hover:bg-vinho/5"
+              >
+                <Plus className="size-6" />
+                <span className="text-sm font-medium">Combate agora</span>
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1584,6 +2088,7 @@ export function VisaoNarrador({
           </DragDropProvider>
         )}
       </div>
+      )}
 
       {/* DIALOG: NOVO COMBATE */}
       <Dialog open={dialogNovoCombate} onOpenChange={setDialogNovoCombate}>
@@ -1614,6 +2119,37 @@ export function VisaoNarrador({
                 onChange={setSelecaoPersonagens}
                 placeholder="Selecionar personagens..."
               />
+
+              {coteries.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Combobox
+                    opcoes={coteries.map((c) => ({
+                      valor: c.id,
+                      rotulo: c.nome,
+                      descricao: `${c.personagemIds.length} membro(s)`,
+                    }))}
+                    valor={coterieParaAdicionarNovoCombate || null}
+                    onChange={setCoterieParaAdicionarNovoCombate}
+                    placeholder="...ou chamar uma Coterie inteira"
+                    mostrarDescricao={false}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={!coterieParaAdicionarNovoCombate}
+                    onClick={() => {
+                      handleAdicionarCoterieNaSelecao(coterieParaAdicionarNovoCombate, selecaoPersonagens, setSelecaoPersonagens)
+                      setCoterieParaAdicionarNovoCombate('')
+                    }}
+                    className="gap-1 shrink-0"
+                  >
+                    <Users className="size-4" />
+                    Chamar Coterie
+                  </Button>
+                </div>
+              )}
 
               {selecaoPersonagens.length > 0 && (
                 <div className="flex flex-col gap-1 border rounded-md p-2 max-h-40 overflow-y-auto">
@@ -1651,6 +2187,41 @@ export function VisaoNarrador({
                 <Skull className="size-4" />
                 Inimigos a partir da lista de Antagonistas
               </Label>
+
+              {preCombates.length > 0 && (
+                <div className="flex flex-col gap-2 rounded-md border border-dashed p-2.5 bg-muted/30">
+                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Library className="size-3.5" />
+                    Ou carregue um Pré-Combate salvo
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Combobox
+                      opcoes={preCombates.map((pc) => ({
+                        valor: pc.id ?? '',
+                        rotulo: pc.nome,
+                        descricao: `${pc.inimigos.length} inimigo(s)`,
+                      }))}
+                      valor={preCombateParaCarregar || null}
+                      onChange={setPreCombateParaCarregar}
+                      placeholder="Selecionar Pré-Combate..."
+                      mostrarDescricao={false}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={!preCombateParaCarregar}
+                      onClick={() => handleCarregarPreCombate(preCombateParaCarregar)}
+                      className="gap-1 shrink-0"
+                    >
+                      <Download className="size-4" />
+                      Carregar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {modelos.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   Nenhum modelo cadastrado em Antagonistas.
@@ -1737,6 +2308,27 @@ export function VisaoNarrador({
                       })}
                     </div>
                   )}
+
+                  {inimigosParaAdicionar.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="self-start gap-1"
+                      onClick={() => {
+                        setPreCombateEmEdicao({
+                          nome: '',
+                          inimigos: inimigosParaAdicionar.map((i) => ({ ...i })),
+                        })
+                        setModelosPreCombateTemp([])
+                        setDialogNovoCombate(false)
+                        setDialogPreCombates(true)
+                      }}
+                    >
+                      <Save className="size-4" />
+                      Salvar esta lista como Pré-Combate
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -1752,6 +2344,148 @@ export function VisaoNarrador({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* DIALOG: GERENCIAR PRÉ-COMBATES */}
+      <Dialog
+        open={dialogPreCombates}
+        onOpenChange={(aberto) => {
+          setDialogPreCombates(aberto)
+          if (!aberto) handleFecharEdicaoPreCombate()
+        }}
+      >
+        <DialogContent className="max-w-xl max-h-9/10 overflow-y-auto">
+          {!preCombateEmEdicao ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-serif text-xl flex items-center gap-2">
+                  <Library className="size-5" />
+                  Pré-Combates
+                </DialogTitle>
+                <DialogDescription>
+                  Grupos de Inimigos salvos para carregar rapidamente ao iniciar um Combate.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-3 py-2">
+                <Button type="button" size="sm" className="self-start gap-1" onClick={abrirNovoPreCombate}>
+                  <Plus className="size-4" />
+                  Novo Pré-Combate
+                </Button>
+
+                {preCombates.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    Nenhum Pré-Combate salvo ainda.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-1 border rounded-md divide-y">
+                    {preCombates.map((pc) => (
+                      <div key={pc.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-medium text-sm truncate">{pc.nome}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pc.inimigos.length} inimigo(s)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            title="Editar Pré-Combate"
+                            onClick={() => abrirEditarPreCombate(pc)}
+                          >
+                            <Edit3 className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive hover:text-destructive"
+                            title="Excluir Pré-Combate"
+                            onClick={() => pc.id && setPreCombateParaExcluir({ id: pc.id, nome: pc.nome })}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogPreCombates(false)}>
+                  Fechar
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-serif text-xl flex items-center gap-2">
+                  <Library className="size-5" />
+                  Novo Pré-Combate
+                </DialogTitle>
+                <DialogDescription>
+                  Dê um nome a esse grupo. Depois a própria página mostra o carrossel pra você montar os Inimigos, igual no Combate normal.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-1 py-4">
+                <Label htmlFor="nome-pre-combate-inicial">Nome do Pré-Combate</Label>
+                <Input
+                  id="nome-pre-combate-inicial"
+                  autoFocus
+                  value={preCombateEmEdicao.nome}
+                  onChange={(e) => setPreCombateEmEdicao({ ...preCombateEmEdicao, nome: e.target.value })}
+                  placeholder="Ex: Emboscada na Boate"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleCriarPreCombateBase()
+                    }
+                  }}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleFecharEdicaoPreCombate}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCriarPreCombateBase}
+                  disabled={salvandoPreCombate || !preCombateEmEdicao.nome.trim()}
+                >
+                  Continuar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* CONFIRMAÇÃO DE EXCLUSÃO DE PRÉ-COMBATE */}
+      <AlertDialog open={Boolean(preCombateParaExcluir)} onOpenChange={(aberto) => { if (!aberto) setPreCombateParaExcluir(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif text-xl">Excluir Pré-Combate?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{preCombateParaExcluir?.nome}" será removido definitivamente. Combates já iniciados a partir dele não são afetados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleExcluirPreCombate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* DIALOG: ADICIONAR PARTICIPANTE AVULSO */}
       <Dialog open={dialogAdicionarParticipante} onOpenChange={setDialogAdicionarParticipante}>
@@ -1844,7 +2578,7 @@ export function VisaoNarrador({
                 )}
               </div>
             ) : (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <Label>Personagem(ns) ou PdN(s)</Label>
                 <SelectMultiplo
                   opcoes={personagens.map((p) => ({
@@ -1859,6 +2593,40 @@ export function VisaoNarrador({
                   onChange={setPersonagensAvulsosTemp}
                   placeholder="Selecionar personagem(ns)..."
                 />
+
+                {coteries.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Combobox
+                      opcoes={coteries.map((c) => ({
+                        valor: c.id,
+                        rotulo: c.nome,
+                        descricao: `${c.personagemIds.length} membro(s)`,
+                      }))}
+                      valor={coterieParaAdicionarAvulso || null}
+                      onChange={setCoterieParaAdicionarAvulso}
+                      placeholder="...ou chamar uma Coterie inteira"
+                      mostrarDescricao={false}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={!coterieParaAdicionarAvulso}
+                      onClick={() => {
+                        const jaNoCombate = combate?.participantes
+                          .filter((p) => p.tipo === 'personagem')
+                          .map((p) => (p as { personagemId: string }).personagemId) ?? []
+                        handleAdicionarCoterieNaSelecao(coterieParaAdicionarAvulso, personagensAvulsosTemp, setPersonagensAvulsosTemp, jaNoCombate)
+                        setCoterieParaAdicionarAvulso('')
+                      }}
+                      className="gap-1 shrink-0"
+                    >
+                      <Users className="size-4" />
+                      Chamar Coterie
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

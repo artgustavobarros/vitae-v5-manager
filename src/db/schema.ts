@@ -5,6 +5,7 @@ import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
 import type { EspecialAntagonista, ParadaExcepcional } from '#/domain/bestiario'
 import { STATUS_REVISAO_BESTIARIO } from '#/domain/revisao-bestiario'
 import type { ParticipanteCombate } from '#/domain/combate'
+import type { InimigoPreCombate } from '#/domain/pre-combate'
 import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import type { ParadaPersonalizada } from '#/domain/paradas'
 import type { EfeitoRelogio, Relogio, TendenciaRelogio } from '#/domain/relogios'
@@ -297,6 +298,20 @@ export const combate = pgTable('combate', {
   turnoAtual: integer('turno_atual').notNull().default(0),
   participantes: jsonb().$type<ParticipanteCombate[]>().notNull().default([]),
   ativo: boolean().notNull().default(true),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+})
+
+/**
+ * Pré-Combate: grupo de Inimigos salvo para reuso rápido ao iniciar um Combate.
+ */
+export const preCombate = pgTable('pre_combate', {
+  id: uuid().primaryKey().defaultRandom(),
+  nome: text().notNull(),
+  inimigos: jsonb().$type<InimigoPreCombate[]>().notNull().default([]),
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
   atualizadoEm: timestamp('atualizado_em', { withTimezone: true })
     .notNull()

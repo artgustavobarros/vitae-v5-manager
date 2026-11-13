@@ -7,7 +7,7 @@ import { VisaoNarrador } from '#/routes/combate'
 import type { EstadoCombateNarrador } from '#/server/combate'
 
 async function renderizar(combate: EstadoCombateNarrador | null) {
-  const routeTree = createRootRoute({ component: () => createElement(VisaoNarrador, { combate, modelos: [], personagens: [] }) })
+  const routeTree = createRootRoute({ component: () => createElement(VisaoNarrador, { combate, modelos: [], personagens: [], preCombates: [], coteries: [] }) })
   const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: ['/'] }) })
   await router.load()
   return renderToStaticMarkup(createElement(RouterProvider, { router }))

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { db } from '#/db'
 import {
   combate,
+  coterie,
   membroCoterie,
   personagem,
   user,
@@ -72,6 +73,34 @@ export type PersonagemCombateOpcao = {
   ehPdn: boolean
   donoNome: string
 }
+
+export type CoterieCombateOpcao = {
+  id: string
+  nome: string
+  personagemIds: string[]
+}
+
+export const listarCoteriesParaCombate = createServerFn({ method: 'GET' })
+  .middleware([exigirNarrador])
+  .handler(async (): Promise<CoterieCombateOpcao[]> => {
+    const linhas = await db
+      .select({
+        coterieId: coterie.id,
+        coterieNome: coterie.nome,
+        personagemId: membroCoterie.personagemId,
+      })
+      .from(coterie)
+      .innerJoin(membroCoterie, eq(coterie.id, membroCoterie.coterieId))
+      .orderBy(asc(coterie.nome))
+
+    const mapa = new Map<string, CoterieCombateOpcao>()
+    for (const l of linhas) {
+      const existente = mapa.get(l.coterieId)
+      if (existente) existente.personagemIds.push(l.personagemId)
+      else mapa.set(l.coterieId, { id: l.coterieId, nome: l.coterieNome, personagemIds: [l.personagemId] })
+    }
+    return [...mapa.values()]
+  })
 
 export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
