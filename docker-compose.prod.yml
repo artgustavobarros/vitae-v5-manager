@@ -40,7 +40,7 @@ services:
       DATABASE_URL: postgres://v5_manager:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@db:5432/v5_manager
       APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?defina APP_DATABASE_PASSWORD}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?defina BETTER_AUTH_SECRET}
-    command: ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && node --experimental-strip-types scripts/preparar-banco.ts"]
+    command: ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && node --experimental-strip-types scripts/preparar-banco.ts && node --experimental-strip-types scripts/povoar-cronica.ts"]
 
   app:
     <<: *imagem-app

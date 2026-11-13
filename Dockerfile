@@ -25,6 +25,9 @@ COPY --from=build --chown=node:node /app/drizzle ./drizzle
 COPY --from=build --chown=node:node /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/scripts/preparar-banco.ts ./scripts/preparar-banco.ts
+# Bestiário e Pré-Combates próprios da crônica, povoados na subida.
+COPY --from=build --chown=node:node /app/scripts/povoar-cronica.ts ./scripts/povoar-cronica.ts
+COPY --from=build --chown=node:node /app/scripts/dados ./scripts/dados
 
 USER node
 EXPOSE 3000

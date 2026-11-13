@@ -19,6 +19,7 @@
     "catalogo:aplicar-sugestoes": "tsx scripts/aplicar-sugestoes.ts",
     "antagonistas:povoar": "tsx scripts/povoar-bestiario.ts",
     "bestiario:povoar": "pnpm antagonistas:povoar",
+    "cronica:povoar": "tsx --env-file-if-exists=.env.local scripts/povoar-cronica.ts",
     "test": "vitest run",
     "test:browser": "vitest run --project browser",
     "check:production-assets": "tsx scripts/check-production-assets.ts",

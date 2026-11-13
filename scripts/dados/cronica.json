@@ -1,0 +1,654 @@
+{
+  "modelos": [
+    {
+      "nome": "Capanga",
+      "notas": "Mortal fraco; intimida e luta por pagamento.",
+      "vontade": 3,
+      "incluido": false,
+      "categoria": "Mortal",
+      "especiais": [],
+      "etiquetas": [],
+      "vitalidade": 5,
+      "nota_revisao": "",
+      "parada_fisico": 3,
+      "parada_mental": 2,
+      "parada_social": 2,
+      "ficha_completa": null,
+      "status_revisao": "rejeitado",
+      "paradas_excepcionais": [
+        {
+          "nome": "Briga",
+          "valor": 4
+        },
+        {
+          "nome": "Armas Brancas",
+          "valor": 4
+        },
+        {
+          "nome": "Manha",
+          "valor": 4
+        }
+      ]
+    },
+    {
+      "nome": "Brutamontes",
+      "notas": "Mortal médio; protege negócios e conhece o submundo.",
+      "vontade": 3,
+      "incluido": false,
+      "categoria": "Mortal",
+      "especiais": [],
+      "etiquetas": [],
+      "vitalidade": 5,
+      "nota_revisao": "",
+      "parada_fisico": 5,
+      "parada_mental": 3,
+      "parada_social": 3,
+      "ficha_completa": null,
+      "status_revisao": "rejeitado",
+      "paradas_excepcionais": [
+        {
+          "nome": "Armas Brancas",
+          "valor": 6
+        },
+        {
+          "nome": "Intimidação",
+          "valor": 4
+        },
+        {
+          "nome": "Manha",
+          "valor": 5
+        }
+      ]
+    },
+    {
+      "nome": "Carniçal",
+      "notas": "",
+      "vontade": 5,
+      "incluido": true,
+      "categoria": "Carniçal",
+      "especiais": [
+        {
+          "nome": "Poder de Disciplina à escolha",
+          "regra": "poder-livre-nivel-1",
+          "descricao": "Um poder de nível 1 de qualquer Disciplina, à escolha do Narrador."
+        }
+      ],
+      "etiquetas": [],
+      "vitalidade": 6,
+      "nota_revisao": "",
+      "parada_fisico": 4,
+      "parada_mental": 4,
+      "parada_social": 4,
+      "ficha_completa": null,
+      "status_revisao": "aprovado",
+      "paradas_excepcionais": [
+        {
+          "nome": "Ocultismo",
+          "valor": 6
+        },
+        {
+          "nome": "Furtividade",
+          "valor": 5
+        },
+        {
+          "nome": "Percepção",
+          "valor": 6
+        },
+        {
+          "nome": "Intimidação",
+          "valor": 5
+        }
+      ]
+    },
+    {
+      "nome": "Belarmino",
+      "notas": "Sangue-Ralo (14ª Geração ou além). Bom em briga de bar. Dificuldade geral: 3/2.",
+      "vontade": 4,
+      "incluido": true,
+      "categoria": "Vampiro",
+      "especiais": [
+        {
+          "nome": "Potência 1",
+          "descricao": "Poder fixo: Corpo Letal."
+        },
+        {
+          "nome": "Corpo Letal",
+          "descricao": "Golpes desarmados causam dano agravado em mortais e ignoram armadura."
+        },
+        {
+          "nome": "Fragilidade Humana",
+          "descricao": "Sangue-Ralo: Potência de Sangue 0. Cura devagar, sem Vantagens de Potência do Sangue, e segue vulnerável a drogas, veneno e doenças quase como um mortal."
+        }
+      ],
+      "etiquetas": [
+        "Sangue-Ralo"
+      ],
+      "vitalidade": 5,
+      "nota_revisao": "",
+      "parada_fisico": 3,
+      "parada_mental": 2,
+      "parada_social": 2,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Briga",
+          "valor": 6
+        }
+      ]
+    },
+    {
+      "nome": "Dona",
+      "notas": "Sangue-Ralo (14ª Geração ou além). Boa com armas brancas. Dificuldade geral: 3/2.",
+      "vontade": 4,
+      "incluido": true,
+      "categoria": "Vampiro",
+      "especiais": [
+        {
+          "nome": "Fragilidade Humana",
+          "descricao": "Sangue-Ralo: Potência de Sangue 0. Cura devagar, sem Vantagens de Potência do Sangue, e segue vulnerável a drogas, veneno e doenças quase como um mortal."
+        }
+      ],
+      "etiquetas": [
+        "Sangue-Ralo"
+      ],
+      "vitalidade": 5,
+      "nota_revisao": "",
+      "parada_fisico": 3,
+      "parada_mental": 2,
+      "parada_social": 2,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Armas Brancas",
+          "valor": 6
+        }
+      ]
+    },
+    {
+      "nome": "Simão",
+      "notas": "Sangue-Ralo (14ª Geração ou além). Bom com armas de fogo. Dono do bar. Dificuldade geral: 3/2.",
+      "vontade": 4,
+      "incluido": true,
+      "categoria": "Vampiro",
+      "especiais": [
+        {
+          "nome": "Proteanismo 1",
+          "descricao": "Poder fixo: Olhos da Fera."
+        },
+        {
+          "nome": "Olhos da Fera",
+          "descricao": "Enxerga no escuro total e assusta mortais com os olhos brilhando."
+        },
+        {
+          "nome": "Fragilidade Humana",
+          "descricao": "Sangue-Ralo: Potência de Sangue 0. Cura devagar, sem Vantagens de Potência do Sangue, e segue vulnerável a drogas, veneno e doenças quase como um mortal."
+        }
+      ],
+      "etiquetas": [
+        "Sangue-Ralo"
+      ],
+      "vitalidade": 5,
+      "nota_revisao": "",
+      "parada_fisico": 3,
+      "parada_mental": 2,
+      "parada_social": 2,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Armas de Fogo",
+          "valor": 6
+        }
+      ]
+    },
+    {
+      "nome": "Carpideira",
+      "notas": "Espectro. Dificuldade geral: 4/3. Mulher chorando à beira da água, à procura dos filhos que perdeu.",
+      "vontade": 5,
+      "incluido": true,
+      "categoria": "Outras criaturas",
+      "especiais": [
+        {
+          "nome": "Incorpóreo",
+          "descricao": "Não pode ser atingida enquanto não assumir forma sólida. Surge e some como névoa branca perto da água."
+        },
+        {
+          "nome": "Pranto da Chorona",
+          "descricao": "O choro dela alcança todos no alcance de audição. Quem ouve testa Determinação + Autocontrole (Dificuldade 4) ou perde 1 de Força de Vontade e sofre -2 dados em qualquer parada até se afastar ou a Chorona parar de chorar."
+        },
+        {
+          "nome": "Chamado das Águas",
+          "descricao": "Pode compelir uma vítima (sobretudo crianças ou enlutados) a caminhar em direção à água mais próxima; usa Manipulação + Dominação contra Determinação + Autocontrole. Perto de rios, lagos ou poços, soma +2 dados a qualquer parada física."
+        },
+        {
+          "nome": "Banimento",
+          "descricao": "Magia sombria, exorcismo ou um ritual que devolva seus filhos (encontrar os ossos, por exemplo) pode banir ou destruir a Chorona."
+        },
+        {
+          "nome": "Visão da Perda",
+          "descricao": "Ao tocar um mortal ou vampiro, mostra uma visão da maior perda da vítima; quem vê precisa testar Determinação + Autocontrole ou fica Atordoado (V5 p. 300) de desespero."
+        }
+      ],
+      "etiquetas": [
+        "Espectro"
+      ],
+      "vitalidade": 6,
+      "nota_revisao": "",
+      "parada_fisico": null,
+      "parada_mental": null,
+      "parada_social": null,
+      "ficha_completa": {
+        "fome": null,
+        "atributos": {
+          "forca": 2,
+          "vigor": 3,
+          "carisma": 1,
+          "destreza": 3,
+          "raciocinio": 2,
+          "manipulacao": 4,
+          "autocontrole": 1,
+          "determinacao": 5,
+          "inteligencia": 2
+        },
+        "humanidade": null,
+        "disciplinas": {
+          "Auspícios": 3,
+          "Dominação": 3,
+          "Ofuscação": 3
+        },
+        "habilidades": {
+          "Briga": 2,
+          "Atletismo": 2,
+          "Ocultismo": 3,
+          "Furtividade": 5,
+          "Percepção": 5,
+          "Subterfúgio": 3,
+          "Intimidação": 5,
+          "Investigação": 3,
+          "Sobrevivência": 3
+        },
+        "potenciaSangue": null
+      },
+      "status_revisao": "pendente",
+      "paradas_excepcionais": []
+    },
+    {
+      "nome": "Capanga Atirador",
+      "notas": "Mortal fraco; atira por quem paga. Dificuldade geral: 3/2.",
+      "vontade": 3,
+      "incluido": true,
+      "categoria": "Mortal",
+      "especiais": [],
+      "etiquetas": [
+        "Capanga"
+      ],
+      "vitalidade": 5,
+      "nota_revisao": "",
+      "parada_fisico": 3,
+      "parada_mental": 2,
+      "parada_social": 2,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Armas de Fogo",
+          "valor": 5
+        },
+        {
+          "nome": "Briga",
+          "valor": 4
+        },
+        {
+          "nome": "Manha",
+          "valor": 4
+        }
+      ]
+    },
+    {
+      "nome": "Cassiano",
+      "notas": "Espectro. Dificuldade geral: 4/3. Homem chorando à beira da água, preso pela própria dor.",
+      "vontade": 5,
+      "incluido": true,
+      "categoria": "Outras criaturas",
+      "especiais": [
+        {
+          "nome": "Incorpóreo",
+          "descricao": "Não pode ser atingido enquanto não assumir forma sólida. Surge e some como névoa branca perto da água."
+        },
+        {
+          "nome": "Pranto do Cassiano",
+          "descricao": "O choro dele alcança todos no alcance de audição. Quem ouve testa Determinação + Autocontrole (Dificuldade 4) ou perde 1 de Força de Vontade e sofre -2 dados em qualquer parada até se afastar ou Cassiano parar de chorar."
+        },
+        {
+          "nome": "Chamado das Águas",
+          "descricao": "Pode compelir uma vítima (sobretudo crianças ou enlutados) a caminhar em direção à água mais próxima; usa Manipulação + Dominação contra Determinação + Autocontrole. Perto de rios, lagos ou poços, soma +2 dados a qualquer parada física."
+        },
+        {
+          "nome": "Banimento",
+          "descricao": "Magia sombria, exorcismo ou um ritual que resolva o que o prende a este mundo pode banir ou destruir Cassiano."
+        },
+        {
+          "nome": "Visão da Perda",
+          "descricao": "Ao tocar um mortal ou vampiro, mostra uma visão da maior perda da vítima; quem vê precisa testar Determinação + Autocontrole ou fica Atordoado (V5 p. 300) de desespero."
+        }
+      ],
+      "etiquetas": [
+        "Espectro"
+      ],
+      "vitalidade": 6,
+      "nota_revisao": "",
+      "parada_fisico": null,
+      "parada_mental": null,
+      "parada_social": null,
+      "ficha_completa": {
+        "fome": null,
+        "atributos": {
+          "forca": 2,
+          "vigor": 3,
+          "carisma": 1,
+          "destreza": 3,
+          "raciocinio": 2,
+          "manipulacao": 4,
+          "autocontrole": 1,
+          "determinacao": 5,
+          "inteligencia": 2
+        },
+        "humanidade": null,
+        "disciplinas": {
+          "Auspícios": 3,
+          "Dominação": 3,
+          "Ofuscação": 3
+        },
+        "habilidades": {
+          "Briga": 2,
+          "Atletismo": 2,
+          "Ocultismo": 3,
+          "Furtividade": 5,
+          "Percepção": 5,
+          "Subterfúgio": 3,
+          "Intimidação": 5,
+          "Investigação": 3,
+          "Sobrevivência": 3
+        },
+        "potenciaSangue": null
+      },
+      "status_revisao": "pendente",
+      "paradas_excepcionais": []
+    },
+    {
+      "nome": "Fabiana",
+      "notas": "Carniçal; bebe o sangue do Domitor para manter os poderes e a juventude. Dificuldade geral: 3/2.",
+      "vontade": 4,
+      "incluido": true,
+      "categoria": "Carniçal",
+      "especiais": [
+        {
+          "nome": "Potência 1",
+          "descricao": "Poder fixo: Corpo Letal."
+        },
+        {
+          "nome": "Corpo Letal",
+          "descricao": "Golpes desarmados causam dano agravado em mortais e ignoram armadura."
+        }
+      ],
+      "etiquetas": [],
+      "vitalidade": 6,
+      "nota_revisao": "",
+      "parada_fisico": 4,
+      "parada_mental": 2,
+      "parada_social": 2,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Briga",
+          "valor": 6
+        },
+        {
+          "nome": "Intimidação",
+          "valor": 4
+        }
+      ]
+    },
+    {
+      "nome": "Véi",
+      "notas": "Carniçal; o \"véi\" veterano e brutal da gangue, bebe o sangue do Domitor há anos. Dificuldade geral: 3/2.",
+      "vontade": 3,
+      "incluido": true,
+      "categoria": "Carniçal",
+      "especiais": [
+        {
+          "nome": "Potência 1",
+          "descricao": "Poder fixo: Corpo Letal."
+        },
+        {
+          "nome": "Corpo Letal",
+          "descricao": "Golpes desarmados causam dano agravado em mortais e ignoram armadura."
+        }
+      ],
+      "etiquetas": [],
+      "vitalidade": 7,
+      "nota_revisao": "",
+      "parada_fisico": 5,
+      "parada_mental": 1,
+      "parada_social": 1,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Briga",
+          "valor": 6
+        },
+        {
+          "nome": "Intimidação",
+          "valor": 5
+        }
+      ]
+    },
+    {
+      "nome": "Corresolto",
+      "notas": "Carniçal; parecido com o Véi, mas especialista em prender o adversário no agarrão. Dificuldade geral: 3/2.",
+      "vontade": 3,
+      "incluido": true,
+      "categoria": "Carniçal",
+      "especiais": [
+        {
+          "nome": "Potência 1",
+          "descricao": "Poder fixo: Corpo Letal."
+        },
+        {
+          "nome": "Corpo Letal",
+          "descricao": "Golpes desarmados causam dano agravado em mortais e ignoram armadura."
+        },
+        {
+          "nome": "Agarrão Brutal",
+          "descricao": "+2 dados para iniciar e manter agarrões."
+        }
+      ],
+      "etiquetas": [],
+      "vitalidade": 7,
+      "nota_revisao": "",
+      "parada_fisico": 5,
+      "parada_mental": 1,
+      "parada_social": 1,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Briga (Agarrões)",
+          "valor": 6
+        },
+        {
+          "nome": "Intimidação",
+          "valor": 4
+        }
+      ]
+    },
+    {
+      "nome": "Ezequiel",
+      "notas": "Carniçal; igual ao Corresolto, mas também tem Fascínio (Presença). Dificuldade geral: 3/2.",
+      "vontade": 3,
+      "incluido": true,
+      "categoria": "Carniçal",
+      "especiais": [
+        {
+          "nome": "Potência 1",
+          "descricao": "Poder fixo: Corpo Letal."
+        },
+        {
+          "nome": "Corpo Letal",
+          "descricao": "Golpes desarmados causam dano agravado em mortais e ignoram armadura."
+        },
+        {
+          "nome": "Agarrão Brutal",
+          "descricao": "+2 dados para iniciar e manter agarrões."
+        },
+        {
+          "nome": "Presença 1",
+          "descricao": "Poder fixo: Fascínio."
+        },
+        {
+          "nome": "Fascínio",
+          "descricao": "Soma Presença aos testes de persuasão, performance e carisma."
+        }
+      ],
+      "etiquetas": [],
+      "vitalidade": 7,
+      "nota_revisao": "",
+      "parada_fisico": 5,
+      "parada_mental": 1,
+      "parada_social": 1,
+      "ficha_completa": null,
+      "status_revisao": "pendente",
+      "paradas_excepcionais": [
+        {
+          "nome": "Briga (Agarrões)",
+          "valor": 6
+        },
+        {
+          "nome": "Intimidação",
+          "valor": 4
+        }
+      ]
+    }
+  ],
+  "preCombates": [
+    {
+      "nome": "Bar do Simão",
+      "inimigos": [
+        {
+          "nome": "Belarmino",
+          "modelo": "Belarmino",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Dona",
+          "modelo": "Dona",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Simão",
+          "modelo": "Simão",
+          "recursosSobrenaturais": null
+        }
+      ]
+    },
+    {
+      "nome": "Bar do Simão + Sabujos",
+      "inimigos": [
+        {
+          "nome": "Belarmino",
+          "modelo": "Belarmino",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Dona",
+          "modelo": "Dona",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Simão",
+          "modelo": "Simão",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Sabujo de Sangue #1",
+          "modelo": "Sabujo de Sangue",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Sabujo de Sangue #2",
+          "modelo": "Sabujo de Sangue",
+          "recursosSobrenaturais": null
+        }
+      ]
+    },
+    {
+      "nome": "Carpideira",
+      "inimigos": [
+        {
+          "nome": "Carpideira",
+          "modelo": "Carpideira",
+          "recursosSobrenaturais": null
+        }
+      ]
+    },
+    {
+      "nome": "Capangas e Brutamontes",
+      "inimigos": [
+        {
+          "nome": "Capanga #1",
+          "modelo": "Capanga",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Capanga #2",
+          "modelo": "Capanga",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Capanga Atirador #1",
+          "modelo": "Capanga Atirador",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Capanga Atirador #2",
+          "modelo": "Capanga Atirador",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Brutamonte #1",
+          "modelo": "Brutamontes",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Brutamonte #2",
+          "modelo": "Brutamontes",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Brutamonte #3",
+          "modelo": "Brutamontes",
+          "recursosSobrenaturais": null
+        },
+        {
+          "nome": "Brutamonte #4",
+          "modelo": "Brutamontes",
+          "recursosSobrenaturais": null
+        }
+      ]
+    },
+    {
+      "nome": "Cassiano",
+      "inimigos": [
+        {
+          "nome": "Cassiano",
+          "modelo": "Cassiano",
+          "recursosSobrenaturais": null
+        }
+      ]
+    }
+  ]
+}
