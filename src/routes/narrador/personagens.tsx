@@ -21,9 +21,9 @@ function Personagens() {
     <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
       <BarraApp />
       <div className="flex flex-col gap-4 pt-2 pb-12">
-        <h1 className="font-serif text-display text-balance">Personagens</h1>
-        <div>
-          <BotaoNovoPersonagem rotulo="Novo PdN" />
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-serif text-display text-balance">Personagens</h1>
+          <BotaoNovoPersonagem rotulo="Novo Personagem" />
         </div>
         {personagens.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum Personagem na Crônica ainda.</p>
@@ -35,10 +35,10 @@ function Personagens() {
                 p.jogador ??
                 (p.atribuidoA
                   ? `Atribuído a ${p.atribuidoA} · esperando resposta`
-                  : p.pdn
-                    ? 'PdN'
-                    : 'Rascunho do Narrador'),
+                  : undefined),
             }))}
+            gerenciavel
+            onAlterado={() => router.invalidate()}
             onApagado={() => router.invalidate()}
           />
         )}

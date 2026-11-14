@@ -1,5 +1,7 @@
 import { createMiddleware, createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
+import { isRedirect, redirect } from '@tanstack/react-router'
+import { isAPIError } from 'better-auth/api'
 
 import type { Papel } from '#/domain/acesso'
 import { auth } from '#/lib/auth'
@@ -15,7 +17,10 @@ export type Usuario = {
 }
 
 async function lerUsuario(): Promise<Usuario | null> {
-  const sessao = await auth.api.getSession({ headers: getRequestHeaders() })
+  const sessao = await auth.api.getSession({ headers: getRequestHeaders() }).catch((erro: unknown) => {
+    if (isAPIError(erro) && erro.body?.code === 'FAILED_TO_GET_SESSION') return null
+    throw erro
+  })
   if (!sessao) return null
   const { id, name, email, image, papel } = sessao.user
   return {
@@ -29,22 +34,29 @@ async function lerUsuario(): Promise<Usuario | null> {
 
 export const buscarUsuario = createServerFn({ method: 'GET' }).handler(lerUsuario)
 
-export const exigirNarrador = createMiddleware({ type: 'function' }).server(
-  async ({ next }) => {
+export const exigirUsuario = createMiddleware({ type: 'function' })
+  .client(async ({ next }) => {
+    try {
+      return await next()
+    } catch (erro) {
+      // Chamadas diretas de server functions podem capturar o redirect antes do Router.
+      if (isRedirect(erro) && (erro.options.to === '/entrar' || erro.options.href === '/entrar') && typeof window !== 'undefined') {
+        window.location.replace('/entrar')
+      }
+      throw erro
+    }
+  })
+  .server(async ({ next }) => {
     const usuario = await lerUsuario()
-    if (usuario?.papel !== 'narrador') throw new Error('Acesso negado')
+    if (!usuario) throw redirect({ to: '/entrar' })
     const espera = limitarUsuario(usuario.id)
     if (espera) throw respostaLimite(espera)
     return next({ context: { usuario } })
-  },
-)
+  })
 
-export const exigirUsuario = createMiddleware({ type: 'function' }).server(
-  async ({ next }) => {
-    const usuario = await lerUsuario()
-    if (!usuario) throw new Error('Acesso negado')
-    const espera = limitarUsuario(usuario.id)
-    if (espera) throw respostaLimite(espera)
-    return next({ context: { usuario } })
-  },
-)
+export const exigirNarrador = createMiddleware({ type: 'function' })
+  .middleware([exigirUsuario])
+  .server(async ({ context, next }) => {
+    if (context.usuario.papel !== 'narrador') throw new Error('Acesso negado')
+    return next()
+  })

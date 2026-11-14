@@ -305,6 +305,22 @@ export function FichaPersonagem({
               ))}
             </dl>
 
+            {ficha.conviccoes && ficha.conviccoes.length > 0 && (
+              <div className="mt-6 flex flex-col gap-2 border-t pt-4">
+                <h3 className="font-serif text-lg font-semibold">Convicções e Pedras de Toque</h3>
+                <ul className="flex flex-col gap-2">
+                  {ficha.conviccoes.map((c, i) => (
+                    <li key={i} className="border-b pb-2 text-sm">
+                      <span className="block font-medium text-foreground">{c.conviccao || '—'}</span>
+                      {c.pedraDeToque && (
+                        <span className="block text-xs text-muted-foreground">Pedra de Toque: {c.pedraDeToque}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {ficha.aparencia && (
               <div className="mt-6 flex flex-col gap-1 border-t pt-4">
                 <h3 className="font-serif text-lg font-semibold">Aparência</h3>

@@ -10,8 +10,8 @@ import { fichaSchema } from '#/domain/ficha'
 const memoria = vi.hoisted(() => ({
   usuario: { id: 'n1', papel: 'narrador' as 'narrador' | 'jogador', nome: 'Narrador' },
   personagem: {} as {
-    id: string; donoId: string; nome: string; status: 'ativo' | 'rascunho';
-    atribuidoA: null; ficha: Ficha;
+    id: string; donoId: string; nome: string; status: 'ativo' | 'rascunho' | 'arquivado';
+    tipo: 'jogador' | 'nao_jogador'; atribuidoA: null; ficha: Ficha; apagado?: boolean;
   },
   notificacoes: [] as { usuarioId: string; texto: string }[],
 }))
@@ -54,25 +54,44 @@ vi.mock('#/db', async () => {
     update: () => ({ set: (valores: object) => ({
       where: async () => { Object.assign(memoria.personagem, valores) },
     }) }),
+    delete: () => ({ where: async () => { memoria.personagem.apagado = true } }),
     transaction: async (executar: (tx: unknown) => unknown): Promise<unknown> => executar(banco),
   }
   return { db: banco }
 })
 
-import { concluir, salvarFicha } from './personagens'
+import { apagarRascunho, concluir, definirAtividadePersonagem, definirTipoPersonagem, salvarFicha } from './personagens'
 
 beforeEach(() => {
   memoria.usuario = { id: 'n1', papel: 'narrador', nome: 'Narrador' }
   memoria.personagem = {
-    id: 'p1', donoId: 'j1', nome: 'Helena', status: 'ativo', atribuidoA: null,
+    id: 'p1', donoId: 'j1', nome: 'Helena', status: 'ativo', tipo: 'jogador', atribuidoA: null,
     ficha: { ...fichaNeofito(), cla: 'brujah', vantagens: [{ id: 'vantagem-modo-nuit', nivel: 2 }] },
   }
   memoria.notificacoes = []
 })
 
 describe('salvarFicha', () => {
+  it('só permite ao Narrador excluir um Rascunho', async () => {
+    await expect(apagarRascunho({ data: { id: 'p1' } })).rejects.toThrow('Rascunhos')
+    expect(memoria.personagem.apagado).not.toBe(true)
+    memoria.personagem.status = 'rascunho'
+    await apagarRascunho({ data: { id: 'p1' } })
+    expect(memoria.personagem.apagado).toBe(true)
+  })
+
+  it('permite ao Narrador ativar, desativar e classificar sem alterar a Ficha', async () => {
+    const ficha = memoria.personagem.ficha
+    await definirAtividadePersonagem({ data: { id: 'p1', ativo: false } })
+    expect(memoria.personagem.status).toBe('rascunho')
+    await definirAtividadePersonagem({ data: { id: 'p1', ativo: true } })
+    expect(memoria.personagem.status).toBe('ativo')
+    await definirTipoPersonagem({ data: { id: 'p1', tipo: 'nao_jogador' } })
+    expect(memoria.personagem.tipo).toBe('nao_jogador')
+    expect(memoria.personagem.ficha).toBe(ficha)
+  })
+
   it('conclui Sacoleiro sem contar a Vantagem opcional do Predador nos 7 pessoais', async () => {
-    memoria.usuario = { id: 'j1', papel: 'jogador', nome: 'Jogador' }
     memoria.personagem.status = 'rascunho'
     const pessoais = {
       ...fichaNeofito(), cla: 'brujah' as const, tipoPredador: 'tipo-predador-sacoleiro',
@@ -105,7 +124,6 @@ describe('salvarFicha', () => {
     expect(memoria.personagem.ficha.cla).toBe('ventrue')
     memoria.personagem.status = 'rascunho'
     memoria.personagem.donoId = 'j1'
-    memoria.usuario = { id: 'j1', papel: 'jogador', nome: 'Jogador' }
     await salvarFicha({ data: {
       id: 'p1', nome: 'Helena', ficha: { ...memoria.personagem.ficha, cla: 'toreador' },
     } })
@@ -113,7 +131,6 @@ describe('salvarFicha', () => {
   })
 
   it('conclui quando as Vantagens e Defeitos estão dentro das regras', async () => {
-    memoria.usuario = { id: 'j1', papel: 'jogador', nome: 'Jogador' }
     memoria.personagem.status = 'rascunho'
     memoria.personagem.ficha = {
       ...fichaNeofito(), cla: 'brujah',
@@ -124,37 +141,24 @@ describe('salvarFicha', () => {
     expect(memoria.personagem.status).toBe('ativo')
   })
 
-  it('recusa trocar ou apagar o Clã de Jogador pela edição do Narrador', async () => {
+  it('permite ao Narrador trocar ou apagar o Clã de qualquer Personagem', async () => {
     for (const cla of ['ventrue', null] as const) {
-      await expect(salvarFicha({ data: {
+      await salvarFicha({ data: {
         id: 'p1', nome: 'Helena', ficha: { ...memoria.personagem.ficha, cla },
-      } })).rejects.toThrow('Clã')
-      expect(memoria.personagem.ficha.cla).toBe('brujah')
+      } })
+      expect(memoria.personagem.ficha.cla).toBe(cla)
     }
     expect(memoria.notificacoes).toEqual([])
   })
 
-  it('não conclui por chamada direta quando faltam Vantagens e Defeitos pessoais', async () => {
-    memoria.usuario = { id: 'j1', papel: 'jogador', nome: 'Jogador' }
+  it('permite ao Narrador concluir sem validação de criação do Jogador', async () => {
     memoria.personagem.status = 'rascunho'
     memoria.personagem.ficha.vantagens = []
-    await expect(concluir({ data: { id: 'p1' } })).rejects.toThrow('Vantagens e Defeitos')
-    expect(memoria.personagem.status).toBe('rascunho')
-  })
-
-  it('não conclui com traço proibido para o Clã mesmo com contagem 7/2', async () => {
-    memoria.usuario = { id: 'j1', papel: 'jogador', nome: 'Jogador' }
-    memoria.personagem.status = 'rascunho'
-    memoria.personagem.ficha = {
-      ...fichaNeofito(), cla: 'ventrue',
-      vantagens: [{ id: 'vantagem-recursos', nivel: 5 }, { id: 'vantagem-contatos', nivel: 2 }],
-      defeitos: [{ id: 'defeito-fazendeiro', nivel: 2 }],
-    }
-    await expect(concluir({ data: { id: 'p1' } })).rejects.toThrow('Vantagens e Defeitos')
+    await concluir({ data: { id: 'p1' } })
+    expect(memoria.personagem.status).toBe('ativo')
   })
 
   it('usa a Potência final de Sanguessuga no Rascunho e notifica a perda uma única vez', async () => {
-    memoria.usuario = { id: 'j1', papel: 'jogador', nome: 'Jogador' }
     memoria.personagem.status = 'rascunho'
     const ficha = { ...memoria.personagem.ficha, tipoPredador: 'tipo-predador-sanguessuga' }
     const salva = await salvarFicha({ data: { id: 'p1', nome: 'Helena', ficha } })

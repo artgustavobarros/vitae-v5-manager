@@ -1,22 +1,16 @@
 import { createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { z } from 'zod'
 
-import { AtribuirPersonagem, AvisoAtribuicao } from '#/components/atribuir-personagem'
 import { BarraApp } from '#/components/barra-app'
+import { BotaoExcluirPersonagem, SeletorAtividadePersonagem } from '#/components/controles-ficha-personagem'
 import { FormularioFicha, type ValoresFormulario } from '#/components/ficha/formulario'
-import { ETAPAS } from '#/components/ficha/etapas-wizard'
-import { WizardCriacao } from '#/components/ficha/wizard'
 import { carregarEdicao } from '#/lib/carregar-edicao'
-import { listarJogadores } from '#/server/conta'
 import { obterOpcoesCriacaoCronica } from '#/server/cronica'
-import { buscarFicha, concluir, salvarFicha } from '#/server/personagens'
+import { buscarFicha, salvarFicha } from '#/server/personagens'
 import type { Ficha } from '#/domain/ficha'
 
-// Rascunho: wizard guiado em 8 etapas. Ficha concluída: formulário da Ficha.
 export const Route = createFileRoute('/personagens/$id/editar')({
-  validateSearch: z.object({ etapa: z.int().min(1).max(ETAPAS.length).optional().catch(undefined) }),
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
   },
@@ -27,10 +21,7 @@ export const Route = createFileRoute('/personagens/$id/editar')({
     )
     if (carregamento.tipo === 'inexistente') throw redirect({ to: '/' })
     if (carregamento.tipo === 'semEdicao') throw redirect({ to: '/personagens/$id', params })
-    const { personagem, opcoesCronica } = carregamento
-    // Rascunho do Narrador: ele pode atribuí-lo a um Jogador na Revisão.
-    const jogadores = personagem.podeAtribuir ? await listarJogadores() : []
-    return { personagem, jogadores, opcoesCronica }
+    return { personagem: carregamento.personagem }
   },
   component: EditarFicha,
 })
@@ -40,8 +31,7 @@ function erroDoServidor(erro: unknown) {
 }
 
 function EditarFicha() {
-  const { personagem, jogadores, opcoesCronica } = Route.useLoaderData()
-  const { etapa = 1 } = Route.useSearch()
+  const { personagem } = Route.useLoaderData()
   const navigate = useNavigate()
   const router = useRouter()
   const [salvando, setSalvando] = useState(false)
@@ -53,7 +43,6 @@ function EditarFicha() {
     setSalvando(true)
     try {
       const ficha = await salvarFicha({ data: { id, ...valores } })
-      // Recarrega o título com o nome salvo; o estado do wizard continua montado.
       await router.invalidate()
       return ficha
     } catch (erro) {
@@ -64,67 +53,39 @@ function EditarFicha() {
     }
   }
 
-  async function salvarEConcluir(valores: ValoresFormulario) {
-    if (!(await salvar(valores))) return
-    setSalvando(true)
-    try {
-      await concluir({ data: { id } })
-      await navigate({ to: '/personagens/$id', params: { id } })
-    } catch (erro) {
-      erroDoServidor(erro)
-      setSalvando(false)
-    }
-  }
-
   return (
     <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
-      <BarraApp
-        acoes={rascunho ? [] : [{ rotulo: 'Voltar para a Ficha', link: { to: '/personagens/$id', params: { id } } }]}
-      />
+      <BarraApp acoes={[{ rotulo: 'Voltar para a Ficha', link: { to: '/personagens/$id', params: { id } } }]} />
       <div className="pt-2">
-        <h1 className="font-serif text-display text-balance">{personagem.nome || 'Novo Personagem'}</h1>
-        <p className="mt-1 mb-8 text-sm text-muted-foreground">
-          {rascunho ? 'Criação guiada de Personagem' : 'Editando a Ficha'}
-        </p>
-        {personagem.podeCancelarAtribuicao && personagem.atribuidoA && (
-          <AvisoAtribuicao id={id} jogador={personagem.atribuidoA.nome} onCancelado={() => router.invalidate()} />
-        )}
-        {personagem.abreNoWizard ? (
-          <WizardCriacao
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-serif text-display text-balance">{personagem.nome || 'Novo Personagem'}</h1>
+          <SeletorAtividadePersonagem
+            id={id}
+            ativo={!rascunho}
+            onAlterado={() => router.invalidate()}
+            className="w-40 shrink-0"
+          />
+        </div>
+        <p className="mt-1 mb-8 text-sm text-muted-foreground">Editando a Ficha</p>
+        <div className="pb-12">
+          <FormularioFicha
             inicial={inicial}
-            etapa={etapa}
             salvando={salvando}
-            onIrPara={(destino) => navigate({ to: '.', search: { etapa: destino } })}
-            onSalvar={salvar}
-            onConcluir={salvarEConcluir}
-            concluirBloqueado={!personagem.podeConcluir}
-            regrasCriacao={personagem.regrasCriacao}
-            opcoesCronica={opcoesCronica}
-            extraRevisao={
-              personagem.podeAtribuir && (
-                <AtribuirPersonagem
-                  id={id}
-                  jogadores={jogadores}
-                  onAtribuido={async (jogador) => {
-                    toast.success(`Atribuído a ${jogador}. Agora é esperar a resposta.`)
-                    await navigate({ to: '/narrador/personagens' })
-                  }}
-                />
-              )
+            podeAlterarCla={personagem.podeAlterarCla}
+            onSalvar={async (valores) => {
+              if (await salvar(valores)) await navigate({ to: '/personagens/$id', params: { id } })
+            }}
+            acoes={
+              <BotaoExcluirPersonagem
+                id={id}
+                nome={personagem.nome}
+                rascunho={rascunho}
+                comTexto
+                onExcluido={() => navigate({ to: '/narrador/personagens' })}
+              />
             }
           />
-        ) : (
-          <div className="pb-12">
-            <FormularioFicha
-              inicial={inicial}
-              salvando={salvando}
-              podeAlterarCla={personagem.podeAlterarCla}
-              onSalvar={async (valores) => {
-                if (await salvar(valores)) await navigate({ to: '/personagens/$id', params: { id } })
-              }}
-            />
-          </div>
-        )}
+        </div>
       </div>
     </main>
   )

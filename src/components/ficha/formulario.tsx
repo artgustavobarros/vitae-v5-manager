@@ -1,11 +1,14 @@
-import { Info, Trash2 } from 'lucide-react'
+import { Info, Plus, Trash2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
 import { Combobox, type OpcaoCombobox } from '#/components/combobox'
 import { TermoRegra } from '#/components/consulta-regra'
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
+import { EditorRichText } from '#/components/ui/editor-rich-text'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { Textarea } from '#/components/ui/textarea'
 import { semItem, temPoderes, tipoRitualDa } from '#/domain/catalogo/escolhas'
 import {
   CLAS,
@@ -101,18 +104,22 @@ export function useEdicaoFicha(inicial: ValoresFormulario) {
 export type EdicaoFicha = ReturnType<typeof useEdicaoFicha>
 
 /**
- * Formulário manual provisório da Ficha inteira numa página, para editar uma Ficha já concluída.
- * Só respeita as faixas, sem regras do V5. Dano, Fome e Manchas não aparecem aqui; seguem como vieram.
+ * Formulário da Ficha inteira numa página.
+ * Campos que dependem de outra escolha (Disciplinas/Vantagens sem Clã, Potência do Sangue sem Geração)
+ * mostram um aviso e levam o foco até o campo necessário.
  */
 export function FormularioFicha({
   inicial,
   salvando,
-  podeAlterarCla = false,
+  podeAlterarCla = true,
+  acoes,
   onSalvar,
 }: {
   inicial: ValoresFormulario
   salvando: boolean
   podeAlterarCla?: boolean
+  /** Ações extras do rodapé (ex.: Excluir Personagem), do lado oposto ao Salvar. */
+  acoes?: ReactNode
   onSalvar: (valores: ValoresFormulario) => void
 }) {
   const edicao = useEdicaoFicha(inicial)
@@ -142,12 +149,24 @@ export function FormularioFicha({
         <CamposSangue edicao={edicao} />
       </Secao>
       <Secao titulo="Vantagens e Defeitos">
-        <CamposVantagensPersonagem ficha={edicao.ficha} regras={false} mudar={edicao.mudar} />
+        {edicao.ficha.cla ? (
+          <CamposVantagensPersonagem ficha={edicao.ficha} regras={false} mudar={edicao.mudar} />
+        ) : (
+          <AvisoPreRequisito
+            mensagem="Escolha o Clã antes de definir Vantagens e Defeitos."
+            rotuloAcao="Escolher Clã"
+            campoAlvoId="cla"
+          />
+        )}
       </Secao>
-      <div className="border-t pt-4">
+      <Secao titulo="Convicções e História">
+        <CamposConviccoesHistoria edicao={edicao} />
+      </Secao>
+      <div className="flex items-center justify-between gap-4 border-t pt-4">
         <Button type="submit" disabled={salvando}>
           Salvar
         </Button>
+        {acoes}
       </div>
     </form>
   )
@@ -192,7 +211,7 @@ export function CamposIdentidade({
         <Campo id="nome" rotulo="Nome do Personagem">
           <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
         </Campo>
-        <Campo id="jogadorNome" rotulo="Jogador" opcional dica="Preencha se for jogador da mesa sem conta no app">
+        <Campo id="jogadorNome" rotulo="Jogador" opcional>
           <Input
             id="jogadorNome"
             placeholder="Ex.: Geovane"
@@ -273,66 +292,74 @@ export function CamposAmbicaoDesejo({ edicao }: { edicao: EdicaoFicha }) {
 
 export function CamposAtributos({ edicao }: { edicao: EdicaoFicha }) {
   const { ficha, mudar } = edicao
-  return GRUPOS.map((g) => (
-    <Grupo key={g.id} titulo={g.atributos}>
-      {atributosDoGrupo(g.id).map((a) => (
-        <LinhaPontos
-          key={a.id}
-          nome={
-            <TermoRegra tipo="atributo" id={a.id}>
-              {a.nome}
-            </TermoRegra>
-          }
-        >
-          <SeletorPontos
-            rotulo={a.nome}
-            valor={ficha.atributos[a.id]}
-            min={FAIXAS.atributo.min}
-            max={FAIXAS.atributo.max}
-            onChange={(valor) => mudar({ atributos: { ...ficha.atributos, [a.id]: valor } })}
-          />
-        </LinhaPontos>
+  return (
+    <div className="grid gap-x-8 gap-y-4 md:grid-cols-3">
+      {GRUPOS.map((g) => (
+        <Grupo key={g.id} titulo={g.atributos}>
+          {atributosDoGrupo(g.id).map((a) => (
+            <LinhaPontos
+              key={a.id}
+              nome={
+                <TermoRegra tipo="atributo" id={a.id}>
+                  {a.nome}
+                </TermoRegra>
+              }
+            >
+              <SeletorPontos
+                rotulo={a.nome}
+                valor={ficha.atributos[a.id]}
+                min={FAIXAS.atributo.min}
+                max={FAIXAS.atributo.max}
+                onChange={(valor) => mudar({ atributos: { ...ficha.atributos, [a.id]: valor } })}
+              />
+            </LinhaPontos>
+          ))}
+        </Grupo>
       ))}
-    </Grupo>
-  ))
+    </div>
+  )
 }
 
 export function CamposHabilidades({ edicao }: { edicao: EdicaoFicha }) {
   const { ficha, mudar, especializacoes, setEspecializacoes } = edicao
-  return GRUPOS.map((g) => (
-    <Grupo key={g.id} titulo={g.habilidades}>
-      {habilidadesDoGrupo(g.id).map((h) => {
-        const habilidade = ficha.habilidades[h.id]
-        return (
-          <li key={h.id} className="border-b">
-            <div className="flex min-h-12 items-center justify-between gap-2 text-base">
-              <TermoRegra tipo="habilidade" id={h.id}>
-                {h.nome}
-              </TermoRegra>
-              <SeletorPontos
-                rotulo={h.nome}
-                valor={habilidade.valor}
-                min={FAIXAS.habilidade.min}
-                max={FAIXAS.habilidade.max}
-                onChange={(valor) =>
-                  mudar({ habilidades: { ...ficha.habilidades, [h.id]: { ...habilidade, valor } } })
-                }
-              />
-            </div>
-            {habilidade.valor > 0 && (
-              <Input
-                aria-label={`Especializações de ${h.nome}`}
-                placeholder="Especializações, separadas por vírgula"
-                value={especializacoes[h.id]}
-                onChange={(e) => setEspecializacoes({ ...especializacoes, [h.id]: e.target.value })}
-                className="mb-2"
-              />
-            )}
-          </li>
-        )
-      })}
-    </Grupo>
-  ))
+  return (
+    <div className="grid gap-x-8 gap-y-4 md:grid-cols-3">
+      {GRUPOS.map((g) => (
+        <Grupo key={g.id} titulo={g.habilidades}>
+          {habilidadesDoGrupo(g.id).map((h) => {
+            const habilidade = ficha.habilidades[h.id]
+            return (
+              <li key={h.id} className="border-b">
+                <div className="flex min-h-12 items-center justify-between gap-2 text-base">
+                  <TermoRegra tipo="habilidade" id={h.id}>
+                    {h.nome}
+                  </TermoRegra>
+                  <SeletorPontos
+                    rotulo={h.nome}
+                    valor={habilidade.valor}
+                    min={FAIXAS.habilidade.min}
+                    max={FAIXAS.habilidade.max}
+                    onChange={(valor) =>
+                      mudar({ habilidades: { ...ficha.habilidades, [h.id]: { ...habilidade, valor } } })
+                    }
+                  />
+                </div>
+                {habilidade.valor > 0 && (
+                  <Input
+                    aria-label={`Especializações de ${h.nome}`}
+                    placeholder="Especializações, separadas por vírgula"
+                    value={especializacoes[h.id]}
+                    onChange={(e) => setEspecializacoes({ ...especializacoes, [h.id]: e.target.value })}
+                    className="mb-2"
+                  />
+                )}
+              </li>
+            )
+          })}
+        </Grupo>
+      ))}
+    </div>
+  )
 }
 
 /** Com `regrasCriacao` (Jogador), poderes e Rituais seguem as regras do V5; sem ela (Narrador), tudo com aviso. */
@@ -341,6 +368,19 @@ export function CamposDisciplinas({ edicao, regrasCriacao = false }: { edicao: E
   const papel = regrasCriacao ? 'jogador' : 'narrador'
   const escolhidas = new Set(ficha.disciplinas.map((d) => d.disciplina))
   const proximaDisciplina = DISCIPLINAS.find((d) => !escolhidas.has(d.id))
+
+  if (!ficha.cla) {
+    return (
+      <>
+        <AvisoPreRequisito
+          mensagem="Escolha o Clã antes de definir as Disciplinas."
+          rotuloAcao="Escolher Clã"
+          campoAlvoId="cla"
+        />
+        <ListaSoltos ficha={ficha} onRemover={(id) => mudar(semItem(ficha, id))} />
+      </>
+    )
+  }
 
   return (
     <>
@@ -418,13 +458,24 @@ export function CamposSangue({ edicao }: { edicao: EdicaoFicha }) {
   const { ficha, mudar } = edicao
   return (
     <>
-      <TrilhaDez
-        rotulo="Potência do Sangue"
-        valor={ficha.potenciaSangue}
-        min={FAIXAS.potenciaSangue.min}
-        max={FAIXAS.potenciaSangue.max}
-        onChange={(potenciaSangue) => mudar({ potenciaSangue })}
-      />
+      {ficha.geracao === null ? (
+        <div className="flex flex-col gap-2">
+          <span className="flex h-12 items-center text-base">Potência do Sangue</span>
+          <AvisoPreRequisito
+            mensagem="Escolha a Geração antes de definir a Potência do Sangue."
+            rotuloAcao="Escolher Geração"
+            campoAlvoId="geracao"
+          />
+        </div>
+      ) : (
+        <TrilhaDez
+          rotulo="Potência do Sangue"
+          valor={ficha.potenciaSangue}
+          min={FAIXAS.potenciaSangue.min}
+          max={FAIXAS.potenciaSangue.max}
+          onChange={(potenciaSangue) => mudar({ potenciaSangue })}
+        />
+      )}
       <TrilhaDez
         rotulo="Humanidade"
         valor={ficha.humanidade}
@@ -433,6 +484,125 @@ export function CamposSangue({ edicao }: { edicao: EdicaoFicha }) {
         onChange={(humanidade) => mudar({ humanidade })}
       />
     </>
+  )
+}
+
+export function CamposConviccoesHistoria({ edicao }: { edicao: EdicaoFicha }) {
+  const { ficha, mudar } = edicao
+  const conviccoes = ficha.conviccoes ?? []
+
+  function adicionarConviccao() {
+    if (conviccoes.length >= 3) return
+    mudar({ conviccoes: [...conviccoes, { conviccao: '', pedraDeToque: '' }] })
+  }
+
+  function alterarConviccao(index: number, campo: 'conviccao' | 'pedraDeToque', valor: string) {
+    mudar({
+      conviccoes: conviccoes.map((c, i) => (i === index ? { ...c, [campo]: valor } : c)),
+    })
+  }
+
+  function removerConviccao(index: number) {
+    mudar({ conviccoes: conviccoes.filter((_, i) => i !== index) })
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-baseline justify-between">
+          <h3 className="text-base font-semibold">Convicções e Pedras de Toque</h3>
+          <span className="text-sm text-muted-foreground tabular-nums">{conviccoes.length} / 3</span>
+        </div>
+        {conviccoes.map((par, i) => (
+          <div key={i} className="grid grid-cols-1 gap-4 border-b pb-4 sm:grid-cols-2">
+            <Campo id={`conviccao-${i}`} rotulo={`Convicção ${i + 1}`}>
+              <Input
+                id={`conviccao-${i}`}
+                placeholder="Ex.: Nunca machucar inocentes"
+                value={par.conviccao}
+                onChange={(e) => alterarConviccao(i, 'conviccao', e.target.value)}
+              />
+            </Campo>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Campo id={`pedra-${i}`} rotulo="Pedra de Toque" opcional>
+                  <Input
+                    id={`pedra-${i}`}
+                    placeholder="Ex.: Irmã caçula Clara"
+                    value={par.pedraDeToque}
+                    onChange={(e) => alterarConviccao(i, 'pedraDeToque', e.target.value)}
+                  />
+                </Campo>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={`Remover Convicção ${i + 1}`}
+                onClick={() => removerConviccao(i)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        {conviccoes.length < 3 && (
+          <Button type="button" variant="secondary" className="self-start" onClick={adicionarConviccao}>
+            <Plus aria-hidden />
+            Adicionar Convicção
+          </Button>
+        )}
+      </div>
+      <Campo id="aparencia" rotulo="Aparência" opcional>
+        <Textarea
+          id="aparencia"
+          placeholder="Traços marcantes, roupas, postura..."
+          value={ficha.aparencia}
+          onChange={(e) => mudar({ aparencia: e.target.value })}
+          rows={3}
+        />
+      </Campo>
+      <Campo id="historia" rotulo="História" opcional>
+        <EditorRichText
+          id="historia"
+          value={ficha.historia}
+          onChange={(historia) => mudar({ historia })}
+          rows={6}
+        />
+      </Campo>
+    </div>
+  )
+}
+
+function focarCampo(id: string) {
+  const elemento = document.getElementById(id)
+  if (!elemento) return
+  elemento.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  elemento.focus()
+}
+
+function AvisoPreRequisito({
+  mensagem,
+  rotuloAcao,
+  campoAlvoId,
+}: {
+  mensagem: string
+  rotuloAcao: string
+  campoAlvoId: string
+}) {
+  return (
+    <Alert className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <AlertDescription className="text-sm text-muted-foreground">{mensagem}</AlertDescription>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="shrink-0 self-start sm:self-auto"
+        onClick={() => focarCampo(campoAlvoId)}
+      >
+        {rotuloAcao}
+      </Button>
+    </Alert>
   )
 }
 

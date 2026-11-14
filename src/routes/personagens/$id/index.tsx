@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { BarraApp } from '#/components/barra-app'
+import { ControlesFichaPersonagem } from '#/components/controles-ficha-personagem'
 import { FichaPersonagem } from '#/components/ficha/ficha'
 import type { AcaoTela } from '#/components/navegacao'
 import { Button } from '#/components/ui/button'
@@ -45,13 +46,6 @@ function TelaFicha() {
     rotulo: 'Paradas',
     link: { to: '/paradas', search: { personagemId: personagem.id } },
   }]
-  if (personagem.acesso === 'editar') {
-    acoes.push({
-      rotulo: 'Editar',
-      link: { to: '/personagens/$id/editar', params: { id: personagem.id } },
-    })
-  }
-
   return (
     <FichaPersonagem
       // Trocar de Personagem reinicia a tela; atualizações remotas preservam as marcas pendentes.
@@ -61,15 +55,25 @@ function TelaFicha() {
       barra={
         <div className="flex flex-col">
           <BarraApp acoes={acoes} />
-          {ehPdnAtivo && (
-            <div className="flex justify-end pt-1">
-              <Button
-                variant={personagem.fixado ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={alternarFixacao}
-              >
-                {personagem.fixado ? 'Desafixar do Painel' : 'Fixar no Painel'}
-              </Button>
+          {usuario.papel === 'narrador' && (
+            <div className="flex justify-end gap-2 pt-1">
+              <ControlesFichaPersonagem
+                id={personagem.id}
+                nome={personagem.nome}
+                ativo={personagem.status === 'ativo'}
+                rascunho={personagem.status === 'rascunho'}
+                onAlterado={() => router.invalidate()}
+                onExcluido={() => router.navigate({ to: '/narrador/personagens' })}
+              />
+              {ehPdnAtivo && (
+                <Button
+                  variant={personagem.fixado ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={alternarFixacao}
+                >
+                  {personagem.fixado ? 'Desafixar do Painel' : 'Fixar no Painel'}
+                </Button>
+              )}
             </div>
           )}
         </div>

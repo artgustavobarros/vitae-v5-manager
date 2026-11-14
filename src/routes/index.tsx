@@ -2,15 +2,11 @@ import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { BarraApp } from '#/components/barra-app'
-import { BotaoNovoPersonagem } from '#/components/botao-novo-personagem'
 import { ConvitesCoteriePendentes } from '#/components/convites-coterie-pendentes'
 import { FiltroCoterie } from '#/components/filtro-coterie'
-import { ListaPersonagens } from '#/components/lista-personagens'
 import { PainelCard } from '#/components/painel-card'
-import { PersonagensAtribuidos } from '#/components/personagens-atribuidos'
 import { listarConvitesCoterieDoJogador } from '#/server/coteries'
 import { carregarPainelNarrador } from '#/server/paineis'
-import { listarAtribuidosAMim, listarMeusPersonagens } from '#/server/personagens'
 
 const searchSchema = z.object({
   coterie: z.string().optional(),
@@ -25,15 +21,11 @@ export const Route = createFileRoute('/')({
   loader: async ({ context }) => {
     if (context.usuario.papel === 'narrador') {
       const painel = await carregarPainelNarrador()
-      return { papel: 'narrador' as const, painel, personagens: [], atribuidos: [], convitesCoterie: [] }
+      return { papel: 'narrador' as const, painel, convitesCoterie: [] }
     }
 
-    const [personagens, atribuidos, convitesCoterie] = await Promise.all([
-      listarMeusPersonagens(),
-      listarAtribuidosAMim(),
-      listarConvitesCoterieDoJogador(),
-    ])
-    return { papel: 'jogador' as const, painel: null, personagens, atribuidos, convitesCoterie }
+    const convitesCoterie = await listarConvitesCoterieDoJogador()
+    return { papel: 'jogador' as const, painel: null, convitesCoterie }
   },
   component: Inicio,
 })
@@ -131,8 +123,7 @@ function Inicio() {
   }
 
   // Visão do Jogador
-  const { personagens, atribuidos, convitesCoterie } = dados
-  const temPendencias = atribuidos.length > 0 || convitesCoterie.length > 0
+  const { convitesCoterie } = dados
 
   return (
     <main className="mx-auto min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0">
@@ -140,28 +131,20 @@ function Inicio() {
       <div className="pt-2">
         <h1 className="font-serif text-display text-balance">Olá, {usuario.nome}</h1>
         <div className="mt-8 flex flex-col gap-8 pb-12">
-          {temPendencias && (
+          {convitesCoterie.length > 0 && (
             <section aria-labelledby="esperando-voce" className="flex flex-col gap-4">
               <h2 id="esperando-voce" className="font-serif text-2xl">
                 Esperando você
               </h2>
-              <PersonagensAtribuidos itens={atribuidos} onRespondido={() => router.invalidate()} />
               <ConvitesCoteriePendentes itens={convitesCoterie} onRespondido={() => router.invalidate()} />
             </section>
           )}
 
           <section className="flex flex-col gap-4">
-            <h2 className="font-serif text-2xl">Meus Personagens</h2>
-            {personagens.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum Personagem ainda. Crie o primeiro: ele começa como Rascunho, com os valores do Neófito.
-              </p>
-            ) : (
-              <ListaPersonagens itens={personagens} onApagado={() => router.invalidate()} />
-            )}
-            <div>
-              <BotaoNovoPersonagem rotulo="Novo Personagem" />
-            </div>
+            <h2 className="font-serif text-2xl">Personagens</h2>
+            <p className="text-sm text-muted-foreground">
+              O Narrador gerencia os Personagens e as Fichas da Crônica.
+            </p>
           </section>
         </div>
       </div>

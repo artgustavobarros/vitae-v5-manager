@@ -2,6 +2,8 @@ import type { Papel } from './acesso'
 
 export const STATUS_PERSONAGEM = ['rascunho', 'ativo', 'arquivado'] as const
 export type StatusPersonagem = (typeof STATUS_PERSONAGEM)[number]
+export const TIPOS_PERSONAGEM = ['jogador', 'nao_jogador'] as const
+export type TipoPersonagem = (typeof TIPOS_PERSONAGEM)[number]
 
 /** editar: tudo; marcar: só dano, Fome e Manchas; ler: nada. */
 export type AcessoFicha = 'editar' | 'marcar' | 'ler'
@@ -18,27 +20,23 @@ type Personagem = {
 }
 
 /** O que uma pessoa pode fazer na Ficha; null quando ela nem enxerga o Personagem. */
-export function acessoFicha(usuario: Usuario, personagem: Personagem): AcessoFicha | null {
-  const dono = personagem.donoId === usuario.id
-  if (personagem.status === 'arquivado') return dono || usuario.papel === 'narrador' ? 'ler' : null
-  if (usuario.papel === 'narrador') {
-    return !dono && personagem.status === 'rascunho' ? 'ler' : 'editar'
-  }
-  if (podeResponderAtribuicao(usuario, personagem)) return 'ler'
-  if (!dono) return null
-  return personagem.status === 'rascunho' ? 'editar' : 'marcar'
+export function acessoFicha(usuario: Usuario, _personagem: Personagem): AcessoFicha | null {
+  return usuario.papel === 'narrador' ? 'editar' : null
 }
 
-/** PdN é Personagem do Narrador já concluído e sem jogador associado; se tiver jogadorNome ou for de jogador, não é PdN. */
+/** O tipo explícito decide se é PdN; a inferência antiga preserva chamadas durante a migração. */
 export function ehPdN({
   papelDono,
   status,
   jogadorNome,
+  tipo,
 }: {
   papelDono: Papel
   status: StatusPersonagem
   jogadorNome?: string | null
+  tipo?: TipoPersonagem
 }): boolean {
+  if (tipo) return tipo === 'nao_jogador'
   if (jogadorNome && jogadorNome.trim()) return false
   return papelDono === 'narrador' && status !== 'rascunho'
 }
@@ -78,16 +76,16 @@ export function rotuloOrigemPersonagem(p: {
   return null
 }
 
-/** Na criação, o Jogador segue as regras (Clã e Geração); as edições do Narrador ignoram a validação. */
-export function exigeRegrasCriacao(usuario: Usuario, personagem: Personagem): boolean {
-  return usuario.papel === 'jogador' && personagem.status === 'rascunho'
+/** A gestão exclusiva do Narrador não bloqueia escolhas pelas regras de criação do Jogador. */
+export function exigeRegrasCriacao(_usuario: Usuario, _personagem: Personagem): boolean {
+  return false
 }
 
 export type MotivoNaoConcluir = 'nao-dono' | 'nao-rascunho' | 'atribuido' | 'sem-nome'
 
 /** "Concluir" passa o Rascunho para Ativo; só exige nome, sem validação do V5. */
 export function motivoNaoConcluir(usuario: Usuario, personagem: Personagem): MotivoNaoConcluir | null {
-  if (personagem.donoId !== usuario.id) return 'nao-dono'
+  if (usuario.papel !== 'narrador') return 'nao-dono'
   if (personagem.status !== 'rascunho') return 'nao-rascunho'
   if (personagem.atribuidoA !== null) return 'atribuido'
   if (personagem.nome.trim() === '') return 'sem-nome'
@@ -99,27 +97,21 @@ export function podeConcluir(usuario: Usuario, personagem: Personagem): boolean 
 }
 
 export function podeApagar(usuario: Usuario, personagem: Personagem): boolean {
-  return personagem.donoId === usuario.id && personagem.status === 'rascunho'
+  return usuario.papel === 'narrador' && personagem.status === 'rascunho'
 }
 
-/** O Narrador atribui um Rascunho próprio a um Jogador, um por vez. Com `alvo`, confere também que ele é Jogador. */
-export function podeAtribuir(usuario: Usuario, personagem: Personagem, alvo?: { papel: Papel }): boolean {
-  return (
-    usuario.papel === 'narrador' &&
-    personagem.donoId === usuario.id &&
-    personagem.status === 'rascunho' &&
-    personagem.atribuidoA === null &&
-    (alvo === undefined || alvo.papel === 'jogador')
-  )
+/** A atribuição antiga fica desativada; o Narrador usa o Tipo de Personagem. */
+export function podeAtribuir(_usuario: Usuario, _personagem: Personagem, _alvo?: { papel: Papel }): boolean {
+  return false
 }
 
-export function podeCancelarAtribuicao(usuario: Usuario, personagem: Personagem): boolean {
-  return usuario.papel === 'narrador' && personagem.donoId === usuario.id && personagem.atribuidoA !== null
+export function podeCancelarAtribuicao(_usuario: Usuario, _personagem: Personagem): boolean {
+  return false
 }
 
-/** Só o Jogador atribuído aceita ou recusa, e só enquanto o Personagem é Rascunho. */
-export function podeResponderAtribuicao(usuario: Usuario, personagem: Personagem): boolean {
-  return personagem.status === 'rascunho' && personagem.atribuidoA === usuario.id
+/** A resposta à atribuição antiga fica desativada. */
+export function podeResponderAtribuicao(_usuario: Usuario, _personagem: Personagem): boolean {
+  return false
 }
 
 /** Aceitar: o Rascunho passa a ser do Jogador. Recusar: volta a ser só do Narrador. */
@@ -135,13 +127,7 @@ export function permissoesPersonagem(usuario: Usuario, personagem: Personagem) {
   const acesso = acessoFicha(usuario, personagem)
   return {
     acesso,
-    /** Clã só muda na criação ou nos PdNs do próprio Narrador. */
-    podeAlterarCla:
-      acesso === 'editar' &&
-      (personagem.status === 'rascunho' ||
-        (usuario.papel === 'narrador' && personagem.donoId === usuario.id)),
-    /** Rascunho editável abre no wizard de criação; o resto abre na Ficha. */
-    abreNoWizard: acesso === 'editar' && personagem.status === 'rascunho',
+    podeAlterarCla: acesso === 'editar',
     podeApagar: podeApagar(usuario, personagem),
     podeConcluir: podeConcluir(usuario, personagem),
     podeAtribuir: podeAtribuir(usuario, personagem),

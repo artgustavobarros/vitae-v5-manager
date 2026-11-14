@@ -13,7 +13,9 @@ const colunasPersonagemNoPainel = {
   id: personagem.id,
   nome: personagem.nome,
   status: personagem.status,
+  tipo: personagem.tipo,
   donoId: personagem.donoId,
+  jogadorNome: personagem.jogadorNome,
   nomeDono: user.name,
   papelDono: user.papel,
   ficha: personagem.ficha,
@@ -38,13 +40,13 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
         .select(colunasPersonagemNoPainel)
         .from(personagem)
         .innerJoin(user, eq(personagem.donoId, user.id))
-        .where(and(eq(personagem.status, 'ativo'), eq(user.papel, 'jogador')))
+        .where(and(eq(personagem.status, 'ativo'), eq(personagem.tipo, 'jogador')))
         .orderBy(asc(personagem.nome)),
       db
         .select(colunasPersonagemNoPainel)
         .from(personagem)
         .innerJoin(user, eq(personagem.donoId, user.id))
-        .where(and(eq(personagem.fixado, true), eq(user.papel, 'narrador')))
+        .where(and(eq(personagem.status, 'ativo'), eq(personagem.fixado, true), eq(personagem.tipo, 'nao_jogador')))
         .orderBy(asc(personagem.nome)),
     ])
 
@@ -60,7 +62,7 @@ export const carregarPainelNarrador = createServerFn({ method: 'GET' })
       return {
         id: p.id,
         nome: p.nome,
-        jogador: nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.nomeDono }),
+        jogador: nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.nomeDono, jogadorNome: p.jogadorNome }),
         coteries: cots.map((c) => c.nome),
         coterieIds: cots.map((c) => c.id),
         condicao: condicaoDe(p.ficha),
@@ -109,6 +111,7 @@ export const carregarTelaCoteries = createServerFn({ method: 'GET' })
         id: personagem.id,
         nome: personagem.nome,
         status: personagem.status,
+        tipo: personagem.tipo,
         donoId: personagem.donoId,
         jogadorNome: personagem.jogadorNome,
         nomeDono: user.name,
@@ -156,7 +159,7 @@ export const carregarTelaCoteries = createServerFn({ method: 'GET' })
           nome: l.nome,
           donoId: l.donoId,
           jogador: nomeJogador({ papelDono, nomeDono: l.nomeDono, jogadorNome: l.jogadorNome }),
-          pdn: ehPdN({ papelDono, status: l.status, jogadorNome: l.jogadorNome }),
+          pdn: ehPdN({ papelDono, status: l.status, jogadorNome: l.jogadorNome, tipo: l.tipo }),
           ehMeu: l.donoId === usuario.id,
           compartilhaCondicao: l.compartilhaCondicao,
           coteriesEmComum: [l.nomeCoterie],

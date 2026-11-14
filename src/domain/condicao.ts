@@ -23,19 +23,18 @@ export function condicaoDe(ficha: Ficha): Condicao {
 
 type Usuario = { id: string; papel: Papel }
 
-/** O Narrador vê toda Condição; o Jogador vê a dos próprios Personagens e a de quem compartilha. */
+/** O Narrador vê toda Condição; Jogadores veem apenas o que foi compartilhado. */
 export function podeVerCondicao(
   usuario: Usuario,
   personagem: { donoId: string; compartilhaCondicao: boolean },
 ): boolean {
-  return usuario.papel === 'narrador' || personagem.donoId === usuario.id || personagem.compartilhaCondicao
+  return usuario.papel === 'narrador' || personagem.compartilhaCondicao
 }
 
-/** Compartilhar a Condição é decisão do Jogador no próprio Personagem; o Narrador só decide pelos PdNs. */
+/** Só o Narrador decide quais Condições aparecem nas visões compartilhadas. */
 export function podeAlternarCompartilharCondicao(
   usuario: Usuario,
-  personagem: { donoId: string; pdn: boolean },
+  _personagem: { donoId: string; pdn: boolean },
 ): boolean {
-  if (personagem.pdn) return usuario.papel === 'narrador'
-  return usuario.papel === 'jogador' && personagem.donoId === usuario.id
+  return usuario.papel === 'narrador'
 }

@@ -22,27 +22,13 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 ## Personagens e Fichas
 
-- Ciclo: Rascunho → Ativo → Arquivado. Não há aprovação do Narrador: o Personagem vira Ativo quando a criação é concluída, e a Ficha fica bloqueada.
-- O Jogador cria seus próprios Personagens quando quiser, quantos quiser, e só apaga Rascunhos. Só o Narrador arquiva e reativa.
-- Personagem atribuído:
-  - o Narrador pode criar um Rascunho e atribuí-lo a um Jogador, um por vez;
-  - o Jogador vê o Rascunho numa seção "Esperando você" no topo de Meus Personagens, pode abrir a Ficha para leitura e aceita ou recusa;
-  - se aceitar, o Rascunho passa a ser dele; se recusar, volta a ser só do Narrador;
-  - enquanto espera, o Narrador continua editando e pode cancelar a atribuição;
-  - um Rascunho atribuído não pode ser concluído.
-- A criação guiada aplica as regras do V5 e bloqueia escolhas inválidas para o Jogador. O Narrador cria PdNs pela mesma criação guiada.
-- Já no wizard da fatia 2, a regra de Clã e Geração (Sangue-Ralo da 14ª à 16ª Geração; os demais clãs até a 13ª) vale para o Jogador. O Narrador cria sem validação.
-- Durante a criação, cada valor mostra sua origem (distribuição, clã, Tipo de Predador). Depois de concluída, a Ficha mostra só o valor final.
-- Até a criação guiada existir (fatia 5), Jogador e Narrador criam Personagens por um formulário manual provisório, sem validação do V5.
-- O Tipo de Predador aplica os bônus automaticamente. O Jogador escolhe quando o livro oferece opções.
-- Após concluir a criação, o Clã do Personagem de Jogador fica fixo. Nem o Jogador nem o Narrador podem alterá-lo.
-- Se uma Vantagem ou um Defeito deixar de atender aos requisitos, o item é removido no salvamento. O dono recebe uma notificação com o item e o motivo, inclusive quando o Narrador fez a edição.
-- Não há XP. A evolução acontece pela Ficha Liberada:
-  - o Narrador libera a Ficha inteira;
-  - o Jogador edita dentro dos limites do V5 (máx. 5 pontos, poder ≤ nível da Disciplina, amálgamas, Potência do Sangue ≤ teto da Geração);
-  - as mudanças valem na hora;
-  - o Narrador fecha a liberação manualmente e revisa o registro de mudanças.
-- Com a Ficha bloqueada, o Jogador altera sozinho apenas o dano (Vitalidade e Força de Vontade), a Fome e as Manchas. Humanidade só muda com a Ficha Liberada ou pelo Narrador.
+- O Narrador cria e altera todos os Personagens. Jogadores não fazem alterações internas; consultam apenas as visões disponibilizadas a eles.
+- O Narrador alterna qualquer Personagem entre Ativo e Rascunho. A Atividade é reversível e independente do Tipo de Personagem; somente Rascunhos podem ser excluídos, sempre após confirmação.
+- O Narrador classifica cada Personagem como Jogador ou Não Jogador. A classificação é reversível e aparece como badge na gestão de Personagens.
+- A criação e a edição de Personagens pelo Narrador abrem diretamente no formulário completo da Ficha (sem wizard por etapas). Campos que dependem de outra informação (como Disciplinas e Vantagens e Defeitos, que dependem do Clã, ou Potência do Sangue, que depende da Geração) exibem um aviso e levam o foco diretamente ao campo necessário.
+- O Tipo de Predador aplica os bônus automaticamente. O Narrador decide quando o livro oferece opções.
+- O Narrador pode alterar o Clã e os demais campos de qualquer Personagem.
+- Não há XP nem Ficha Liberada. O Narrador faz a evolução diretamente na Ficha.
 - Valores Derivados são calculados automaticamente: Vitalidade, Força de Vontade e efeitos da Potência do Sangue. Só o Narrador os sobrescreve.
 - A Ficha guarda:
   - poderes de Disciplina individualmente;
@@ -51,7 +37,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   - campos narrativos: Seita, Senhor, Geração, Ambição, Desejo, Convicções com Pedras de Toque, Aparência e História.
 
   A Ficha não tem retrato.
-- Notas: só o Jogador escreve. O Narrador lê, exceto as Notas marcadas como privadas.
+- Notas: só o Narrador escreve e consulta.
 
 ## Paradas dos Personagens
 
@@ -65,10 +51,7 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 - O Narrador vê e edita todas as Fichas, e suas edições ignoram a validação.
 - PdNs:
   - o Narrador pode criar PdNs com Ficha completa;
-  - o Narrador pode converter qualquer Personagem de Jogador em PdN;
-  - na conversão, o Jogador perde o acesso e as Notas privadas são apagadas;
-  - um PdN nunca vira Personagem de Jogador.
-- Quando um Jogador é removido da Crônica, os Personagens Ativos dele viram PdNs e os Rascunhos passam a ser Rascunhos do Narrador.
+  - o Narrador alterna o Tipo de Personagem entre Jogador e Não Jogador quando quiser.
 - Opções de criação da Crônica, definidas pelo Narrador:
   - idades permitidas;
   - Sangue-Ralo e Caitiff;
@@ -91,10 +74,10 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
   - adiciona PdNs diretamente;
   - expulsa membros;
   - ao apagar uma Coterie, deixa os membros sem ela.
-- O Personagem Arquivado sai de todas as Coteries. O PdN convertido permanece nelas.
+- Desativar um Personagem não apaga sua Ficha nem suas Coteries; reativá-lo restaura seu uso na Crônica.
 - O Jogador só enxerga as Coteries em que tem Personagem.
 - Condição (Vitalidade + Força de Vontade + Fome):
-  - um único botão de compartilhar por Personagem, tudo ou nada, desligado por padrão;
+  - o Narrador controla um único botão de compartilhar por Personagem, tudo ou nada, desligado por padrão;
   - fica visível para Jogadores que dividem ao menos uma Coterie com o Personagem.
 
 ## Painéis
@@ -107,19 +90,13 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 
 - Só dentro do site, com o site aberto: toast na hora e um sino com a lista. Chegam pelo mesmo tempo real (SSE) dos Painéis.
 - Eventos que geram notificação para o Jogador:
-  - Personagem atribuído a ele;
   - Convite de Coterie recebido;
-  - Ficha Liberada e liberação fechada;
   - Combate iniciado com um Personagem dele na ordem de turnos;
   - Ressonância Atual ou Compulsão Ativa aplicada a um Personagem dele;
-  - Personagem dele arquivado ou convertido em PdN;
+  - mudança pública relacionada a um Personagem de Jogador;
   - Personagem dele removido de uma Coterie, inclusive quando a Coterie é apagada;
-  - o Narrador editou a Ficha de um Personagem dele.
 - Eventos que geram notificação para o Narrador:
   - conta nova criada pelo Convite para a Crônica;
-  - Personagem concluído (Rascunho virou Ativo);
-  - Personagem atribuído aceito ou recusado;
-  - mudança feita pelo Jogador com a Ficha Liberada, uma por salvamento;
   - Convite de Coterie aceito ou recusado;
   - Personagem saiu de uma Coterie;
   - Mudança de Condição marcada por Jogador: Fome chega a 4 ou a 5; Vitalidade ou Força de Vontade fica toda preenchida (qualquer dano) ou toda curada.
