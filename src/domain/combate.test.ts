@@ -236,8 +236,11 @@ describe('Combate - Visibilidade para Jogadores', () => {
     expect(inimigo.danoVitalidade).toEqual({ superficial: 0, agravado: 0 })
   })
 
-  it('aplica regra de compartilhamento de Condição para outros personagens no combate', () => {
-    const combate = iniciarCombate([mockPersonagem1, mockPersonagem2])
+  it('aplica regra de compartilhamento de Condição quando ocultada pelo Narrador no combate', () => {
+    const combate = iniciarCombate([
+      { ...mockPersonagem1, revelarCondicao: false },
+      { ...mockPersonagem2, revelarCondicao: false },
+    ])
     const visaoJogador = filtrarCombateParaJogador(combate, {
       jogadorId: 'user-1',
       meusPersonagemIds: ['char-1'],
@@ -389,7 +392,7 @@ describe('Combate - Estado de Saúde e Condições V5', () => {
   })
 
   it('mostra tags de saude sem revelar os valores da Condicao oculta, conforme pedido do Narrador', () => {
-    const combate = iniciarCombate([mockPersonagem1, mockInimigo])
+    const combate = iniciarCombate([{ ...mockPersonagem1, revelarCondicao: false }, mockInimigo])
     const visao = filtrarCombateParaJogador(combate, {
       jogadorId: 'user-outro',
       meusPersonagemIds: [],

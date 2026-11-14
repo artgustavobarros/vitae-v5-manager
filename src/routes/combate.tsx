@@ -2,25 +2,21 @@ import { rotuloOrigemPersonagem } from '#/domain/permissoes-ficha'
 import { ChipDificuldadeAntagonista } from '#/components/chip-dificuldade-antagonista'
 import { separarDificuldadeGeral } from '#/domain/dificuldade-antagonista'
 import { ConfigurarPoderesAntagonista, ResumoRecursosSobrenaturais } from '#/components/poderes-antagonista'
-import { obterPerfilSobrenatural, sortearRecursosSobrenaturais, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
+import { obterPerfilSobrenatural, sortearRecursosSobrenaturais, validarSelecaoParaModelo, type RecursosSobrenaturais } from '#/domain/poderes-antagonista'
 import { RegraEspecialAntagonista } from '#/components/regra-especial-antagonista'
 import { normalizarEspecialAntagonista, type EspecialAntagonista } from '#/domain/bestiario'
 import { EditorFichaAntagonistaCompleta, ResumoFichaAntagonistaCompleta } from '#/components/ficha-antagonista-completa'
-import type { FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
+import { criarFichaAntagonistaCompleta, type FichaAntagonistaCompleta } from '#/domain/ficha-antagonista'
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { cn } from 'cn'
 import {
-  ArrowDown,
   ArrowRight,
-  ArrowUp,
   Copy,
   Edit3,
   Eye,
   EyeOff,
   GripVertical,
   Library,
-  Maximize2,
-  Minimize2,
   Play,
   Plus,
   Save,
@@ -33,7 +29,7 @@ import { Accessibility, defaultPreset } from '@dnd-kit/dom'
 import { OptimisticSortingPlugin } from '@dnd-kit/dom/sortable'
 import { DragDropProvider, DragOverlay, useDragDropManager, type DragEndEvent, type DragOverEvent } from '@dnd-kit/react'
 import { isSortable, useSortable } from '@dnd-kit/react/sortable'
-import { useCallback, useState, type ComponentProps } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react'
 import { toast } from 'sonner'
 
 const pluginsCombate = [
@@ -58,7 +54,7 @@ import { BarraApp } from '#/components/barra-app'
 import { CardCombate } from '#/components/combate/card-combate'
 import { CarrosselCombate } from '#/components/combate/carrossel-combate'
 import { BotaoVisibilidadeCondicao } from '#/components/combate/visibilidade-condicao'
-import { BadgeSaude, TrilhaTatilExpandida, FomeTatilExpandida, TrackersNumericosLinha, BadgesCondicoes, VisaoJogador } from '#/components/combate/visao-jogador'
+import { BadgeSaude, TrilhaTatilExpandida, FomeTatilExpandida, BadgesCondicoes, VisaoJogador } from '#/components/combate/visao-jogador'
 import { LinkExibicaoPublica } from '#/components/exibicao-publica/link-exibicao-publica'
 import { BadgeEspecial } from '#/components/badge-especial'
 import { ChipParadaExcepcional } from '#/components/chip-parada-excepcional'
@@ -72,6 +68,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '#/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 import { Combobox } from '#/components/combobox'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -94,9 +98,9 @@ import {
   type ParticipantePersonagem,
 } from '#/domain/combate'
 import type { Dano } from '#/domain/trilhas'
-import { listarModelosBestiario } from '#/server/bestiario'
+import { listarModelosBestiario, salvarModeloBestiario } from '#/server/bestiario'
 import { listarPreCombates, salvarPreCombate, excluirPreCombate } from '#/server/pre-combate'
-import type { PreCombate } from '#/domain/pre-combate'
+import { aplicarCustomizacaoAoModelo, type InimigoPreCombate, type PreCombate } from '#/domain/pre-combate'
 import {
   adicionarParticipanteCombateServer,
   alternarCondicaoParticipanteCombateServer,
@@ -154,20 +158,102 @@ export const Route = createFileRoute('/combate')({
   component: PaginaCombate,
 })
 
-type InimigoPreCombateRascunho = { id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }
+type InimigoPreCombateRascunho = Omit<InimigoPreCombate, 'recursosSobrenaturais'> & {
+  recursos?: RecursosSobrenaturais
+}
 
-/** Card de Inimigo dentro do carrossel de edição de um Pré-Combate: mesma linguagem visual do Combate real. */
+function serializarInimigoPreCombate(i: InimigoPreCombateRascunho): InimigoPreCombate {
+  return {
+    id: i.id,
+    modeloId: i.modeloId,
+    nome: i.nome,
+    ...(i.recursos !== undefined ? { recursosSobrenaturais: i.recursos } : {}),
+    ...(i.vitalidadeMax !== undefined ? { vitalidadeMax: i.vitalidadeMax } : {}),
+    ...(i.vontadeMax !== undefined ? { vontadeMax: i.vontadeMax } : {}),
+    ...(i.paradas !== undefined ? { paradas: i.paradas } : {}),
+    ...(i.fichaCompleta !== undefined ? { fichaCompleta: i.fichaCompleta } : {}),
+    ...(i.especiais !== undefined ? { especiais: i.especiais } : {}),
+    ...(i.notas !== undefined ? { notas: i.notas } : {}),
+  }
+}
+
+function rascunhoDeInimigoPreCombate(i: InimigoPreCombate): InimigoPreCombateRascunho {
+  const { recursosSobrenaturais, ...resto } = structuredClone(i)
+  return {
+    ...resto,
+    ...(recursosSobrenaturais !== undefined ? { recursos: recursosSobrenaturais } : {}),
+  }
+}
+
+function clonarInimigoRascunho(i: InimigoPreCombateRascunho): InimigoPreCombateRascunho {
+  return rascunhoDeInimigoPreCombate(serializarInimigoPreCombate(i))
+}
+
+function acrescentarInimigoRascunho(
+  atuais: InimigoPreCombateRascunho[],
+  modeloId: string,
+  nomeModelo: string,
+): InimigoPreCombateRascunho[] {
+  let numero = atuais.filter((i) => i.modeloId === modeloId).length + 1
+  while (atuais.some((i) => i.nome === `${nomeModelo} #${numero}`)) numero++
+  return [...atuais, { id: crypto.randomUUID(), modeloId, nome: `${nomeModelo} #${numero}` }]
+}
+
+function duplicarInimigoRascunhoNaLista(
+  atuais: InimigoPreCombateRascunho[],
+  inimigo: InimigoPreCombateRascunho,
+  nomeModelo?: string,
+): InimigoPreCombateRascunho[] {
+  const prefixo = inimigo.nome.replace(/\s+#\d+$/, '').trim() || nomeModelo || 'Inimigo'
+  let numero = atuais.filter((i) => i.modeloId === inimigo.modeloId).length + 1
+  while (atuais.some((i) => i.nome === `${prefixo} #${numero}`)) numero++
+  return [
+    ...atuais,
+    {
+      ...clonarInimigoRascunho(inimigo),
+      id: crypto.randomUUID(),
+      nome: `${prefixo} #${numero}`,
+    },
+  ]
+}
+
+/** Card de Inimigo na preparação do Combate ou no Pré-Combate: mesma linguagem visual do Combate real. */
 function CardInimigoPreCombate({
-  inimigo, modelo, onRenomear, onAlterarRecursos, onRemover,
+  inimigo,
+  modelo,
+  onRenomear,
+  onAlterarRecursos,
+  onDuplicar,
+  onEditar,
+  onRemover,
 }: {
   inimigo: InimigoPreCombateRascunho
   modelo: ModeloAntagonista | undefined
   onRenomear: (nome: string) => void
   onAlterarRecursos: (recursos: RecursosSobrenaturais) => void
+  onDuplicar: () => void
+  onEditar: () => void
   onRemover: () => void
 }) {
   const [nomeLocal, setNomeLocal] = useState(inimigo.nome)
-  const resumo = modelo ? separarDificuldadeGeral(modelo.notas) : null
+  useEffect(() => {
+    setNomeLocal(inimigo.nome)
+  }, [inimigo.nome])
+
+  const modeloEfetivo = modelo ? aplicarCustomizacaoAoModelo(modelo, inimigo) : undefined
+  const resumo = modeloEfetivo ? separarDificuldadeGeral(modeloEfetivo.notas) : null
+  const perfilSobrenatural = modeloEfetivo ? obterPerfilSobrenatural(modeloEfetivo) : null
+  const temPoderesConfiguraveis = Boolean(
+    perfilSobrenatural && (perfilSobrenatural.livres > 0 || Object.keys(perfilSobrenatural.disciplinas).length > 0),
+  )
+  const temRecursosResumo = Boolean(
+    inimigo.recursos &&
+      (inimigo.recursos.poderes.length > 0 ||
+        inimigo.recursos.rituais.length > 0 ||
+        inimigo.recursos.cerimonias.length > 0 ||
+        inimigo.recursos.formulas.length > 0),
+  )
+  const notasVisiveis = resumo?.notas.trim() ?? ''
 
   return (
     <div data-slide-combate="">
@@ -179,59 +265,107 @@ function CardInimigoPreCombate({
               value={nomeLocal}
               onChange={(e) => setNomeLocal(e.target.value)}
               onBlur={() => { if (nomeLocal.trim() && nomeLocal.trim() !== inimigo.nome) onRenomear(nomeLocal.trim()) }}
-              aria-label="Nome do Inimigo"
+              aria-label={`Nome de ${inimigo.nome}`}
               className="h-8 -ml-1 border-0 px-1 font-serif text-base font-bold shadow-none focus-visible:ring-1"
             />
           </div>
-          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-destructive hover:text-destructive" title="Remover do Pré-Combate" onClick={onRemover}>
-            <Trash2 className="size-4" />
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title="Editar este inimigo"
+              aria-label={`Editar ${inimigo.nome}`}
+              disabled={!modeloEfetivo}
+              onClick={onEditar}
+            >
+              <Edit3 className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title="Duplicar este inimigo"
+              aria-label={`Duplicar ${inimigo.nome}`}
+              disabled={!modeloEfetivo}
+              onClick={onDuplicar}
+            >
+              <Copy className="size-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 px-4 pb-2">
-          {modelo?.categoria && <Badge variant="outline" className="text-xs">{modelo.categoria}</Badge>}
-          {modelo && <Badge variant="secondary" className="text-xs">Vit {modelo.vitalidade} · Vont {modelo.vontade}</Badge>}
+          {modeloEfetivo?.categoria && <Badge variant="outline" className="text-xs">{modeloEfetivo.categoria}</Badge>}
+          {modeloEfetivo?.etiquetas?.map((etiqueta) => (
+            <Badge key={etiqueta} variant="outline" className="text-xs text-muted-foreground">{etiqueta}</Badge>
+          ))}
+          {modeloEfetivo && <Badge variant="secondary" className="text-xs">Vit {modeloEfetivo.vitalidade} · Vont {modeloEfetivo.vontade}</Badge>}
           <ChipDificuldadeAntagonista dificuldade={resumo?.dificuldade ?? null} />
         </div>
 
-        <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
-          {!modelo ? (
+        <div className="flex flex-1 flex-col gap-3 px-4 pb-3">
+          {!modeloEfetivo ? (
             <p className="text-xs text-destructive">Modelo não encontrado no Bestiário (pode ter sido excluído).</p>
           ) : (
             <>
-              {modelo.fichaCompleta ? (
-                <ResumoFichaAntagonistaCompleta ficha={modelo.fichaCompleta} nome={modelo.nome} />
+              {modeloEfetivo.fichaCompleta ? (
+                <ResumoFichaAntagonistaCompleta ficha={modeloEfetivo.fichaCompleta} nome={inimigo.nome} />
               ) : (
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span>Físico: <strong className="text-foreground">{modelo.paradaFisico}</strong></span>
+                  <span>Físico: <strong className="text-foreground">{modeloEfetivo.paradaFisico}</strong></span>
                   <span>&bull;</span>
-                  <span>Social: <strong className="text-foreground">{modelo.paradaSocial}</strong></span>
+                  <span>Social: <strong className="text-foreground">{modeloEfetivo.paradaSocial}</strong></span>
                   <span>&bull;</span>
-                  <span>Mental: <strong className="text-foreground">{modelo.paradaMental}</strong></span>
+                  <span>Mental: <strong className="text-foreground">{modeloEfetivo.paradaMental}</strong></span>
                 </div>
               )}
 
-              {modelo.paradasExcepcionais.length > 0 && (
+              {modeloEfetivo.paradasExcepcionais.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 border-t pt-2">
-                  {modelo.paradasExcepcionais.map((pe, i) => <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />)}
+                  {modeloEfetivo.paradasExcepcionais.map((pe, i) => <ChipParadaExcepcional key={i} nome={pe.nome} valor={pe.valor} />)}
                 </div>
               )}
 
-              <div className="border-t pt-2">
-                <ConfigurarPoderesAntagonista modelo={modelo} valor={inimigo.recursos} onChange={onAlterarRecursos} />
-                <ResumoRecursosSobrenaturais recursos={inimigo.recursos} />
-              </div>
+              {(temPoderesConfiguraveis || temRecursosResumo) && (
+                <div className="flex flex-wrap items-center gap-2 border-t pt-2">
+                  <ConfigurarPoderesAntagonista modelo={modeloEfetivo} valor={inimigo.recursos} onChange={onAlterarRecursos} />
+                  <ResumoRecursosSobrenaturais recursos={inimigo.recursos} />
+                </div>
+              )}
 
-              {modelo.especiais.length > 0 && (
+              {modeloEfetivo.especiais.length > 0 && (
                 <div className="flex min-w-0 items-center gap-1 border-t pt-2">
                   <span className="shrink-0 text-xs font-medium text-muted-foreground">Especiais:</span>
                   <CarrosselBadges>
-                    {modelo.especiais.map((esp, i) => <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />)}
+                    {modeloEfetivo.especiais.map((esp, i) => <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />)}
                   </CarrosselBadges>
+                </div>
+              )}
+
+              {notasVisiveis && (
+                <div className="border-t pt-2 text-xs text-muted-foreground italic">
+                  <VisualizadorMarkdown markdown={notasVisiveis} />
                 </div>
               )}
             </>
           )}
+
+          <div className="mt-auto flex justify-end pt-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 shrink-0 text-destructive hover:text-destructive"
+              title="Remover inimigo"
+              aria-label={`Remover ${inimigo.nome}`}
+              onClick={onRemover}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         </div>
       </CardCombate>
     </div>
@@ -307,36 +441,38 @@ function CardInimigoIncapacitadoNarrador({
           >
             <Edit3 className="size-4" />
           </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onRemover(part.id)}
-            className="size-7 text-destructive/70 hover:text-destructive"
-            title="Remover definitivamente do combate"
-          >
-            <Trash2 className="size-4" />
-          </Button>
         </div>
       </div>
 
-      {/* LINHA 2: ESTADO DE SAÚDE COMO CONDIÇÃO + OUTRAS CONDIÇÕES */}
-      <div className="flex items-center gap-1 px-4 py-1 border-t border-border/40 bg-muted/20 min-w-0">
-        <BadgeSaude
-          vitalidadeMax={part.vitalidadeMax}
-          dano={part.danoVitalidade}
-          ehVampiro={ehVampiro}
-          condicoes={part.condicoes}
-        />
-        <BadgesCondicoes
-          participanteId={part.id}
-          ehVampiro={ehParticipanteVampiro(part)}
-          condicoes={(part.condicoes ?? []).filter(
-            (c) => !['morto', 'desacordado', 'incapacitado', 'torpor'].includes(c),
-          )}
-          podeEditar={true}
-          onAlternarCondicao={onAlternarCondicao}
-        />
+      {/* LINHA 2: ESTADO DE SAÚDE COMO CONDIÇÃO + OUTRAS CONDIÇÕES + REMOVER */}
+      <div className="flex items-center justify-between gap-2 px-4 py-1 border-t border-border/40 bg-muted/20 min-w-0">
+        <div className="flex items-center gap-1 min-w-0">
+          <BadgeSaude
+            vitalidadeMax={part.vitalidadeMax}
+            dano={part.danoVitalidade}
+            ehVampiro={ehVampiro}
+            condicoes={part.condicoes}
+          />
+          <BadgesCondicoes
+            participanteId={part.id}
+            ehVampiro={ehParticipanteVampiro(part)}
+            condicoes={(part.condicoes ?? []).filter(
+              (c) => !['morto', 'desacordado', 'incapacitado', 'torpor'].includes(c),
+            )}
+            podeEditar={true}
+            onAlternarCondicao={onAlternarCondicao}
+          />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemover(part.id)}
+          className="size-7 shrink-0 text-destructive/70 hover:text-destructive ml-auto"
+          title="Remover definitivamente do combate"
+          aria-label={`Remover ${part.nome}`}
+        >
+          <Trash2 className="size-4" />
+        </Button>
       </div>
     </CardCombate>
   )
@@ -366,13 +502,9 @@ type ParticipanteNarrador = EstadoCombateNarrador['participantes'][number]
 interface PropsCardConteudoNarrador {
   part: ParticipanteNarrador
   index: number
-  totalParticipantes: number
   ehTurnoAtual: boolean
   ehProximoTurno: boolean
-  minimizado: boolean
   handleRef?: (el: HTMLElement | null) => void
-  onAlternarMinimizado: (id: string) => void
-  onReordenar: (id: string, direcao: 'cima' | 'baixo') => void
   onEditarInimigo: (part: ParticipanteInimigo) => void
   onAlternarRevelar: (id: string, revelar?: boolean) => Promise<void>
   onRemover: (id: string) => void
@@ -385,13 +517,9 @@ interface PropsCardConteudoNarrador {
 function CardConteudoNarrador({
   part,
   index,
-  totalParticipantes,
   ehTurnoAtual,
   ehProximoTurno,
-  minimizado,
   handleRef,
-  onAlternarMinimizado,
-  onReordenar,
   onEditarInimigo,
   onAlternarRevelar,
   onRemover,
@@ -402,7 +530,7 @@ function CardConteudoNarrador({
 }: PropsCardConteudoNarrador) {
   const resumoInimigo = part.tipo === 'inimigo' ? separarDificuldadeGeral(part.notas) : null
   const visibilidadeCondicao = part.tipo === 'personagem' && (
-    <BotaoVisibilidadeCondicao revelada={part.revelarCondicao === true}
+    <BotaoVisibilidadeCondicao revelada={part.revelarCondicao !== false}
       onAlterar={(revelar) => onAlternarRevelar(part.id, revelar)} />
   )
   const saude = part.tipo === 'inimigo'
@@ -411,217 +539,16 @@ function CardConteudoNarrador({
       ? calcularEstadoSaude(part.condicaoPersonagem.vitalidadeMax, part.condicaoPersonagem.danoVitalidade, true, part.condicoes)
       : undefined
 
-  if (minimizado) {
-    return (
-      <CardCombate estado={saude?.estado}
-        className={cn(
-          'gap-0 py-0 flex flex-col rounded-xl border bg-card transition-all shadow-xs overflow-hidden',
-          ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/2',
-          ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 bg-dano-superficial/2',
-          !ehTurnoAtual && !ehProximoTurno && 'border-border/80 hover:border-border',
-        )}
-      >
-        {/* LINHA 1: IDENTIDADE / VEZ / ESTADO DE SAÚDE / AÇÕES */}
-        <div className="flex flex-col gap-3 px-4 py-2">
-          <div className="flex items-start gap-2 min-w-0">
-            <div
-              ref={handleRef}
-              data-arrastar-participante=""
-              className="cursor-grab active:cursor-grabbing p-1.5 -ml-1 text-muted-foreground/60 hover:text-foreground shrink-0 mt-0.5 touch-none rounded-md hover:bg-muted/50"
-              title="Arraste para reordenar a iniciativa"
-            >
-              <GripVertical className="size-4 pointer-events-none" />
-            </div>
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
-              {index + 1}
-            </span>
-            <div className="flex flex-wrap items-start gap-2 min-w-0 pt-1">
-              <div className="flex max-w-full min-w-0 items-center gap-2">
-                <span className="font-serif font-bold text-base text-foreground truncate leading-tight" title={part.nome}>
-                  {part.nome}
-                </span>
-
-                {ehTurnoAtual && (
-                  <span
-                    className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
-                    title="Agindo agora"
-                  >
-                    <span className="size-2 rounded-full bg-vinho animate-pulse" />
-                  </span>
-                )}
-                {ehProximoTurno && !ehTurnoAtual && (
-                  <span
-                    className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-dano-superficial/20 border border-dano-superficial/40"
-                    title="Próximo a agir"
-                  >
-                    <span className="size-2 rounded-full bg-dano-superficial" />
-                  </span>
-                )}
-              </div>
-
-              {part.tipo === 'inimigo' ? (
-                <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
-                  Inimigo
-                </Badge>
-              ) : part.ehPdN || part.ehPdn ? (
-                <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
-                  PdN
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
-                  {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Direita: Dot de Saúde + Ações Narrador + Maximizar */}
-          <div className="flex flex-wrap items-center justify-end gap-1 pt-1">
-            {part.tipo === 'inimigo' ? (
-              <BadgeSaude
-                vitalidadeMax={part.vitalidadeMax}
-                dano={part.danoVitalidade}
-                condicoes={part.condicoes}
-                ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
-                soTag={true}
-              />
-            ) : part.condicaoPersonagem ? (
-              <BadgeSaude
-                vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
-                dano={part.condicaoPersonagem.danoVitalidade}
-                condicoes={part.condicoes}
-                ehVampiro={true}
-                soTag={true}
-              />
-            ) : null}
-
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={index === 0}
-              onClick={() => onReordenar(part.id, 'cima')}
-              className="size-7"
-              aria-label="Mover para cima"
-            >
-              <ArrowUp className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={index === totalParticipantes - 1}
-              onClick={() => onReordenar(part.id, 'baixo')}
-              className="size-7"
-              aria-label="Mover para baixo"
-            >
-              <ArrowDown className="size-4" />
-            </Button>
-            {part.tipo === 'inimigo' && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEditarInimigo(part as ParticipanteInimigo)}
-                  className="size-7"
-                  title="Editar este inimigo no combate"
-                >
-                  <Edit3 className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onAlternarRevelar(part.id)}
-                  className="size-7"
-                  title={
-                    part.revelarVitalidade
-                      ? 'Ocultar Vitalidade dos Jogadores'
-                      : 'Revelar Vitalidade aos Jogadores'
-                  }
-                >
-                  {part.revelarVitalidade ? (
-                    <Eye className="size-4 text-vinho" />
-                  ) : (
-                    <EyeOff className="size-4 text-muted-foreground" />
-                  )}
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onAlternarMinimizado(part.id)}
-              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-              title="Expandir card completo"
-            >
-              <Maximize2 className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onRemover(part.id)}
-              className="size-7 text-destructive hover:text-destructive"
-              aria-label="Remover participante"
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* LINHA 2: TRACKERS EM VALORES NUMÉRICOS (CARROSSEL DRAG-FREE) */}
-        <div className="flex items-center px-4 py-1 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
-          {part.tipo === 'inimigo' ? (
-            <TrackersNumericosLinha
-              danoVitalidade={part.danoVitalidade}
-              vitalidadeMax={part.vitalidadeMax}
-              danoVontade={part.danoVontade}
-              vontadeMax={part.vontadeMax}
-            />
-          ) : part.condicaoPersonagem ? (
-            <TrackersNumericosLinha
-              danoVitalidade={part.condicaoPersonagem.danoVitalidade}
-              vitalidadeMax={part.condicaoPersonagem.vitalidadeMax}
-              danoVontade={part.condicaoPersonagem.danoVontade}
-              vontadeMax={part.condicaoPersonagem.vontadeMax}
-              fome={part.condicaoPersonagem.fome}
-            />
-          ) : (
-            <span className="text-xs text-muted-foreground italic px-1 py-1">
-              Condição indisponível
-            </span>
-          )}
-        </div>
-
-        {part.tipo === 'inimigo' && (part.recursosSobrenaturais || resumoInimigo?.dificuldade) && (
-          <div className="flex flex-wrap items-center gap-2 px-4 py-1">
-            <ChipDificuldadeAntagonista dificuldade={resumoInimigo?.dificuldade ?? null} />
-            <ResumoRecursosSobrenaturais recursos={part.recursosSobrenaturais} />
-          </div>
-        )}
-
-        {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
-        {visibilidadeCondicao && <div className="px-4 py-2">{visibilidadeCondicao}</div>}
-        <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
-          <BadgesCondicoes
-            participanteId={part.id}
-            ehVampiro={ehParticipanteVampiro(part)}
-            condicoes={part.condicoes}
-            podeEditar={true}
-            onAlternarCondicao={onAlternarCondicao}
-          />
-        </div>
-      </CardCombate>
-    )
-  }
-
   return (
     <CardCombate estado={saude?.estado}
       className={cn(
-        'py-4 transition-all duration-150',
+        'py-4 flex h-full flex-col transition-all duration-150',
         ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
         ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
         !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
       )}
     >
-      <CardHeader className="py-2 px-4 flex flex-col items-stretch gap-2">
+      <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
         <div className="flex items-start gap-2 min-w-0">
           <div
             ref={handleRef}
@@ -681,81 +608,41 @@ function CardConteudoNarrador({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-1 pt-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={index === 0}
-            onClick={() => onReordenar(part.id, 'cima')}
-            className="size-8"
-            aria-label="Mover para cima"
-          >
-            <ArrowUp className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={index === totalParticipantes - 1}
-            onClick={() => onReordenar(part.id, 'baixo')}
-            className="size-8"
-            aria-label="Mover para baixo"
-          >
-            <ArrowDown className="size-4" />
-          </Button>
-          {part.tipo === 'inimigo' && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onEditarInimigo(part as ParticipanteInimigo)}
-                className="size-8"
-                title="Editar este inimigo no combate (status, especiais, notas)"
-              >
-                <Edit3 className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onAlternarRevelar(part.id)}
-                className="size-8"
-                title={
-                  part.revelarVitalidade
-                    ? 'Ocultar Vitalidade dos Jogadores'
-                    : 'Revelar Vitalidade aos Jogadores'
-                }
-              >
-                {part.revelarVitalidade ? (
-                  <Eye className="size-4 text-vinho" />
-                ) : (
-                  <EyeOff className="size-4 text-muted-foreground" />
-                )}
-              </Button>
-            </>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onAlternarMinimizado(part.id)}
-            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-            title="Minimizar card"
-          >
-            <Minimize2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onRemover(part.id)}
-            className="size-8 text-destructive hover:text-destructive"
-            aria-label="Remover participante"
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
+        {part.tipo === 'inimigo' && (
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEditarInimigo(part as ParticipanteInimigo)}
+              className="size-8"
+              title="Editar este inimigo no combate (status, especiais, notas)"
+            >
+              <Edit3 className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onAlternarRevelar(part.id)}
+              className="size-8"
+              title={
+                part.revelarVitalidade
+                  ? 'Ocultar Vitalidade dos Jogadores'
+                  : 'Revelar Vitalidade aos Jogadores'
+              }
+            >
+              {part.revelarVitalidade ? (
+                <Eye className="size-4 text-vinho" />
+              ) : (
+                <EyeOff className="size-4 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
+        )}
       </CardHeader>
 
-      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2">
+      <CardContent className="pt-1 pb-3 px-4 flex flex-1 flex-col gap-2">
         {part.tipo === 'inimigo' ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-1 flex-col gap-3">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="flex flex-col gap-2 items-start min-w-0">
                 <TrilhaTatilExpandida
@@ -823,20 +710,9 @@ function CardConteudoNarrador({
                 </CarrosselBadges>
               </div>
             )}
-
-            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-              <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
-              <BadgesCondicoes
-                participanteId={part.id}
-                ehVampiro={ehParticipanteVampiro(part)}
-                condicoes={part.condicoes}
-                podeEditar={true}
-                onAlternarCondicao={onAlternarCondicao}
-              />
-            </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-1 flex-col gap-3">
             {visibilidadeCondicao}
             {part.condicaoPersonagem ? (
               <div data-condicao-combate="" className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -872,19 +748,31 @@ function CardConteudoNarrador({
             ) : (
               <p className="text-xs text-muted-foreground">Condição indisponível.</p>
             )}
-
-            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-              <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
-              <BadgesCondicoes
-                participanteId={part.id}
-                ehVampiro={ehParticipanteVampiro(part)}
-                condicoes={part.condicoes}
-                podeEditar={true}
-                onAlternarCondicao={onAlternarCondicao}
-              />
-            </div>
           </div>
         )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1 border-t min-w-0">
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
+            <BadgesCondicoes
+              participanteId={part.id}
+              ehVampiro={ehParticipanteVampiro(part)}
+              condicoes={part.condicoes}
+              podeEditar={true}
+              onAlternarCondicao={onAlternarCondicao}
+            />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemover(part.id)}
+            className="size-8 shrink-0 text-destructive hover:text-destructive ml-auto"
+            aria-label="Remover participante"
+            title="Remover participante do combate"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
       </CardContent>
     </CardCombate>
   )
@@ -907,10 +795,7 @@ function CardParticipanteSortavel({
   totalParticipantes,
   ehTurnoAtual,
   ehProximoTurno,
-  minimizado,
   salvandoOrdem,
-  onAlternarMinimizado,
-  onReordenar,
   onEditarInimigo,
   onAlternarRevelar,
   onRemover,
@@ -918,7 +803,7 @@ function CardParticipanteSortavel({
   onAlterarDanoPersonagem,
   onAlterarFomePersonagem,
   onAlternarCondicao,
-}: PropsCardConteudoNarrador & { salvandoOrdem: boolean }) {
+}: PropsCardConteudoNarrador & { totalParticipantes: number; salvandoOrdem: boolean }) {
   const { ref, handleRef, isDragging } = useSortable({
     id: part.id,
     index,
@@ -932,7 +817,7 @@ function CardParticipanteSortavel({
       role="group"
       aria-label={`Participante ${index + 1} de ${totalParticipantes}`}
       style={{
-        minHeight: isDragging ? (minimizado ? 72 : 136) : undefined,
+        minHeight: isDragging ? 136 : undefined,
       }}
       className={cn(
         'relative transition-transform duration-200 ease-out',
@@ -949,13 +834,9 @@ function CardParticipanteSortavel({
         <CardConteudoNarrador
           part={part}
           index={index}
-          totalParticipantes={totalParticipantes}
           ehTurnoAtual={ehTurnoAtual}
           ehProximoTurno={ehProximoTurno}
-          minimizado={minimizado}
           handleRef={handleRef}
-          onAlternarMinimizado={onAlternarMinimizado}
-          onReordenar={onReordenar}
           onEditarInimigo={onEditarInimigo}
           onAlternarRevelar={onAlternarRevelar}
           onRemover={onRemover}
@@ -998,8 +879,16 @@ export function VisaoNarrador({
     ehVampiro: boolean
   } | null>(null)
 
+  const [modelosAtualizados, setModelosAtualizados] = useState<Record<string, ModeloAntagonista>>({})
+  const listaModelos = useMemo(
+    () => modelos.map((m) => (m.id && modelosAtualizados[m.id] ? modelosAtualizados[m.id] : m)),
+    [modelos, modelosAtualizados],
+  )
+
   const [inimigoEmEdicao, setInimigoEmEdicao] = useState<{
+    origem: 'combate' | 'montagem' | 'pre-combate'
     id: string
+    modeloId?: string | null
     nome: string
     vitalidadeMax: number
     vontadeMax: number
@@ -1017,16 +906,13 @@ export function VisaoNarrador({
   const [salvandoEdicaoInimigo, setSalvandoEdicaoInimigo] = useState(false)
 
   const [selecaoPersonagens, setSelecaoPersonagens] = useState<string[]>([])
-  const [inimigosParaAdicionar, setInimigosParaAdicionar] = useState<
-    Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
-  >([])
+  const [inimigosParaAdicionar, setInimigosParaAdicionar] = useState<InimigoPreCombateRascunho[]>([])
   const [mostrarPreCombates, setMostrarPreCombates] = useState(false)
   const [preCombateEmEdicao, setPreCombateEmEdicao] = useState<{
     id?: string
     nome: string
-    inimigos: Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
+    inimigos: InimigoPreCombateRascunho[]
   } | null>(null)
-  const [modelosPreCombateTemp, setModelosPreCombateTemp] = useState<string[]>([])
   const [salvandoPreCombate, setSalvandoPreCombate] = useState(false)
   const [preCombateParaExcluir, setPreCombateParaExcluir] = useState<{ id: string; nome: string } | null>(null)
   const [nomeInimigoAvulso, setNomeInimigoAvulso] = useState<string>('')
@@ -1037,26 +923,6 @@ export function VisaoNarrador({
   const [arrastandoId, setArrastandoId] = useState<string | null>(null)
   const [locaisParticipantes, setLocaisParticipantes] = useState<EstadoCombateNarrador['participantes'] | null>(null)
   const [salvandoOrdem, setSalvandoOrdem] = useState(false)
-
-  const [cardsMinimizados, setCardsMinimizados] = useState<Record<string, boolean>>({})
-  const [modoCompactoGeral, setModoCompactoGeral] = useState(false)
-
-  function estaMinimizado(id: string) {
-    return cardsMinimizados[id] ?? modoCompactoGeral
-  }
-
-  function alternarMinimizado(id: string) {
-    setCardsMinimizados((prev) => ({
-      ...prev,
-      [id]: !estaMinimizado(id),
-    }))
-  }
-
-  function alternarModoCompactoGeral() {
-    const novo = !modoCompactoGeral
-    setModoCompactoGeral(novo)
-    setCardsMinimizados({})
-  }
 
   const participantesAtivos = combate
     ? combate.participantes.filter((p) => !ehInimigoIncapacitado(p))
@@ -1077,7 +943,9 @@ export function VisaoNarrador({
 
   function abrirEditarInimigo(part: ParticipanteInimigo) {
     setInimigoEmEdicao({
+      origem: 'combate',
       id: part.id,
+      modeloId: part.modeloId ?? null,
       nome: part.nome,
       vitalidadeMax: part.vitalidadeMax,
       vontadeMax: part.vontadeMax,
@@ -1098,36 +966,156 @@ export function VisaoNarrador({
     })
   }
 
-  async function handleSalvarEdicaoInimigo(e: React.FormEvent) {
-    e.preventDefault()
+  function abrirEditarInimigoRascunho(inimigo: InimigoPreCombateRascunho, origem: 'montagem' | 'pre-combate') {
+    const modeloBase = listaModelos.find((m) => m.id === inimigo.modeloId)
+    if (!modeloBase) return
+    const modeloEfetivo = aplicarCustomizacaoAoModelo(modeloBase, inimigo)
+    setInimigoEmEdicao({
+      origem,
+      id: inimigo.id,
+      modeloId: inimigo.modeloId,
+      nome: inimigo.nome,
+      vitalidadeMax: modeloEfetivo.vitalidade,
+      vontadeMax: modeloEfetivo.vontade,
+      fichaCompleta: modeloEfetivo.fichaCompleta ? structuredClone(modeloEfetivo.fichaCompleta) : null,
+      paradas: {
+        fisico: modeloEfetivo.paradaFisico,
+        social: modeloEfetivo.paradaSocial,
+        mental: modeloEfetivo.paradaMental,
+        excepcionais: modeloEfetivo.paradasExcepcionais.map((pe) => ({ ...pe })),
+      },
+      especiais: modeloEfetivo.especiais.map(normalizarEspecialAntagonista),
+      recursosSobrenaturais: inimigo.recursos ? structuredClone(inimigo.recursos) : undefined,
+      notas: modeloEfetivo.notas ?? '',
+    })
+  }
+
+  async function salvarEdicaoInimigo(escopo: 'instancia' | 'modelo') {
     if (!inimigoEmEdicao) return
+    const nomeLimpo = inimigoEmEdicao.nome.trim()
+    if (!nomeLimpo) {
+      toast.error('Informe o nome do inimigo.')
+      return
+    }
+
+    const perfil = obterPerfilSobrenatural(inimigoEmEdicao)
+    const temRecursos = Boolean(perfil.livres || Object.keys(perfil.disciplinas).length)
+    const recursosFinais = temRecursos ? inimigoEmEdicao.recursosSobrenaturais : undefined
+    if (recursosFinais) {
+      try {
+        validarSelecaoParaModelo(inimigoEmEdicao, recursosFinais)
+      } catch {
+        toast.error('As Disciplinas ou os Especiais mudaram. Configure os poderes do Inimigo antes de salvar.')
+        return
+      }
+    }
+
     setSalvandoEdicaoInimigo(true)
     try {
-      const perfil = obterPerfilSobrenatural(inimigoEmEdicao)
-      await atualizarParticipanteInimigoServer({
-        data: {
-          participanteId: inimigoEmEdicao.id,
-          atualizacao: {
-            nome: inimigoEmEdicao.nome,
-            vitalidadeMax: inimigoEmEdicao.vitalidadeMax,
-            vontadeMax: inimigoEmEdicao.vontadeMax,
-            paradas: inimigoEmEdicao.paradas,
-            fichaCompleta: inimigoEmEdicao.fichaCompleta,
-            especiais: inimigoEmEdicao.especiais,
-            recursosSobrenaturais: perfil.livres || Object.keys(perfil.disciplinas).length
-              ? inimigoEmEdicao.recursosSobrenaturais : null,
-            notas: inimigoEmEdicao.notas,
+      const paradasLimpa = {
+        fisico: inimigoEmEdicao.fichaCompleta ? null : (inimigoEmEdicao.paradas.fisico ?? 1),
+        social: inimigoEmEdicao.fichaCompleta ? null : (inimigoEmEdicao.paradas.social ?? 1),
+        mental: inimigoEmEdicao.fichaCompleta ? null : (inimigoEmEdicao.paradas.mental ?? 1),
+        excepcionais: inimigoEmEdicao.paradas.excepcionais
+          .map((pe) => ({ nome: pe.nome.trim(), valor: pe.valor }))
+          .filter((pe) => pe.nome.length > 0),
+      }
+      const especiaisLimpos = inimigoEmEdicao.especiais
+        .map((esp) => normalizarEspecialAntagonista({ ...esp, nome: esp.nome.trim() }))
+        .filter((esp) => esp.nome.length > 0)
+
+      if (escopo === 'modelo') {
+        const modeloOriginal = listaModelos.find((m) => m.id === inimigoEmEdicao.modeloId)
+        if (!modeloOriginal?.id) {
+          throw new Error('Modelo original não encontrado em Antagonistas.')
+        }
+        const nomeModelo = nomeLimpo.replace(/\s+#\d+$/, '').trim() || modeloOriginal.nome
+        const novoModelo: ModeloAntagonista = {
+          id: modeloOriginal.id,
+          nome: nomeModelo,
+          categoria: modeloOriginal.categoria,
+          etiquetas: modeloOriginal.etiquetas ?? [],
+          vitalidade: inimigoEmEdicao.vitalidadeMax,
+          vontade: inimigoEmEdicao.vontadeMax,
+          paradaFisico: paradasLimpa.fisico,
+          paradaSocial: paradasLimpa.social,
+          paradaMental: paradasLimpa.mental,
+          paradasExcepcionais: paradasLimpa.excepcionais,
+          fichaCompleta: inimigoEmEdicao.fichaCompleta ? structuredClone(inimigoEmEdicao.fichaCompleta) : null,
+          especiais: especiaisLimpos,
+          notas: inimigoEmEdicao.notas,
+        }
+        await salvarModeloBestiario({ data: novoModelo })
+        setModelosAtualizados((prev) => ({ ...prev, [modeloOriginal.id!]: novoModelo }))
+      }
+
+      if (inimigoEmEdicao.origem === 'combate') {
+        await atualizarParticipanteInimigoServer({
+          data: {
+            participanteId: inimigoEmEdicao.id,
+            atualizacao: {
+              nome: nomeLimpo,
+              vitalidadeMax: inimigoEmEdicao.vitalidadeMax,
+              vontadeMax: inimigoEmEdicao.vontadeMax,
+              paradas: paradasLimpa,
+              fichaCompleta: inimigoEmEdicao.fichaCompleta,
+              especiais: especiaisLimpos,
+              recursosSobrenaturais: recursosFinais ?? null,
+              notas: inimigoEmEdicao.notas,
+            },
           },
-        },
-      })
+        })
+      } else {
+        const aplicarNoRascunho = (item: InimigoPreCombateRascunho): InimigoPreCombateRascunho =>
+          escopo === 'modelo'
+            ? {
+                id: item.id,
+                modeloId: item.modeloId,
+                nome: nomeLimpo,
+                ...(recursosFinais ? { recursos: structuredClone(recursosFinais) } : {}),
+              }
+            : {
+                ...item,
+                nome: nomeLimpo,
+                vitalidadeMax: inimigoEmEdicao.vitalidadeMax,
+                vontadeMax: inimigoEmEdicao.vontadeMax,
+                paradas: structuredClone(paradasLimpa),
+                fichaCompleta: inimigoEmEdicao.fichaCompleta ? structuredClone(inimigoEmEdicao.fichaCompleta) : null,
+                especiais: structuredClone(especiaisLimpos),
+                notas: inimigoEmEdicao.notas,
+                recursos: recursosFinais ? structuredClone(recursosFinais) : undefined,
+              }
+
+        if (inimigoEmEdicao.origem === 'montagem') {
+          setInimigosParaAdicionar((atuais) =>
+            atuais.map((item) => (item.id === inimigoEmEdicao.id ? aplicarNoRascunho(item) : item)),
+          )
+        } else {
+          atualizarInimigosPreCombateEmEdicao((atuais) =>
+            atuais.map((item) => (item.id === inimigoEmEdicao.id ? aplicarNoRascunho(item) : item)),
+          )
+        }
+      }
+
       setInimigoEmEdicao(null)
-      toast.success('Inimigo atualizado no combate.')
-      router.invalidate()
+      toast.success(
+        escopo === 'modelo'
+          ? 'Modelo geral e inimigo atualizados.'
+          : inimigoEmEdicao.origem === 'combate'
+            ? 'Inimigo atualizado no Combate.'
+            : 'Inimigo atualizado para este Combate.',
+      )
+      await router.invalidate()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Falha ao atualizar inimigo.')
     } finally {
       setSalvandoEdicaoInimigo(false)
     }
+  }
+
+  async function handleSalvarEdicaoInimigo(e: React.FormEvent) {
+    e.preventDefault()
+    await salvarEdicaoInimigo('instancia')
   }
 
   async function handleAvancarTurno() {
@@ -1156,29 +1144,6 @@ export function VisaoNarrador({
       router.invalidate()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Falha ao encerrar combate.')
-    }
-  }
-
-  async function handleReordenar(id: string, direcao: 'cima' | 'baixo') {
-    if (!combate) return
-    const idsAtivos = participantesAtivos.map((p) => p.id)
-    const index = idsAtivos.indexOf(id)
-    if (index === -1) return
-
-    const novoIndex = direcao === 'cima' ? index - 1 : index + 1
-    if (novoIndex < 0 || novoIndex >= idsAtivos.length) return
-
-    const temp = idsAtivos[index]
-    idsAtivos[index] = idsAtivos[novoIndex]
-    idsAtivos[novoIndex] = temp
-
-    const todosIds = [...idsAtivos, ...inimigosIncapacitados.map((p) => p.id)]
-
-    try {
-      await reordenarParticipantesCombateServer({ data: { ordemIds: todosIds } })
-      router.invalidate()
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao reordenar.')
     }
   }
 
@@ -1226,6 +1191,7 @@ export function VisaoNarrador({
   async function handleRemoverParticipante(id: string) {
     try {
       await removerParticipanteCombateServer({ data: { participanteId: id } })
+      if (inimigoEmEdicao?.id === id) setInimigoEmEdicao(null)
       router.invalidate()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Falha ao remover.')
@@ -1236,7 +1202,7 @@ export function VisaoNarrador({
     try {
       const participante = combate?.participantes.find((p) => p.id === id)
       if (participante?.tipo === 'personagem') {
-        await definirRevelarCondicaoCombateServer({ data: { participanteId: id, revelar: revelar ?? !participante.revelarCondicao } })
+        await definirRevelarCondicaoCombateServer({ data: { participanteId: id, revelar: revelar ?? participante.revelarCondicao === false } })
       } else {
         await alternarRevelarVitalidadeCombateServer({ data: { participanteId: id } })
       }
@@ -1344,15 +1310,23 @@ export function VisaoNarrador({
             jogadorNome: personagemEscolhido.jogadorNome ?? null,
             ehPdN: personagemEscolhido.ehPdN,
             ehPdn: personagemEscolhido.ehPdN,
+            revelarCondicao: true,
             condicoes: [],
           })
         }
       }
 
       for (const inimigoInfo of inimigosParaAdicionar) {
-        const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
-        if (modelo) {
-          participantes.push(criarInimigoDeModelo(modelo, { id: inimigoInfo.id, nome: inimigoInfo.nome }, inimigoInfo.recursos ?? sortearRecursosSobrenaturais(modelo)))
+        const modeloBase = listaModelos.find((m) => m.id === inimigoInfo.modeloId)
+        if (modeloBase) {
+          const modeloEfetivo = aplicarCustomizacaoAoModelo(modeloBase, inimigoInfo)
+          participantes.push(
+            criarInimigoDeModelo(
+              modeloEfetivo,
+              { id: inimigoInfo.id, nome: inimigoInfo.nome },
+              inimigoInfo.recursos ?? sortearRecursosSobrenaturais(modeloEfetivo),
+            ),
+          )
         }
       }
 
@@ -1365,6 +1339,7 @@ export function VisaoNarrador({
       setSelecaoPersonagens([])
       setInimigosParaAdicionar([])
       setPreCombateEmEdicao(null) // Se veio do carrossel de edição de um Pré-Combate, sai dele.
+      setInimigoEmEdicao(null)
       toast.success('Combate iniciado!')
       await router.invalidate()
     } catch (err: unknown) {
@@ -1374,14 +1349,15 @@ export function VisaoNarrador({
     }
   }
 
-  function adicionarInimigoNaMontagem(modeloId: string, recursos?: RecursosSobrenaturais) {
-    const modelo = modelos.find((m) => m.id === modeloId)
+  function adicionarInimigoNaMontagem(modeloId: string) {
+    const modelo = listaModelos.find((m) => m.id === modeloId)
     if (!modelo) return
-    setInimigosParaAdicionar((atuais) => {
-      let numero = atuais.filter((i) => i.modeloId === modeloId).length + 1
-      while (atuais.some((i) => i.nome === `${modelo.nome} #${numero}`)) numero++
-      return [...atuais, { id: crypto.randomUUID(), modeloId, nome: `${modelo.nome} #${numero}`, recursos: recursos ? structuredClone(recursos) : undefined }]
-    })
+    setInimigosParaAdicionar((atuais) => acrescentarInimigoRascunho(atuais, modeloId, modelo.nome))
+  }
+
+  function duplicarInimigoNaMontagem(inimigo: InimigoPreCombateRascunho) {
+    const modelo = listaModelos.find((m) => m.id === inimigo.modeloId)
+    setInimigosParaAdicionar((atuais) => duplicarInimigoRascunhoNaLista(atuais, inimigo, modelo?.nome))
   }
 
   function handleAdicionarCoterieNaSelecao(
@@ -1409,10 +1385,8 @@ export function VisaoNarrador({
     if (!pc) return
 
     const novosInimigos = pc.inimigos.map((inimigo) => ({
+      ...rascunhoDeInimigoPreCombate(inimigo),
       id: crypto.randomUUID(),
-      modeloId: inimigo.modeloId,
-      nome: inimigo.nome,
-      recursos: inimigo.recursosSobrenaturais,
     }))
 
     setInimigosParaAdicionar([...inimigosParaAdicionar, ...novosInimigos])
@@ -1423,7 +1397,6 @@ export function VisaoNarrador({
   // continua no carrossel, com salvamento automático.
   function abrirNovoPreCombate() {
     setPreCombateEmEdicao({ nome: '', inimigos: [] })
-    setModelosPreCombateTemp([])
   }
 
   function abrirEditarPreCombate(pc: PreCombate) {
@@ -1431,29 +1404,24 @@ export function VisaoNarrador({
       id: pc.id,
       nome: pc.nome,
       inimigos: pc.inimigos.map((i) => ({
-        id: crypto.randomUUID(),
-        modeloId: i.modeloId,
-        nome: i.nome,
-        recursos: i.recursosSobrenaturais,
+        ...rascunhoDeInimigoPreCombate(i),
+        id: i.id ?? crypto.randomUUID(),
       })),
     })
-    setModelosPreCombateTemp([])
     setMostrarPreCombates(false)
   }
 
   async function persistirPreCombateEmEdicao(novo: {
     id: string
     nome: string
-    inimigos: Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
+    inimigos: InimigoPreCombateRascunho[]
   }) {
     try {
       await salvarPreCombate({
         data: {
           id: novo.id,
           nome: novo.nome,
-          inimigos: novo.inimigos.map((i) => ({
-            id: i.id, modeloId: i.modeloId, nome: i.nome, recursosSobrenaturais: i.recursos,
-          })),
+          inimigos: novo.inimigos.map(serializarInimigoPreCombate),
         },
       })
       router.invalidate()
@@ -1487,24 +1455,21 @@ export function VisaoNarrador({
   }
 
   function removerInimigoPreCombateEmEdicao(inimigoId: string) {
+    if (inimigoEmEdicao?.id === inimigoId) setInimigoEmEdicao(null)
     atualizarInimigosPreCombateEmEdicao((atual) => atual.filter((i) => i.id !== inimigoId))
   }
 
-  function adicionarModelosAoPreCombateEmEdicao() {
-    if (!preCombateEmEdicao || modelosPreCombateTemp.length === 0) return
-    if (!preCombateEmEdicao.id) return // ainda no Passo 1 (só o nome); isso some assim que criar.
-    atualizarInimigosPreCombateEmEdicao((atual) => {
-      const novos = [...atual]
-      for (const mId of modelosPreCombateTemp) {
-        const modelo = modelos.find((m) => m.id === mId)
-        if (modelo && modelo.id) {
-          const contagem = novos.filter((i) => i.modeloId === modelo.id).length + 1
-          novos.push({ id: crypto.randomUUID(), modeloId: modelo.id, nome: `${modelo.nome} #${contagem}` })
-        }
-      }
-      return novos
-    })
-    setModelosPreCombateTemp([])
+  function adicionarInimigoAoPreCombateEmEdicao(modeloId: string) {
+    if (!preCombateEmEdicao?.id) return
+    const modelo = listaModelos.find((m) => m.id === modeloId)
+    if (!modelo) return
+    atualizarInimigosPreCombateEmEdicao((atual) => acrescentarInimigoRascunho(atual, modeloId, modelo.nome))
+  }
+
+  function duplicarInimigoNoPreCombateEmEdicao(inimigo: InimigoPreCombateRascunho) {
+    if (!preCombateEmEdicao?.id) return
+    const modelo = listaModelos.find((m) => m.id === inimigo.modeloId)
+    atualizarInimigosPreCombateEmEdicao((atual) => duplicarInimigoRascunhoNaLista(atual, inimigo, modelo?.nome))
   }
 
   // Passo 1 → 2: salva só o nome (já cria no banco, com os Inimigos que já estiverem no rascunho)
@@ -1520,16 +1485,14 @@ export function VisaoNarrador({
       const salvo = await salvarPreCombate({
         data: {
           nome: preCombateEmEdicao.nome.trim(),
-          inimigos: preCombateEmEdicao.inimigos.map((i) => ({
-            id: i.id, modeloId: i.modeloId, nome: i.nome, recursosSobrenaturais: i.recursos,
-          })),
+          inimigos: preCombateEmEdicao.inimigos.map(serializarInimigoPreCombate),
         },
       })
       setMostrarPreCombates(false)
       setPreCombateEmEdicao({
         id: salvo.id,
         nome: salvo.nome,
-        inimigos: salvo.inimigos.map((i) => ({ id: i.id, modeloId: i.modeloId, nome: i.nome, recursos: i.recursosSobrenaturais })),
+        inimigos: salvo.inimigos.map(rascunhoDeInimigoPreCombate),
       })
       router.invalidate()
     } catch (err: unknown) {
@@ -1550,7 +1513,7 @@ export function VisaoNarrador({
       }
     }
     setPreCombateEmEdicao(null)
-    setModelosPreCombateTemp([])
+    setInimigoEmEdicao(null)
     setMostrarPreCombates(false)
   }
 
@@ -1569,8 +1532,11 @@ export function VisaoNarrador({
   // Botão "Ativar Combate" dentro do carrossel de edição: usa os Inimigos já salvos no rascunho.
   function handleAtivarCombateAPartirDoPreCombateEmEdicao() {
     if (!preCombateEmEdicao) return
-    setInimigosParaAdicionar(preCombateEmEdicao.inimigos.map((i) => ({ ...i })))
+    setInimigosParaAdicionar(
+      preCombateEmEdicao.inimigos.map((i) => rascunhoDeInimigoPreCombate(serializarInimigoPreCombate(i))),
+    )
     setPreCombateEmEdicao(null)
+    setInimigoEmEdicao(null)
   }
 
   async function handleConfirmarAdicionarAvulso(tipoNovoPart: 'personagem' | 'inimigo') {
@@ -1594,6 +1560,7 @@ export function VisaoNarrador({
               jogadorNome: personagemEscolhido.jogadorNome ?? null,
               ehPdN: personagemEscolhido.ehPdN,
               ehPdn: personagemEscolhido.ehPdN,
+              revelarCondicao: true,
               condicoes: [],
             }
             await adicionarParticipanteCombateServer({ data: { participante: part } })
@@ -1611,7 +1578,7 @@ export function VisaoNarrador({
         }
         try {
           for (const mId of modelosAvulsosTemp) {
-            const modelo = modelos.find((m) => m.id === mId)
+            const modelo = listaModelos.find((m) => m.id === mId)
             if (!modelo) continue
             const contagem =
               (combate?.participantes.filter((p) => p.tipo === 'inimigo' && p.modeloId === modelo.id).length ?? 0) + 1
@@ -1665,11 +1632,33 @@ export function VisaoNarrador({
             Edição salva automaticamente. Monte os Inimigos aqui, igual na tela de Combate, e ative quando quiser.
           </p>
 
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed p-4">
+            <Label className="font-semibold flex items-center gap-1">
+              <Plus className="size-4" />
+              Adicionar Inimigo da lista de Antagonistas
+            </Label>
+            {listaModelos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Nenhum modelo cadastrado em Antagonistas.</p>
+            ) : (
+              <Combobox
+                rotulo="Adicionar Inimigo"
+                opcoes={listaModelos.map((m) => ({
+                  valor: m.id ?? '',
+                  rotulo: m.nome,
+                  descricao: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                }))}
+                valor={null}
+                onChange={(id) => adicionarInimigoAoPreCombateEmEdicao(id)}
+                placeholder="Buscar e adicionar Inimigo..."
+              />
+            )}
+          </div>
+
           {preCombateEmEdicao.inimigos.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <Skull className="size-10 text-muted-foreground/60 mb-3" />
               <h3 className="font-serif text-xl font-medium">Nenhum Inimigo ainda</h3>
-              <p className="max-w-sm text-sm text-muted-foreground mt-1">Escolha modelos da lista de Antagonistas abaixo para adicionar.</p>
+              <p className="max-w-sm text-sm text-muted-foreground mt-1">Busque modelos da lista de Antagonistas acima para adicionar.</p>
             </div>
           ) : (
             <CarrosselCombate>
@@ -1677,47 +1666,16 @@ export function VisaoNarrador({
                 <CardInimigoPreCombate
                   key={inimigo.id}
                   inimigo={inimigo}
-                  modelo={modelos.find((m) => m.id === inimigo.modeloId)}
+                  modelo={listaModelos.find((m) => m.id === inimigo.modeloId)}
                   onRenomear={(nome) => renomearInimigoPreCombateEmEdicao(inimigo.id, nome)}
                   onAlterarRecursos={(recursos) => alterarRecursosInimigoPreCombateEmEdicao(inimigo.id, recursos)}
+                  onDuplicar={() => duplicarInimigoNoPreCombateEmEdicao(inimigo)}
+                  onEditar={() => abrirEditarInimigoRascunho(inimigo, 'pre-combate')}
                   onRemover={() => removerInimigoPreCombateEmEdicao(inimigo.id)}
                 />
               ))}
             </CarrosselCombate>
           )}
-
-          <div className="flex flex-col gap-2 rounded-lg border border-dashed p-4">
-            <Label className="font-semibold flex items-center gap-1">
-              <Plus className="size-4" />
-              Adicionar Inimigo da lista de Antagonistas
-            </Label>
-            {modelos.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nenhum modelo cadastrado em Antagonistas.</p>
-            ) : (
-              <div className="flex items-center gap-2">
-                <SelectMultiplo
-                  opcoes={modelos.map((m) => ({
-                    valor: m.id ?? '',
-                    rotulo: m.nome,
-                    detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
-                  }))}
-                  valores={modelosPreCombateTemp}
-                  onChange={setModelosPreCombateTemp}
-                  placeholder="Selecionar modelos de inimigo..."
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={modelosPreCombateTemp.length === 0}
-                  onClick={adicionarModelosAoPreCombateEmEdicao}
-                  className="shrink-0 gap-1"
-                >
-                  <Plus className="size-4" />
-                  Adicionar {modelosPreCombateTemp.length > 0 ? `(${modelosPreCombateTemp.length})` : ''}
-                </Button>
-              </div>
-            )}
-          </div>
         </div>
       ) : (
       <div className="flex flex-col gap-6 pt-2 pb-12">
@@ -1776,25 +1734,6 @@ export function VisaoNarrador({
               <Button size="sm" onClick={handleAvancarTurno} className="gap-1 font-semibold">
                 <Play className="size-4 fill-current" />
                 Próximo Turno
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={alternarModoCompactoGeral}
-                className="gap-1"
-                title={modoCompactoGeral ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
-              >
-                {modoCompactoGeral ? (
-                  <>
-                    <Maximize2 className="size-4" />
-                    <span>Expandir Cards</span>
-                  </>
-                ) : (
-                  <>
-                    <Minimize2 className="size-4" />
-                    <span>Minimizar Cards</span>
-                  </>
-                )}
               </Button>
               <Button
                 variant="outline"
@@ -1878,7 +1817,7 @@ export function VisaoNarrador({
               )}
 
               {selecaoPersonagens.length > 0 && (
-                <div className="flex flex-col gap-1 border rounded-md p-2 max-h-40 overflow-y-auto">
+                <div className="flex flex-col gap-1 border rounded-md p-2">
                   {selecaoPersonagens.map((pId) => {
                     const personagemEscolhido = personagens.find((p) => p.id === pId)
                     if (!personagemEscolhido) return null
@@ -1915,15 +1854,15 @@ export function VisaoNarrador({
                 Inimigos a partir da lista de Antagonistas
               </Label>
 
-              {modelos.length === 0 ? (
+              {listaModelos.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   Nenhum modelo cadastrado em Antagonistas.
                 </p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   <Combobox
                     rotulo="Adicionar Inimigo"
-                    opcoes={modelos.map((m) => ({
+                    opcoes={listaModelos.map((m) => ({
                       valor: m.id ?? '',
                       rotulo: m.nome,
                       descricao: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
@@ -1935,50 +1874,29 @@ export function VisaoNarrador({
 
                   {inimigosParaAdicionar.length > 0 && (
                     <div className="flex flex-col gap-4">
-                      {inimigosParaAdicionar.map((inimigo, idx) => {
-                        const mod = modelos.find((m) => m.id === inimigo.modeloId)
-                        return (
-                          <div
-                            key={inimigo.id}
-                            className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-b-0"
-                          >
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <Input
-                                aria-label={`Nome de ${inimigo.nome}`}
-                                value={inimigo.nome}
-                                onChange={(e) => {
-                                  setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, nome: e.target.value } : i))
-                                }}
-                                className="text-sm"
-                              />
-                              {mod?.categoria && (
-                                <span className="text-xs text-muted-foreground mt-1 ml-1">
-                                  Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
-                                </span>
-                              )}
-                              {mod && <ConfigurarPoderesAntagonista modelo={mod} valor={inimigo.recursos} onChange={recursos => setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, recursos } : i))} />}
-                            </div>
-                            <Button type="button" variant="ghost" size="icon" aria-label={`Duplicar ${inimigo.nome}`}
-                              disabled={!mod} onClick={() => adicionarInimigoNaMontagem(inimigo.modeloId, inimigo.recursos)}>
-                              <Copy className="size-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-destructive shrink-0"
-                              aria-label={`Remover ${inimigo.nome}`}
-                              onClick={() => {
-                                setInimigosParaAdicionar(
-                                  inimigosParaAdicionar.filter((_, i) => i !== idx),
-                                )
-                              }}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-                        )
-                      })}
+                      {inimigosParaAdicionar.map((inimigo) => (
+                        <CardInimigoPreCombate
+                          key={inimigo.id}
+                          inimigo={inimigo}
+                          modelo={listaModelos.find((m) => m.id === inimigo.modeloId)}
+                          onRenomear={(nome) => {
+                            setInimigosParaAdicionar((atuais) =>
+                              atuais.map((i) => (i.id === inimigo.id ? { ...i, nome } : i)),
+                            )
+                          }}
+                          onAlterarRecursos={(recursos) => {
+                            setInimigosParaAdicionar((atuais) =>
+                              atuais.map((i) => (i.id === inimigo.id ? { ...i, recursos } : i)),
+                            )
+                          }}
+                          onDuplicar={() => duplicarInimigoNaMontagem(inimigo)}
+                          onEditar={() => abrirEditarInimigoRascunho(inimigo, 'montagem')}
+                          onRemover={() => {
+                            if (inimigoEmEdicao?.id === inimigo.id) setInimigoEmEdicao(null)
+                            setInimigosParaAdicionar((atuais) => atuais.filter((i) => i.id !== inimigo.id))
+                          }}
+                        />
+                      ))}
                     </div>
                   )}
 
@@ -1991,9 +1909,8 @@ export function VisaoNarrador({
                       onClick={() => {
                         setPreCombateEmEdicao({
                           nome: '',
-                          inimigos: inimigosParaAdicionar.map((i) => ({ ...i })),
+                          inimigos: inimigosParaAdicionar.map((i) => rascunhoDeInimigoPreCombate(serializarInimigoPreCombate(i))),
                         })
-                        setModelosPreCombateTemp([])
                       }}
                     >
                       <Save className="size-4" />
@@ -2030,7 +1947,7 @@ export function VisaoNarrador({
                   <Label>Modelo(s) da lista de Antagonistas</Label>
                   <SelectMultiplo
                     rotulo="Modelos para adicionar"
-                    opcoes={modelos.map((m) => ({
+                    opcoes={listaModelos.map((m) => ({
                       valor: m.id ?? '',
                       rotulo: m.nome,
                       detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
@@ -2044,7 +1961,7 @@ export function VisaoNarrador({
                   />
                 </div>
                 {modelosAvulsosTemp.map(mId => {
-                  const modelo = modelos.find(m => m.id === mId)
+                  const modelo = listaModelos.find(m => m.id === mId)
                   return modelo ? <div key={mId} className="flex flex-col items-start gap-1">
                     {modelosAvulsosTemp.length > 1 && <span className="text-xs text-muted-foreground">{modelo.nome}</span>}
                     <ConfigurarPoderesAntagonista modelo={modelo} valor={recursosAvulsos[mId]} onChange={recursos => setRecursosAvulsos({ ...recursosAvulsos, [mId]: recursos })} />
@@ -2055,7 +1972,7 @@ export function VisaoNarrador({
                     <div className="flex items-center justify-between">
                       <Label htmlFor="nome-inimigo-avulso">Rótulo / Nome no Combate (opcional)</Label>
                       {(() => {
-                        const mod = modelos.find((m) => m.id === modelosAvulsosTemp[0])
+                        const mod = listaModelos.find((m) => m.id === modelosAvulsosTemp[0])
                         return mod ? (
                           <span className="text-xs text-muted-foreground">
                             Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
@@ -2214,10 +2131,7 @@ export function VisaoNarrador({
                     totalParticipantes={participantesExibidos.length}
                     ehTurnoAtual={ehTurnoAtual}
                     ehProximoTurno={ehProximoTurno}
-                    minimizado={estaMinimizado(part.id)}
                     salvandoOrdem={salvandoOrdem}
-                    onAlternarMinimizado={alternarMinimizado}
-                    onReordenar={handleReordenar}
                     onEditarInimigo={abrirEditarInimigo}
                     onAlternarRevelar={handleAlternarRevelar}
                     onRemover={handleRemoverParticipante}
@@ -2240,7 +2154,6 @@ export function VisaoNarrador({
                   <CardConteudoNarrador
                     part={arrastandoPart}
                     index={participantesExibidos.findIndex((p) => p.id === arrastandoPart.id)}
-                    totalParticipantes={participantesExibidos.length}
                     ehTurnoAtual={
                       combate ? arrastandoPart.id === combate.participantes[combate.turnoAtual]?.id : false
                     }
@@ -2249,9 +2162,6 @@ export function VisaoNarrador({
                         ? arrastandoPart.id === combate.participantes[proximoIndex]?.id
                         : false
                     }
-                    minimizado={estaMinimizado(arrastandoPart.id)}
-                    onAlternarMinimizado={() => {}}
-                    onReordenar={() => {}}
                     onEditarInimigo={() => {}}
                     onAlternarRevelar={async () => {}}
                     onRemover={() => {}}
@@ -2384,19 +2294,25 @@ export function VisaoNarrador({
         </AlertDialogContent>
       </AlertDialog>
 
-      {inimigoEmEdicao && !preCombateEmEdicao?.id && (
-        <Card className="mb-8" aria-labelledby="titulo-editar-inimigo">
+      <Dialog
+        open={Boolean(inimigoEmEdicao)}
+        onOpenChange={(aberto) => {
+          if (!aberto && !salvandoEdicaoInimigo) setInimigoEmEdicao(null)
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-9/10 overflow-y-auto">
+          {inimigoEmEdicao && (
             <form onSubmit={handleSalvarEdicaoInimigo}>
-              <CardHeader>
-                <CardTitle id="titulo-editar-inimigo" role="heading" aria-level={2} className="font-serif text-xl">
+              <DialogHeader>
+                <DialogTitle className="font-serif text-xl">
                   Editar Inimigo no Combate
-                </CardTitle>
-                <CardDescription>
-                  Customizações feitas aqui afetam apenas este combate, sem alterar o Modelo original da lista de Antagonistas.
-                </CardDescription>
-              </CardHeader>
+                </DialogTitle>
+                <DialogDescription>
+                  Ajuste os dados apenas para este Combate ou atualize também o Modelo original na lista de Antagonistas.
+                </DialogDescription>
+              </DialogHeader>
 
-              <CardContent className="flex flex-col gap-4 py-4">
+              <div className="flex flex-col gap-4 py-4">
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="nome-instancia">Rótulo / Nome no Combate</Label>
                   <Input
@@ -2408,6 +2324,38 @@ export function VisaoNarrador({
                     }
                     placeholder="Ex: Carniçal Ocultista (Líder)"
                     required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <Label>Formato da Ficha</Label>
+                  <Combobox
+                    rotulo="Formato da Ficha"
+                    opcoes={[
+                      { valor: 'simplificada', rotulo: 'Ficha Simplificada (Paradas Gerais)' },
+                      { valor: 'completa', rotulo: 'Ficha Completa de Antagonista (Atributos e Habilidades)' },
+                    ]}
+                    valor={inimigoEmEdicao.fichaCompleta ? 'completa' : 'simplificada'}
+                    onChange={(tipo) => {
+                      if (tipo === 'completa' && !inimigoEmEdicao.fichaCompleta) {
+                        setInimigoEmEdicao({
+                          ...inimigoEmEdicao,
+                          fichaCompleta: criarFichaAntagonistaCompleta(),
+                        })
+                      } else if (tipo === 'simplificada' && inimigoEmEdicao.fichaCompleta) {
+                        setInimigoEmEdicao({
+                          ...inimigoEmEdicao,
+                          fichaCompleta: null,
+                          paradas: {
+                            ...inimigoEmEdicao.paradas,
+                            fisico: inimigoEmEdicao.paradas.fisico ?? 4,
+                            social: inimigoEmEdicao.paradas.social ?? 3,
+                            mental: inimigoEmEdicao.paradas.mental ?? 3,
+                          },
+                        })
+                      }
+                    }}
+                    placeholder="Escolher formato da Ficha..."
                   />
                 </div>
 
@@ -2686,9 +2634,9 @@ export function VisaoNarrador({
                     }
                   />
                 </div>
-              </CardContent>
+              </div>
 
-              <CardFooter className="justify-end gap-4">
+              <DialogFooter className="flex flex-wrap justify-end gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -2697,13 +2645,24 @@ export function VisaoNarrador({
                 >
                   Cancelar
                 </Button>
+                {inimigoEmEdicao.modeloId && listaModelos.some((m) => m.id === inimigoEmEdicao.modeloId) && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={salvandoEdicaoInimigo}
+                    onClick={() => void salvarEdicaoInimigo('modelo')}
+                  >
+                    {salvandoEdicaoInimigo ? 'Salvando...' : 'Salvar no Modelo geral'}
+                  </Button>
+                )}
                 <Button type="submit" disabled={salvandoEdicaoInimigo}>
                   {salvandoEdicaoInimigo ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
-              </CardFooter>
+              </DialogFooter>
             </form>
-        </Card>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* ALERT DIALOG: CONFIRMAR MATAR OU DESACORDAR AO PREENCHER VITALIDADE AGRAVADA */}
       <AlertDialog

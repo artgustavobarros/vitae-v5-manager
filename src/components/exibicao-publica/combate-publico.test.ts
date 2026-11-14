@@ -122,14 +122,14 @@ describe('Combate público', () => {
     expect(html).toContain('Fora de Combate')
   })
 
-  it('oferece a mesma apresentação expandida e compacta do Combate, com trilhas de dano visuais', async () => {
+  it('oferece a apresentação do Combate com trilhas de dano visuais sem botão de minimizar', async () => {
     const html = await renderizar({
       id: 'combate', rodada: 3, turnoAtual: 0, ativo: true,
       participantes: [{ id: 'inimigo', tipo: 'inimigo', nome: 'Guarda', vitalidadeOculta: false,
         vitalidadeMax: 5, danoVitalidade: { superficial: 2, agravado: 1 }, condicoes: [] }],
     })
-    expect(html).toContain('Minimizar Cards')
-    expect(html).toContain('Minimizar card')
+    expect(html).not.toContain('Minimizar Cards')
+    expect(html).not.toContain('Minimizar card')
     expect(html).toMatch(/disabled=""[^>]*>X<\/button>/)
     expect(html.match(/disabled=""[^>]*>\/<\/button>/g)).toHaveLength(2)
     expect(html).not.toMatch(/Dano superficial:|Dano agravado:|Próximo Turno|Encerrar/)

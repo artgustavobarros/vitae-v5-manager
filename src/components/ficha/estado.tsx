@@ -1,15 +1,18 @@
 import { cn } from 'cn'
+import { useState } from 'react'
 
 import { TermoRegra } from '#/components/consulta-regra'
 import { Button } from '#/components/ui/button'
 import {
-  alternarCaixaDano,
+  alterarCaixaDanoNaPosicao,
   alternarFome,
   alternarMancha,
   caixasDano,
   ehMancha,
   MAX_FOME,
+  reconciliarCaixasDano,
   TOTAL_HUMANIDADE,
+  type CaixaDano,
   type Dano,
   type TrilhaHumanidade,
 } from '#/domain/trilhas'
@@ -18,6 +21,73 @@ import { Bolinha, GlifoDano } from './marcadores'
 
 // Os toques usam o Button do shadcn (ghost), sem fundo no hover: no celular ele ficaria preso após o toque.
 const NOMES_DANO = { vazio: 'sem dano', superficial: 'dano superficial', agravado: 'dano agravado' }
+
+/**
+ * Mantém o estado posicional das caixas de dano otimisticamente após cliques locais,
+ * reconciliando apenas quando as propriedades `dano` ou `max` mudam externamente.
+ */
+export function useCaixasDano(
+  dano: Dano,
+  max: number,
+  onChange?: (novoDano: Dano) => void,
+) {
+  const [estado, setEstado] = useState<{
+    caixas: CaixaDano[]
+    superficialProp: number
+    agravadoProp: number
+    maxProp: number
+  }>(() => ({
+    caixas: caixasDano(dano, max),
+    superficialProp: dano.superficial,
+    agravadoProp: dano.agravado,
+    maxProp: max,
+  }))
+
+  const propsMudaram =
+    estado.superficialProp !== dano.superficial ||
+    estado.agravadoProp !== dano.agravado ||
+    estado.maxProp !== max
+
+  const caixas = propsMudaram
+    ? reconciliarCaixasDano(estado.caixas, dano, max)
+    : estado.caixas
+
+  if (propsMudaram) {
+    setEstado({
+      caixas,
+      superficialProp: dano.superficial,
+      agravadoProp: dano.agravado,
+      maxProp: max,
+    })
+  }
+
+  function avancarCaixa(indice: number) {
+    if (!onChange) return
+    const proximo = alterarCaixaDanoNaPosicao(caixas, indice, 'avancar')
+    setEstado({
+      caixas: proximo.caixas,
+      superficialProp: dano.superficial,
+      agravadoProp: dano.agravado,
+      maxProp: max,
+    })
+    onChange(proximo.dano)
+  }
+
+  function retrocederCaixa(indice: number) {
+    if (!onChange) return
+    if (caixas[indice] === 'vazio') return
+    const proximo = alterarCaixaDanoNaPosicao(caixas, indice, 'retroceder')
+    setEstado({
+      caixas: proximo.caixas,
+      superficialProp: dano.superficial,
+      agravadoProp: dano.agravado,
+      maxProp: max,
+    })
+    onChange(proximo.dano)
+  }
+
+  return { caixas, avancarCaixa, retrocederCaixa }
+}
 
 /** Linha de Vitalidade ou Força de Vontade. Sem onChange, fica só para leitura. */
 export function TrilhaDano({
@@ -34,7 +104,7 @@ export function TrilhaDano({
   /** Id do termo da consulta rápida; com ele, o rótulo abre a consulta. */
   termo?: string
 }) {
-  const caixas = caixasDano(dano, max)
+  const { caixas, avancarCaixa, retrocederCaixa } = useCaixasDano(dano, max, onChange)
   const restante = caixas.filter((c) => c === 'vazio').length
 
   return (
@@ -52,7 +122,12 @@ export function TrilhaDano({
             size="icon"
             disabled={!onChange}
             aria-label={`${rotulo}, caixa ${i + 1}: ${NOMES_DANO[estado]}`}
-            onClick={() => onChange?.(alternarCaixaDano(dano, max, i))}
+            onClick={() => avancarCaixa(i)}
+            onContextMenu={(e) => {
+              if (!onChange) return
+              e.preventDefault()
+              retrocederCaixa(i)
+            }}
             className="h-12 w-10 hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-100 dark:hover:bg-transparent"
           >
             <GlifoDano estado={estado} />
