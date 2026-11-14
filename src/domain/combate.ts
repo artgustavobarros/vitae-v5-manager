@@ -343,6 +343,7 @@ export function iniciarCombate(
     turnoAtual: 0,
     participantes: participantes.map((p) => ({
       ...p,
+      ...(p.tipo === 'personagem' ? { revelarCondicao: p.revelarCondicao ?? true } : {}),
       condicoes: p.condicoes ?? [],
     })),
     ativo: true,
@@ -489,6 +490,7 @@ export function adicionarParticipante(combate: Combate, participante: Participan
       ...combate.participantes,
       {
         ...participante,
+        ...(participante.tipo === 'personagem' ? { revelarCondicao: participante.revelarCondicao ?? true } : {}),
         condicoes: participante.condicoes ?? [],
       },
     ],
@@ -807,7 +809,7 @@ export function filtrarCombateParaJogador(
       : undefined
 
     const podeVerCondicao =
-      p.revelarCondicao === true || ehMeu || (divideCoterie && condicaoInfo?.compartilhaCondicao === true)
+      p.revelarCondicao !== false || ehMeu || (divideCoterie && condicaoInfo?.compartilhaCondicao === true)
 
     if (podeVerCondicao && condicaoInfo) {
       return {

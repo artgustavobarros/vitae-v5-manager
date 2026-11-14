@@ -26,8 +26,8 @@ describe('Exibição pública', () => {
   const condicao = { compartilhaCondicao: false, vitalidadeMax: 6, vontadeMax: 5,
     danoVitalidade: { superficial: 2, agravado: 1 }, danoVontade: { superficial: 1, agravado: 0 }, fome: 3 }
 
-  it('divulga a Condição autorizada pelo Narrador sem conceder edição ou acesso à Ficha', () => {
-    const participante = participantePersonagemSchema.parse({ ...personagem, revelarCondicao: true })
+  it('divulga a Condição de Personagens (PJ ou PdN) por padrão sem conceder edição ou acesso à Ficha', () => {
+    const participante = participantePersonagemSchema.parse(personagem)
     const publico = filtrarCombatePublico(iniciarCombate([participante]), { [personagem.personagemId]: condicao })
     expect(publico.participantes[0]).toMatchObject({ ehMeu: false, condicaoOculta: false,
       condicao: { vitalidadeMax: 6, vontadeMax: 5, danoVitalidade: { superficial: 2, agravado: 1 },
@@ -35,9 +35,8 @@ describe('Exibição pública', () => {
     expect(publico.participantes[0].condicao).not.toHaveProperty('compartilhaCondicao')
   })
 
-  it('a autorização também permite consultar a Condição sem dividir Coterie', () => {
-    const participante = { ...personagem, revelarCondicao: true }
-    const visivel = filtrarCombateParaJogador(iniciarCombate([participante]), {
+  it('a visibilidade padrão também permite consultar a Condição sem dividir Coterie', () => {
+    const visivel = filtrarCombateParaJogador(iniciarCombate([personagem]), {
       jogadorId: 'outro', meusPersonagemIds: [], coterieIdsDoJogador: [], coteriesPorPersonagem: {},
       condicoesPersonagens: { [personagem.personagemId]: condicao },
     })
@@ -74,9 +73,9 @@ describe('Exibição pública', () => {
     expect(JSON.stringify(publico)).not.toMatch(/Trairá|Segredo|paradas|vontadeMax/)
   })
 
-  it('não concede privilégios de dono nem transforma compartilhamento de Coterie em divulgação pública', () => {
+  it('não concede privilégios de dono nem transforma compartilhamento de Coterie em divulgação pública quando ocultada pelo Narrador', () => {
     const publico = filtrarCombatePublico(iniciarCombate([
-      { id: 'pj', tipo: 'personagem', nome: 'Ana', personagemId: 'ficha', ehPdn: false, condicoes: ['frenesi'] },
+      { id: 'pj', tipo: 'personagem', nome: 'Ana', personagemId: 'ficha', ehPdn: false, revelarCondicao: false, condicoes: ['frenesi'] },
     ]), { ficha: { compartilhaCondicao: true, vitalidadeMax: 6, vontadeMax: 5,
       danoVitalidade: { superficial: 1, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 }, fome: 3 } })
     expect(publico.participantes[0]).toMatchObject({ nome: 'Ana', ehMeu: false, condicaoOculta: true, condicoes: ['frenesi'] })

@@ -1,6 +1,6 @@
 import { useRouter } from '@tanstack/react-router'
 import { cn } from 'cn'
-import { ArrowRight, Maximize2, Minimize2, Play, Plus, Skull, Swords, X } from 'lucide-react'
+import { ArrowRight, Play, Plus, Skull, Swords, X } from 'lucide-react'
 import { useState, type ComponentType, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
@@ -18,6 +18,7 @@ import {
   ehParticipanteVampiro, obterCondicaoCombate, obterProximoIndiceAtivo,
   type CombateVisivel, type EstadoSaude, type InfoEstadoSaude, type ParticipanteVisivel,
 } from '#/domain/combate'
+import { useCaixasDano } from '#/components/ficha/estado'
 import type { Dano } from '#/domain/trilhas'
 import { avancarTurnoCombateServer, alternarCondicaoParticipanteCombateServer } from '#/server/combate'
 import { marcar } from '#/server/personagens'
@@ -163,26 +164,11 @@ export function TrilhaTatilExpandida({
   podeEditar: boolean
   onChange?: (novoDano: Dano) => void
 }) {
-  function handleCliqueBox(index: number) {
-    if (!podeEditar || !onChange) return
-    const agravados = dano.agravado
-    const superficiais = dano.superficial
-
-    // box index < agravados: é X. Clicar limpa esse X (vira vazio).
-    if (index < agravados) {
-      onChange({ superficial: superficiais, agravado: agravados - 1 })
-      return
-    }
-
-    // box index < agravados + superficiais: é /. Clicar transforma esse / em X.
-    if (index < agravados + superficiais) {
-      onChange({ superficial: superficiais - 1, agravado: agravados + 1 })
-      return
-    }
-
-    // box vazio: Clicar adiciona 1 superficial /.
-    onChange({ superficial: superficiais + 1, agravado: agravados })
-  }
+  const { caixas, avancarCaixa, retrocederCaixa } = useCaixasDano(
+    dano,
+    max,
+    podeEditar ? onChange : undefined,
+  )
 
   return (
     <div data-trilha-combate="" className="flex items-start gap-3 select-none py-1">
@@ -190,9 +176,9 @@ export function TrilhaTatilExpandida({
         {rotulo}:
       </span>
       <div className="flex items-center gap-1 flex-wrap">
-        {Array.from({ length: max }, (_, i) => {
-          const ehAgravado = i < dano.agravado
-          const ehSuperficial = !ehAgravado && i < dano.agravado + dano.superficial
+        {caixas.map((estado, i) => {
+          const ehAgravado = estado === 'agravado'
+          const ehSuperficial = estado === 'superficial'
 
           return (
             <Button
@@ -201,7 +187,12 @@ export function TrilhaTatilExpandida({
               key={i}
               type="button"
               disabled={!podeEditar}
-              onClick={() => handleCliqueBox(i)}
+              onClick={() => avancarCaixa(i)}
+              onContextMenu={(e) => {
+                if (!podeEditar) return
+                e.preventDefault()
+                retrocederCaixa(i)
+              }}
               className={cn(
                 'size-7 p-0 rounded-md border-2 flex items-center justify-center font-mono text-sm font-bold transition-all',
                 podeEditar ? 'cursor-pointer hover:border-foreground active:scale-95' : 'cursor-default',
@@ -212,9 +203,9 @@ export function TrilhaTatilExpandida({
               title={
                 podeEditar
                   ? ehAgravado
-                    ? 'Agravado (clique para limpar)'
+                    ? 'Agravado (clique para limpar, botão direito para voltar a Superficial)'
                     : ehSuperficial
-                      ? 'Superficial (clique para virar Agravado)'
+                      ? 'Superficial (clique para virar Agravado, botão direito para limpar)'
                       : 'Vazio (clique para marcar Superficial)'
                   : undefined
               }
@@ -270,84 +261,6 @@ export function FomeTatilExpandida({
         })}
       </div>
     </div>
-  )
-}
-
-export function TrackersNumericosLinha({
-  danoVitalidade,
-  vitalidadeMax,
-  danoVontade,
-  vontadeMax,
-  fome,
-  vitalidadeOculta = false,
-  condicaoOculta = false,
-}: {
-  danoVitalidade?: Dano
-  vitalidadeMax?: number
-  danoVontade?: Dano
-  vontadeMax?: number
-  fome?: number
-  vitalidadeOculta?: boolean
-  condicaoOculta?: boolean
-}) {
-  if (condicaoOculta) {
-    return (
-      <span className="text-xs text-muted-foreground italic px-1 py-1">
-        Condição oculta (não compartilhada na Coterie)
-      </span>
-    )
-  }
-
-  return (
-    <CarrosselBadges>
-      {vitalidadeOculta ? (
-        <span className="text-xs text-muted-foreground italic px-1 py-1 shrink-0">
-          Vitalidade oculta
-        </span>
-      ) : danoVitalidade && vitalidadeMax !== undefined ? (
-        <div
-          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-xs select-none shrink-0"
-          title={`Vitalidade: ${danoVitalidade.superficial} superficial, ${danoVitalidade.agravado} agravado (máximo ${vitalidadeMax})`}
-        >
-          <span className="font-medium text-muted-foreground">Vitalidade</span>
-          <span className="font-mono font-bold text-dano-superficial">
-            {danoVitalidade.superficial}
-          </span>
-          <span className="text-muted-foreground/60">/</span>
-          <span className="font-mono font-bold text-destructive">
-            {danoVitalidade.agravado}
-          </span>
-        </div>
-      ) : null}
-
-      {danoVontade && vontadeMax !== undefined ? (
-        <div
-          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-xs select-none shrink-0"
-          title={`Força de Vontade: ${danoVontade.superficial} superficial, ${danoVontade.agravado} agravado (máximo ${vontadeMax})`}
-        >
-          <span className="font-medium text-muted-foreground">Vontade</span>
-          <span className="font-mono font-bold text-dano-superficial">
-            {danoVontade.superficial}
-          </span>
-          <span className="text-muted-foreground/60">/</span>
-          <span className="font-mono font-bold text-destructive">
-            {danoVontade.agravado}
-          </span>
-        </div>
-      ) : null}
-
-      {fome !== undefined ? (
-        <div
-          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-xs select-none shrink-0"
-          title={`Fome atual: ${fome}`}
-        >
-          <span className="font-medium text-muted-foreground">Fome</span>
-          <span className="font-mono font-bold text-fome">
-            {fome}
-          </span>
-        </div>
-      ) : null}
-    </CarrosselBadges>
   )
 }
 
@@ -576,26 +489,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
   const router = useRouter()
   const [passandoTurno, setPassandoTurno] = useState(false)
 
-  const [cardsMinimizados, setCardsMinimizados] = useState<Record<string, boolean>>({})
-  const [modoCompactoGeral, setModoCompactoGeral] = useState(false)
-
-  function estaMinimizado(id: string) {
-    return cardsMinimizados[id] ?? modoCompactoGeral
-  }
-
-  function alternarMinimizado(id: string) {
-    setCardsMinimizados((prev) => ({
-      ...prev,
-      [id]: !estaMinimizado(id),
-    }))
-  }
-
-  function alternarModoCompactoGeral() {
-    const novo = !modoCompactoGeral
-    setModoCompactoGeral(novo)
-    setCardsMinimizados({})
-  }
-
   const participantesAtivos = combate
     ? combate.participantes.filter((p) => !ehInimigoIncapacitado(p))
     : []
@@ -694,25 +587,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                     {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={alternarModoCompactoGeral}
-                  className="gap-1 ml-auto sm:ml-0"
-                  title={modoCompactoGeral ? 'Expandir todos os cards' : 'Minimizar todos os cards'}
-                >
-                  {modoCompactoGeral ? (
-                    <>
-                      <Maximize2 className="size-4" />
-                      <span>Expandir Cards</span>
-                    </>
-                  ) : (
-                    <>
-                      <Minimize2 className="size-4" />
-                      <span>Minimizar Cards</span>
-                    </>
-                  )}
-                </Button>
               </div>
             )}
           </div>
@@ -740,64 +614,48 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
 
               return (
                 <div key={part.id} data-slide-combate="" role="group" aria-label={`Participante ${index + 1} de ${participantesAtivos.length}`}>
-                  {estaMinimizado(part.id) ? (
-                    /* MODO MINIMIZADO: FITA TÁTICA (3 LINHAS) - JOGADOR */
-                    <CardCombate estado={part.estadoSaude?.estado}
-                      className={cn(
-                        'gap-0 py-0 flex flex-col rounded-xl border bg-card transition-all shadow-xs overflow-hidden',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/2',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 bg-dano-superficial/2',
-                        !ehTurnoAtual && !ehProximoTurno && 'border-border/80 hover:border-border',
-                      )}
-                    >
-                      {/* LINHA 1: IDENTIDADE / VEZ / ESTADO DE SAÚDE / MAXIMIZAR */}
-                      <div className="flex items-start justify-between gap-3 px-4 py-2">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
-                            {index + 1}
-                          </span>
-                          <div className="flex flex-wrap items-start gap-2 min-w-0 pt-1">
-                            <div className="flex max-w-full min-w-0 items-center gap-2">
-                              <span className="font-serif font-bold text-base text-foreground truncate leading-tight" title={part.nome}>
-                                {part.nome}
-                              </span>
-
-                              {ehTurnoAtual && (
-                                <span
-                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-vinho/20 border border-vinho/40"
-                                  title="Agindo agora"
-                                >
-                                  <span className="size-2 rounded-full bg-vinho animate-pulse" />
-                                </span>
-                              )}
-                              {ehProximoTurno && !ehTurnoAtual && (
-                                <span
-                                  className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-dano-superficial/20 border border-dano-superficial/40"
-                                  title="Próximo a agir"
-                                >
-                                  <span className="size-2 rounded-full bg-dano-superficial" />
-                                </span>
-                              )}
-                            </div>
-
-                            {part.tipo === 'inimigo' ? (
-                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
-                                Inimigo
-                              </Badge>
-                            ) : part.ehPdN || part.ehPdn ? (
-                              <Badge variant="outline" className="text-xs py-0 px-1 h-5 text-muted-foreground shrink-0">
-                                PdN
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs py-0 px-1 h-5 shrink-0">
-                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Direita: Dot de Saúde + Botão Maximizar */}
-                        <div className="flex items-center gap-2 shrink-0 pt-1">
+                  <CardCombate estado={part.estadoSaude?.estado}
+                    className={cn(
+                      'py-4 flex h-full flex-col transition-all duration-150',
+                      ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
+                      ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
+                      !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
+                    )}
+                  >
+                    <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 min-w-0">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
+                          {index + 1}
+                        </span>
+                        <div className="flex flex-wrap items-start gap-2 pt-1 min-w-0">
+                          <CardTitle className="font-serif text-xl truncate leading-tight">{part.nome}</CardTitle>
+                          {ehTurnoAtual && (
+                            <Badge className="bg-vinho text-primary-foreground border-0 text-xs font-semibold shrink-0">
+                              Agindo agora
+                            </Badge>
+                          )}
+                          {ehProximoTurno && !ehTurnoAtual && (
+                            <Badge
+                              variant="outline"
+                              className="border-dano-superficial/80 bg-dano-superficial/10 text-dano-superficial font-semibold text-xs flex items-center gap-1 shrink-0"
+                            >
+                              <ArrowRight className="size-3" />
+                              Próximo a agir
+                            </Badge>
+                          )}
+                          {part.tipo === 'inimigo' ? (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              Inimigo
+                            </Badge>
+                          ) : part.ehPdN || part.ehPdn ? (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              PdN
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs shrink-0">
+                              {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
+                            </Badge>
+                          )}
                           {part.tipo === 'inimigo' ? (
                             <BadgeSaude
                               vitalidadeMax={part.vitalidadeMax}
@@ -806,7 +664,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                               ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
                               infoCalculada={part.estadoSaude}
                               ocultarNumeros={part.vitalidadeOculta}
-                              soTag={true}
                             />
                           ) : (
                             <BadgeSaude
@@ -816,174 +673,41 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                               ehVampiro={true}
                               infoCalculada={part.estadoSaude}
                               ocultarNumeros={part.condicaoOculta}
-                              soTag={true}
                             />
                           )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => alternarMinimizado(part.id)}
-                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="Expandir card completo"
-                          >
-                            <Maximize2 className="size-4" />
-                          </Button>
                         </div>
                       </div>
+                    </CardHeader>
 
-                      {/* LINHA 2: TRACKERS EM VALORES NUMÉRICOS (CARROSSEL DRAG-FREE) */}
-                      <div className="flex items-center px-4 py-1 border-t border-border/40 bg-muted/5 min-w-0 text-xs">
-                        {part.tipo === 'inimigo' ? (
-                          <TrackersNumericosLinha
-                            danoVitalidade={part.danoVitalidade}
-                            vitalidadeMax={part.vitalidadeMax}
-                            vitalidadeOculta={part.vitalidadeOculta}
-                          />
-                        ) : part.condicao ? (
-                          <TrackersNumericosLinha
-                            danoVitalidade={part.condicao.danoVitalidade}
-                            vitalidadeMax={part.condicao.vitalidadeMax}
-                            danoVontade={part.condicao.danoVontade}
-                            vontadeMax={part.condicao.vontadeMax}
-                            fome={part.condicao.fome}
-                            condicaoOculta={part.condicaoOculta}
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground italic px-1 py-1">
-                            {part.condicaoOculta ? 'Condição oculta' : 'Condição indisponível'}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* LINHA 3: CONDIÇÕES / DEBUFFS (JUSTIFY-BETWEEN) */}
-                      <div className="flex items-center justify-between gap-3 px-4 py-1 bg-muted/20 border-t border-border/50 text-xs min-h-9">
-                        <BadgesCondicoes
-                          participanteId={part.id}
-                          ehVampiro={ehParticipanteVampiro(part)}
-                          condicoes={part.condicoes}
-                          podeEditar={part.ehMeu === true}
-                          onAlternarCondicao={handleAlternarCondicao}
-                        />
-                        {ehTurnoAtual && part.ehMeu && (
-                          <Button
-                            size="sm"
-                            onClick={handlePassarMeuTurno}
-                            disabled={passandoTurno}
-                            className="h-7 text-xs gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground shrink-0 ml-2 shadow-sm"
-                          >
-                            <Play className="size-3 fill-current" />
-                            {passandoTurno ? 'Passando...' : 'Concluir Turno'}
-                          </Button>
-                        )}
-                      </div>
-                    </CardCombate>
-                  ) : (
-                    /* MODO MAXIMIZADO: CARD COMPLETO COM py-4 - JOGADOR */
-                    <CardCombate estado={part.estadoSaude?.estado}
-                      className={cn(
-                        'py-4 transition-all duration-150',
-                        ehTurnoAtual && 'border-2 border-vinho shadow-md bg-vinho/3',
-                        ehProximoTurno && !ehTurnoAtual && 'border-2 border-dano-superficial/60 shadow-sm bg-dano-superficial/3',
-                        !ehTurnoAtual && !ehProximoTurno && 'border border-border opacity-95',
-                      )}
-                    >
-                      <CardHeader className="py-2 px-4 flex flex-row items-start justify-between gap-2">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-bold text-muted-foreground">
-                            {index + 1}
-                          </span>
-                          <div className="flex flex-wrap items-start gap-2 pt-1 min-w-0">
-                            <CardTitle className="font-serif text-xl truncate leading-tight">{part.nome}</CardTitle>
-                            {ehTurnoAtual && (
-                              <Badge className="bg-vinho text-primary-foreground border-0 text-xs font-semibold shrink-0">
-                                Agindo agora
-                              </Badge>
-                            )}
-                            {ehProximoTurno && !ehTurnoAtual && (
-                              <Badge
-                                variant="outline"
-                                className="border-dano-superficial/80 bg-dano-superficial/10 text-dano-superficial font-semibold text-xs flex items-center gap-1 shrink-0"
-                              >
-                                <ArrowRight className="size-3" />
-                                Próximo a agir
-                              </Badge>
-                            )}
-                            {part.tipo === 'inimigo' ? (
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                Inimigo
-                              </Badge>
-                            ) : part.ehPdN || part.ehPdn ? (
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                PdN
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs shrink-0">
-                                {part.jogadorNome ? `PJ • ${part.jogadorNome}` : 'Personagem'}
-                              </Badge>
-                            )}
-                            {part.tipo === 'inimigo' ? (
-                              <BadgeSaude
-                                vitalidadeMax={part.vitalidadeMax}
-                                dano={part.danoVitalidade}
-                                condicoes={part.condicoes}
-                                ehVampiro={part.categoria?.toLowerCase().includes('vampiro') ?? false}
-                                infoCalculada={part.estadoSaude}
-                                ocultarNumeros={part.vitalidadeOculta}
+                    <CardContent className="pt-1 pb-3 px-4 flex flex-1 flex-col gap-2">
+                      {part.tipo === 'inimigo' ? (
+                        <div className="flex flex-1 flex-col gap-3">
+                          {part.vitalidadeOculta ? (
+                            <p className="text-xs text-muted-foreground italic">
+                              Vitalidade oculta pelo Narrador.
+                            </p>
+                          ) : (
+                            <div className="flex flex-col gap-2 items-start min-w-0">
+                              <TrilhaTatilExpandida
+                                rotulo="Vitalidade"
+                                dano={part.danoVitalidade ?? { superficial: 0, agravado: 0 }}
+                                max={part.vitalidadeMax ?? 3}
+                                podeEditar={false}
                               />
-                            ) : (
-                              <BadgeSaude
-                                vitalidadeMax={part.condicao?.vitalidadeMax}
-                                dano={part.condicao?.danoVitalidade}
-                                condicoes={part.condicoes}
-                                ehVampiro={true}
-                                infoCalculada={part.estadoSaude}
-                                ocultarNumeros={part.condicaoOculta}
-                              />
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 shrink-0 pt-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => alternarMinimizado(part.id)}
-                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="Minimizar card"
-                          >
-                            <Minimize2 className="size-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent className="pt-1 pb-3 px-4 flex flex-col gap-2">
-                        {part.tipo === 'inimigo' ? (
-                          <div className="flex flex-col gap-3">
-                            {part.vitalidadeOculta ? (
-                              <p className="text-xs text-muted-foreground italic">
-                                Vitalidade oculta pelo Narrador.
-                              </p>
-                            ) : (
-                              <div className="flex flex-col gap-2 items-start min-w-0">
-                                <TrilhaTatilExpandida
-                                  rotulo="Vitalidade"
-                                  dano={part.danoVitalidade ?? { superficial: 0, agravado: 0 }}
-                                  max={part.vitalidadeMax ?? 3}
-                                  podeEditar={false}
-                                />
-                              </div>
-                            )}
-                            {part.especiais && part.especiais.length > 0 && (
-                              <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-                                <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
-                                <CarrosselBadges>
-                                  {part.especiais.map((esp, i) => (
-                                    <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />
-                                  ))}
-                                </CarrosselBadges>
-                              </div>
-                            )}
+                            </div>
+                          )}
+                          {part.especiais && part.especiais.length > 0 && (
                             <div className="flex items-center gap-1 pt-1 border-t min-w-0">
+                              <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
+                              <CarrosselBadges>
+                                {part.especiais.map((esp, i) => (
+                                  <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />
+                                ))}
+                              </CarrosselBadges>
+                            </div>
+                          )}
+                          {(part.condicoes?.length ?? 0) > 0 && (
+                            <div className="mt-auto flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
@@ -993,66 +717,68 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                                 onAlternarCondicao={handleAlternarCondicao}
                               />
                             </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-3">
-                            {part.condicaoOculta ? (
-                              <p className="text-xs text-muted-foreground italic">
-                                {publico ? 'Condição oculta pelo Narrador.' : 'Condição oculta (não compartilhada na Coterie).'}
-                              </p>
-                            ) : part.condicao ? (
-                              <div data-condicao-combate="" className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                                <div className="flex flex-col gap-2 items-start min-w-0">
-                                  <TrilhaTatilExpandida
-                                    rotulo="Vitalidade"
-                                    dano={part.condicao.danoVitalidade}
-                                    max={part.condicao.vitalidadeMax}
-                                    podeEditar={part.ehMeu === true}
-                                    onChange={
-                                      part.ehMeu
-                                        ? (dano) =>
-                                            handleAlterarDanoMeuPersonagem(
-                                              part.personagemId!,
-                                              'vitalidade',
-                                              dano,
-                                            )
-                                        : undefined
-                                    }
-                                  />
-                                  <TrilhaTatilExpandida
-                                    rotulo="Força de Vontade"
-                                    dano={part.condicao.danoVontade}
-                                    max={part.condicao.vontadeMax}
-                                    podeEditar={part.ehMeu === true}
-                                    onChange={
-                                      part.ehMeu
-                                        ? (dano) =>
-                                            handleAlterarDanoMeuPersonagem(
-                                              part.personagemId!,
-                                              'vontade',
-                                              dano,
-                                            )
-                                        : undefined
-                                    }
-                                  />
-                                </div>
-
-                                <FomeTatilExpandida
-                                  fome={part.condicao.fome}
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-1 flex-col gap-3">
+                          {part.condicaoOculta ? (
+                            <p className="text-xs text-muted-foreground italic">
+                              {publico ? 'Condição oculta pelo Narrador.' : 'Condição oculta (não compartilhada na Coterie).'}
+                            </p>
+                          ) : part.condicao ? (
+                            <div data-condicao-combate="" className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                              <div className="flex flex-col gap-2 items-start min-w-0">
+                                <TrilhaTatilExpandida
+                                  rotulo="Vitalidade"
+                                  dano={part.condicao.danoVitalidade}
+                                  max={part.condicao.vitalidadeMax}
                                   podeEditar={part.ehMeu === true}
                                   onChange={
                                     part.ehMeu
-                                      ? (novaFome) =>
-                                          handleAlterarFomeMeuPersonagem(part.personagemId!, novaFome)
+                                      ? (dano) =>
+                                          handleAlterarDanoMeuPersonagem(
+                                            part.personagemId!,
+                                            'vitalidade',
+                                            dano,
+                                          )
+                                      : undefined
+                                  }
+                                />
+                                <TrilhaTatilExpandida
+                                  rotulo="Força de Vontade"
+                                  dano={part.condicao.danoVontade}
+                                  max={part.condicao.vontadeMax}
+                                  podeEditar={part.ehMeu === true}
+                                  onChange={
+                                    part.ehMeu
+                                      ? (dano) =>
+                                          handleAlterarDanoMeuPersonagem(
+                                            part.personagemId!,
+                                            'vontade',
+                                            dano,
+                                          )
                                       : undefined
                                   }
                                 />
                               </div>
-                            ) : (
-                              <p className="text-xs text-muted-foreground">Condição indisponível.</p>
-                            )}
 
-                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
+                              <FomeTatilExpandida
+                                fome={part.condicao.fome}
+                                podeEditar={part.ehMeu === true}
+                                onChange={
+                                  part.ehMeu
+                                    ? (novaFome) =>
+                                        handleAlterarFomeMeuPersonagem(part.personagemId!, novaFome)
+                                    : undefined
+                                }
+                              />
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Condição indisponível.</p>
+                          )}
+
+                          {((part.condicoes?.length ?? 0) > 0 || part.ehMeu === true) && (
+                            <div className="mt-auto flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
@@ -1062,25 +788,25 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                                 onAlternarCondicao={handleAlternarCondicao}
                               />
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
 
-                        {ehTurnoAtual && part.ehMeu && (
-                          <div className="pt-2 border-t flex justify-end">
-                            <Button
-                              size="sm"
-                              onClick={handlePassarMeuTurno}
-                              disabled={passandoTurno}
-                              className="gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground shadow-sm"
-                            >
-                              <Play className="size-4 fill-current" />
-                              {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </CardCombate>
-                  )}
+                      {ehTurnoAtual && part.ehMeu && (
+                        <div className="pt-2 border-t flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={handlePassarMeuTurno}
+                            disabled={passandoTurno}
+                            className="gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground shadow-sm"
+                          >
+                            <Play className="size-4 fill-current" />
+                            {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </CardCombate>
                 </div>
               )
             })}

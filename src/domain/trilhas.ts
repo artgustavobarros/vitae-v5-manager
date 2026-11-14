@@ -20,6 +20,72 @@ export function caixasDano(dano: Dano, max: number): CaixaDano[] {
 }
 
 /** Um toque numa caixa: vazio → superficial → agravado → vazio. */
+export function avancarEstadoCaixa(estado: CaixaDano): CaixaDano {
+  if (estado === 'vazio') return 'superficial'
+  if (estado === 'superficial') return 'agravado'
+  return 'vazio'
+}
+
+/** Clique direito numa caixa: agravado → superficial → vazio. */
+export function retrocederEstadoCaixa(estado: CaixaDano): CaixaDano {
+  if (estado === 'agravado') return 'superficial'
+  return 'vazio'
+}
+
+export function contarCaixasDano(caixas: readonly CaixaDano[]): Dano {
+  let superficial = 0
+  let agravado = 0
+  for (const caixa of caixas) {
+    if (caixa === 'superficial') superficial += 1
+    else if (caixa === 'agravado') agravado += 1
+  }
+  return { superficial, agravado }
+}
+
+/**
+ * Preserva a posição exata das caixas clicadas enquanto o total de dano superficial
+ * e agravado continuar compatível com `dano` e `max`.
+ */
+export function reconciliarCaixasDano(
+  atual: readonly CaixaDano[],
+  dano: Dano,
+  max: number,
+): CaixaDano[] {
+  const agravadoEsperado = Math.min(Math.max(0, dano.agravado), max)
+  const superficialEsperado = Math.min(
+    Math.max(0, dano.superficial),
+    max - agravadoEsperado,
+  )
+  if (atual.length === max) {
+    const contagem = contarCaixasDano(atual)
+    if (
+      contagem.agravado === agravadoEsperado &&
+      contagem.superficial === superficialEsperado
+    ) {
+      return [...atual]
+    }
+  }
+  return caixasDano(dano, max)
+}
+
+export function alterarCaixaDanoNaPosicao(
+  caixas: readonly CaixaDano[],
+  indice: number,
+  direcao: 'avancar' | 'retroceder' = 'avancar',
+): { caixas: CaixaDano[]; dano: Dano } {
+  const estadoAtual = caixas[indice]
+  if (!estadoAtual) {
+    return { caixas: [...caixas], dano: contarCaixasDano(caixas) }
+  }
+  const proximoEstado =
+    direcao === 'avancar'
+      ? avancarEstadoCaixa(estadoAtual)
+      : retrocederEstadoCaixa(estadoAtual)
+  const novasCaixas = caixas.map((caixa, i) => (i === indice ? proximoEstado : caixa))
+  return { caixas: novasCaixas, dano: contarCaixasDano(novasCaixas) }
+}
+
+/** Um toque numa caixa: vazio → superficial → agravado → vazio. */
 export function alternarCaixaDano(dano: Dano, max: number, indice: number): Dano {
   const caixa = caixasDano(dano, max)[indice]
   if (caixa === 'vazio') return { ...dano, superficial: dano.superficial + 1 }

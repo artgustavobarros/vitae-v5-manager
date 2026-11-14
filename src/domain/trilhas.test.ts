@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  alterarCaixaDanoNaPosicao,
   alternarCaixaDano,
   alternarFome,
   alternarMancha,
   alternarPontos,
   caixasDano,
+  reconciliarCaixasDano,
+  type CaixaDano,
   type Dano,
 } from './trilhas'
 
@@ -52,6 +55,46 @@ describe('alternarCaixaDano', () => {
       superficial: 0,
       agravado: 5,
     })
+  })
+})
+
+describe('alterarCaixaDanoNaPosicao e reconciliarCaixasDano', () => {
+  it('marca exatamente a caixa clicada no meio como superficial -> agravado -> vazio', () => {
+    const inicial: CaixaDano[] = ['vazio', 'vazio', 'vazio', 'vazio', 'vazio', 'vazio']
+
+    const passo1 = alterarCaixaDanoNaPosicao(inicial, 3, 'avancar')
+    expect(passo1.caixas).toEqual(['vazio', 'vazio', 'vazio', 'superficial', 'vazio', 'vazio'])
+    expect(passo1.dano).toEqual({ superficial: 1, agravado: 0 })
+
+    // Reconciliar com o dano persistido preserva a caixa 3 marcada no meio
+    expect(reconciliarCaixasDano(passo1.caixas, passo1.dano, 6)).toEqual([
+      'vazio',
+      'vazio',
+      'vazio',
+      'superficial',
+      'vazio',
+      'vazio',
+    ])
+
+    const passo2 = alterarCaixaDanoNaPosicao(passo1.caixas, 3, 'avancar')
+    expect(passo2.caixas).toEqual(['vazio', 'vazio', 'vazio', 'agravado', 'vazio', 'vazio'])
+    expect(passo2.dano).toEqual({ superficial: 0, agravado: 1 })
+
+    const passo3 = alterarCaixaDanoNaPosicao(passo2.caixas, 3, 'avancar')
+    expect(passo3.caixas).toEqual(['vazio', 'vazio', 'vazio', 'vazio', 'vazio', 'vazio'])
+    expect(passo3.dano).toEqual({ superficial: 0, agravado: 0 })
+  })
+
+  it('retrocede com clique direito: agravado volta para superficial e superficial limpa para vazio', () => {
+    const comAgravadoNoMeio: CaixaDano[] = ['vazio', 'vazio', 'agravado', 'vazio', 'vazio']
+
+    const paraSuperficial = alterarCaixaDanoNaPosicao(comAgravadoNoMeio, 2, 'retroceder')
+    expect(paraSuperficial.caixas).toEqual(['vazio', 'vazio', 'superficial', 'vazio', 'vazio'])
+    expect(paraSuperficial.dano).toEqual({ superficial: 1, agravado: 0 })
+
+    const paraVazio = alterarCaixaDanoNaPosicao(paraSuperficial.caixas, 2, 'retroceder')
+    expect(paraVazio.caixas).toEqual(['vazio', 'vazio', 'vazio', 'vazio', 'vazio'])
+    expect(paraVazio.dano).toEqual({ superficial: 0, agravado: 0 })
   })
 })
 

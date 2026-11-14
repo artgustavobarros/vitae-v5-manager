@@ -21,7 +21,7 @@ declare module 'vitest/browser' {
 
 // Só as fronteiras de servidor e a navegação autenticada são substituídas; os cards, Embla e Dnd são reais.
 vi.mock('#/components/barra-app', () => ({ BarraApp: () => null }))
-vi.mock('#/server/bestiario', () => ({ listarModelosBestiario: vi.fn() }))
+vi.mock('#/server/bestiario', () => ({ listarModelosBestiario: vi.fn(), salvarModeloBestiario: vi.fn() }))
 vi.mock('#/server/personagens', () => ({ marcar: vi.fn() }))
 vi.mock('#/server/exibicao-publica', () => ({ consultarLinkPublico: vi.fn(), gerarLinkPublico: vi.fn(), revogarLinkPublico: vi.fn() }))
 vi.mock('#/server/combate', () => ({

@@ -11,7 +11,7 @@ import { preCombateSchema } from '#/domain/pre-combate'
 import '#/styles.css'
 
 vi.mock('#/components/barra-app', () => ({ BarraApp: () => null }))
-vi.mock('#/server/bestiario', () => ({ listarModelosBestiario: vi.fn() }))
+vi.mock('#/server/bestiario', () => ({ listarModelosBestiario: vi.fn(), salvarModeloBestiario: vi.fn() }))
 vi.mock('#/server/personagens', () => ({ marcar: vi.fn() }))
 vi.mock('#/server/exibicao-publica', () => ({ consultarLinkPublico: vi.fn(), gerarLinkPublico: vi.fn(), revogarLinkPublico: vi.fn() }))
 vi.mock('#/server/combate', () => ({
@@ -24,6 +24,7 @@ vi.mock('#/server/combate', () => ({
 }))
 vi.mock('#/server/pre-combate', () => ({ listarPreCombates: vi.fn(), salvarPreCombate: vi.fn(), excluirPreCombate: vi.fn() }))
 
+import { salvarModeloBestiario } from '#/server/bestiario'
 import { adicionarParticipanteCombateServer, atualizarParticipanteInimigoServer, iniciarCombateServer } from '#/server/combate'
 import { salvarPreCombate } from '#/server/pre-combate'
 
@@ -120,17 +121,56 @@ describe('Preparação do Combate sem diálogos', () => {
     expect(document.querySelector('[role="dialog"][aria-modal="true"]')).toBeNull()
   })
 
-  it('edita o Inimigo na página e mantém a confirmação de encerramento', async () => {
+  it('edita o Inimigo em um modal e mantém a confirmação de encerramento', async () => {
     await montar({ id: 'combate', ativo: true, rodada: 1, turnoAtual: 0,
       participantes: [criarInimigoDeModelo(modelo, { id: 'guarda', nome: 'Segurança #1' })] })
     await page.getByRole('button', { name: /Editar este inimigo no combate/ }).click()
+    await expect.element(page.getByRole('dialog', { name: 'Editar Inimigo no Combate' })).toBeVisible()
     await page.getByRole('textbox', { name: 'Rótulo / Nome no Combate' }).fill('Chefe da portaria')
-    expect(document.querySelector('[role="dialog"][aria-modal="true"]')).toBeNull()
     await page.getByRole('button', { name: 'Salvar Alterações' }).click()
     expect(atualizarParticipanteInimigoServer).toHaveBeenCalledWith({ data: {
       participanteId: 'guarda', atualizacao: expect.objectContaining({ nome: 'Chefe da portaria' }),
     } })
     await page.getByRole('button', { name: 'Encerrar', exact: true }).click()
     await expect.element(page.getByRole('alertdialog')).toBeVisible()
+  })
+
+  it('permite editar o card do Inimigo selecionado apenas para este Combate ou atualizar o Modelo geral', async () => {
+    await montar()
+    await escolher('Adicionar Inimigo', 'Segurança')
+    const divisoresCard = [...document.querySelectorAll('[data-slide-combate] .border-t')]
+    expect(divisoresCard.every((el) => el.children.length > 0 || (el.textContent?.trim().length ?? 0) > 0)).toBe(true)
+
+    await page.getByRole('button', { name: 'Editar Segurança #1' }).click()
+    await page.getByRole('textbox', { name: 'Rótulo / Nome no Combate' }).fill('Segurança Veterano')
+    await page.getByRole('spinbutton', { name: 'Vitalidade Máx' }).fill('8')
+    await page.getByRole('button', { name: 'Salvar Alterações' }).click()
+    expect(salvarModeloBestiario).not.toHaveBeenCalled()
+
+    await page.getByRole('button', { name: 'Editar Segurança Veterano' }).click()
+    await page.getByRole('spinbutton', { name: 'Força de Vontade Máx' }).fill('6')
+    await page.getByRole('button', { name: 'Salvar no Modelo geral' }).click()
+    expect(salvarModeloBestiario).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        id: modelo.id,
+        nome: 'Segurança Veterano',
+        vitalidade: 8,
+        vontade: 6,
+      }),
+    })
+
+    await page.getByRole('button', { name: 'Iniciar Combate', exact: true }).click()
+    expect(iniciarCombateServer).toHaveBeenCalledWith({
+      data: {
+        participantes: [
+          expect.objectContaining({
+            tipo: 'inimigo',
+            nome: 'Segurança Veterano',
+            vitalidadeMax: 8,
+            vontadeMax: 6,
+          }),
+        ],
+      },
+    })
   })
 })
