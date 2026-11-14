@@ -27,7 +27,7 @@ const ITENS: Record<Papel, ItemNavegacao[]> = {
     { rotulo: 'Crônica', to: '/narrador/cronica' },
   ],
   jogador: [
-    { rotulo: 'Meus Personagens', to: '/' },
+    { rotulo: 'Início', to: '/' },
     { rotulo: 'Relógios', to: '/relogios' },
     { rotulo: 'Paradas', to: '/paradas' },
     { rotulo: 'Coteries', to: '/coteries' },

@@ -122,8 +122,7 @@ export function Combobox({
           <PopoverAnchor asChild>
             <div ref={containerRef} className="relative flex w-full items-center">
               <CommandPrimitive.Input
-                ref={inputRef}
-                id={id}
+                asChild
                 role="combobox"
                 aria-expanded={aberto}
                 aria-label={rotulo}
@@ -162,7 +161,17 @@ export function Combobox({
                   'placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30',
                   'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
                 )}
-              />
+              >
+                <input
+                  ref={(el) => {
+                    inputRef.current = el
+                    if (el && id) {
+                      el.removeAttribute('cmdk-input')
+                      el.id = id
+                    }
+                  }}
+                />
+              </CommandPrimitive.Input>
               <button
                 type="button"
                 tabIndex={-1}

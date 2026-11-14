@@ -34,8 +34,9 @@ describe('podeVerCondicao', () => {
     expect(podeVerCondicao(narrador, doJogador)).toBe(true)
   })
 
-  it('o Jogador vê a Condição do próprio Personagem, mesmo sem compartilhar', () => {
-    expect(podeVerCondicao(jogador, doJogador)).toBe(true)
+  it('o Jogador só vê a Condição quando o Narrador compartilha', () => {
+    expect(podeVerCondicao(jogador, doJogador)).toBe(false)
+    expect(podeVerCondicao(jogador, { ...doJogador, compartilhaCondicao: true })).toBe(true)
   })
 
   it('outro Jogador só vê quando a Condição é compartilhada', () => {
@@ -48,16 +49,16 @@ describe('podeAlternarCompartilharCondicao', () => {
   const doJogador = { donoId: 'j1', pdn: false }
   const pdn = { donoId: 'n1', pdn: true }
 
-  it('o Jogador decide no próprio Personagem', () => {
-    expect(podeAlternarCompartilharCondicao(jogador, doJogador)).toBe(true)
+  it('o Jogador não decide nem no antigo Personagem próprio', () => {
+    expect(podeAlternarCompartilharCondicao(jogador, doJogador)).toBe(false)
   })
 
   it('outro Jogador não decide', () => {
     expect(podeAlternarCompartilharCondicao(outroJogador, doJogador)).toBe(false)
   })
 
-  it('o Narrador não decide pelo Personagem de Jogador', () => {
-    expect(podeAlternarCompartilharCondicao(narrador, doJogador)).toBe(false)
+  it('o Narrador decide pelo Personagem de Jogador', () => {
+    expect(podeAlternarCompartilharCondicao(narrador, doJogador)).toBe(true)
   })
 
   it('o Narrador decide pelos PdNs, e o Jogador não', () => {
@@ -65,7 +66,7 @@ describe('podeAlternarCompartilharCondicao', () => {
     expect(podeAlternarCompartilharCondicao(jogador, pdn)).toBe(false)
   })
 
-  it('um Rascunho do Narrador ainda não é PdN e não compartilha', () => {
-    expect(podeAlternarCompartilharCondicao(narrador, { donoId: 'n1', pdn: false })).toBe(false)
+  it('o Narrador decide mesmo antes de ativar o Personagem', () => {
+    expect(podeAlternarCompartilharCondicao(narrador, { donoId: 'n1', pdn: false })).toBe(true)
   })
 })

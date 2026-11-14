@@ -5,14 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '#/db'
 import { notificacao, operacaoMarcacao, personagem, user } from '#/db/schema'
 import { fichaNeofito, marcasDe } from '#/domain/ficha'
-import type { EventoReal } from '#/domain/eventos'
 import type { AlteracaoMarcas } from '#/domain/sincronizacao-marcas'
-import { barramento } from '#/server/eventos'
 import type { Usuario } from '#/server/sessao'
 import { aplicarMarcacao } from './sincronizar-marcas'
 
 let jogador: Usuario
-let narradorId: string
+let narrador: Usuario
 let id: string
 let entrada: AlteracaoMarcas
 
@@ -21,21 +19,24 @@ beforeEach(async () => {
     id: randomUUID(), nome: 'Jogador de teste', email: `${randomUUID()}@teste.local`,
     papel: 'jogador', imagem: null,
   }
-  narradorId = randomUUID()
+  narrador = {
+    id: randomUUID(), nome: 'Narrador de teste', email: `${randomUUID()}@teste.local`,
+    papel: 'narrador', imagem: null,
+  }
   await db.insert(user).values([
     { id: jogador.id, name: jogador.nome, email: jogador.email, papel: 'jogador' },
-    { id: narradorId, name: 'Narrador de teste', email: `${randomUUID()}@teste.local`, papel: 'narrador' },
+    { id: narrador.id, name: narrador.nome, email: narrador.email, papel: 'narrador' },
   ])
   id = randomUUID()
   const ficha = { ...fichaNeofito(), fome: 1 }
-  await db.insert(personagem).values({ id, donoId: jogador.id, nome: 'Teste de sincronização', status: 'ativo', ficha })
-  entrada = { operacaoId: randomUUID(), usuarioId: jogador.id, id, base: marcasDe(ficha), marcas: { fome: 4 } }
+  await db.insert(personagem).values({ id, donoId: narrador.id, nome: 'Teste de sincronização', status: 'ativo', ficha })
+  entrada = { operacaoId: randomUUID(), usuarioId: narrador.id, id, base: marcasDe(ficha), marcas: { fome: 4 } }
 })
 
 afterEach(async () => {
   await db.delete(notificacao).where(sql`${notificacao.linkJson}->'params'->>'id' = ${id}`)
   await db.delete(personagem).where(eq(personagem.id, id))
-  await db.delete(user).where(sql`${user.id} in (${jogador.id}, ${narradorId})`)
+  await db.delete(user).where(sql`${user.id} in (${jogador.id}, ${narrador.id})`)
 })
 
 describe('Sincronização idempotente das marcas no Postgres', () => {
@@ -46,7 +47,7 @@ describe('Sincronização idempotente das marcas no Postgres', () => {
       throw new Error('Falha antes de confirmar a transação')
     }))
     try {
-      await expect(aplicarMarcacao(jogador, entrada)).rejects.toThrow('Falha antes de confirmar')
+      await expect(aplicarMarcacao(narrador, entrada)).rejects.toThrow('Falha antes de confirmar')
     } finally {
       falha.mockRestore()
     }
@@ -54,59 +55,35 @@ describe('Sincronização idempotente das marcas no Postgres', () => {
     const [salvo] = await db.select().from(personagem).where(eq(personagem.id, id))
     expect(salvo.ficha.fome).toBe(1)
     expect(salvo.revisaoMarcas).toBe(0)
-    const registros = await db.select().from(operacaoMarcacao).where(eq(operacaoMarcacao.usuarioId, jogador.id))
+    const registros = await db.select().from(operacaoMarcacao).where(eq(operacaoMarcacao.usuarioId, narrador.id))
     expect(registros).toHaveLength(0)
-    const avisos = await db.select().from(notificacao).where(eq(notificacao.usuarioId, narradorId))
+    const avisos = await db.select().from(notificacao).where(eq(notificacao.usuarioId, narrador.id))
     expect(avisos).toHaveLength(0)
   })
 
-  it('reenvia a mesma resposta sem reaplicar a Ficha ou duplicar notificações', async () => {
-    const eventos: EventoReal[] = []
-    const desinscrever = barramento.escutar((evento) => {
-      if ('paraUsuarioId' in evento && evento.paraUsuarioId === narradorId) eventos.push(evento)
-    })
-    try {
-      const primeira = await aplicarMarcacao(jogador, entrada)
-      await db.update(personagem).set({ ficha: { ...fichaNeofito(), fome: 2 } }).where(eq(personagem.id, id))
-      const repetida = await aplicarMarcacao(jogador, entrada)
+  it('reenvia a mesma resposta sem reaplicar a Ficha', async () => {
+    const primeira = await aplicarMarcacao(narrador, entrada)
+    await db.update(personagem).set({ ficha: { ...fichaNeofito(), fome: 2 } }).where(eq(personagem.id, id))
+    const repetida = await aplicarMarcacao(narrador, entrada)
 
-      expect(primeira).toMatchObject({ tipo: 'salvo', marcas: { fome: 4 }, revisao: 1 })
-      expect(repetida).toEqual(primeira)
-      const [salvo] = await db.select().from(personagem).where(eq(personagem.id, id))
-      expect(salvo.ficha.fome).toBe(2)
-      expect(salvo.revisaoMarcas).toBe(2)
-      const avisos = await db.select().from(notificacao).where(eq(notificacao.usuarioId, narradorId))
-      expect(avisos).toHaveLength(1)
-      expect(eventos).toEqual([
-        {
-          tipo: 'notificacao', paraUsuarioId: narradorId,
-          notificacao: {
-            id: avisos[0].id,
-            texto: 'Teste de sincronização chegou a Fome 4',
-            quando: avisos[0].criadoEm.toISOString(), lida: false,
-            destino: { to: '/personagens/$id', params: { id } },
-          },
-        },
-        { tipo: 'mudanca', escopo: 'notificacao', paraUsuarioId: narradorId },
-      ])
-    } finally {
-      desinscrever()
-    }
+    expect(primeira).toMatchObject({ tipo: 'salvo', marcas: { fome: 4 }, revisao: 1 })
+    expect(repetida).toEqual(primeira)
+    const [salvo] = await db.select().from(personagem).where(eq(personagem.id, id))
+    expect(salvo.ficha.fome).toBe(2)
+    expect(salvo.revisaoMarcas).toBe(2)
   })
 
   it('serializa duas tentativas simultâneas da mesma operação', async () => {
-    const resultados = await Promise.all([aplicarMarcacao(jogador, entrada), aplicarMarcacao(jogador, entrada)])
+    const resultados = await Promise.all([aplicarMarcacao(narrador, entrada), aplicarMarcacao(narrador, entrada)])
     expect(resultados[0]).toEqual(resultados[1])
     expect(resultados[0]).toMatchObject({ tipo: 'salvo', revisao: 1 })
-    const registros = await db.select().from(operacaoMarcacao).where(eq(operacaoMarcacao.usuarioId, jogador.id))
+    const registros = await db.select().from(operacaoMarcacao).where(eq(operacaoMarcacao.usuarioId, narrador.id))
     expect(registros).toHaveLength(1)
-    const avisos = await db.select().from(notificacao).where(eq(notificacao.usuarioId, narradorId))
-    expect(avisos).toHaveLength(1)
   })
 
   it('recusa reutilizar o identificador com outro conteúdo', async () => {
-    await aplicarMarcacao(jogador, entrada)
-    const repetida = await aplicarMarcacao(jogador, { ...entrada, marcas: { fome: 5 } })
+    await aplicarMarcacao(narrador, entrada)
+    const repetida = await aplicarMarcacao(narrador, { ...entrada, marcas: { fome: 5 } })
     expect(repetida.tipo).toBe('recusado')
     const [salvo] = await db.select().from(personagem).where(eq(personagem.id, id))
     expect(salvo.ficha.fome).toBe(4)
@@ -114,29 +91,27 @@ describe('Sincronização idempotente das marcas no Postgres', () => {
 
   it('retorna conflito sem sobrescrever Fome alterada por outra ação', async () => {
     await db.update(personagem).set({ ficha: { ...fichaNeofito(), fome: 3 } }).where(eq(personagem.id, id))
-    const resultado = await aplicarMarcacao(jogador, entrada)
+    const resultado = await aplicarMarcacao(narrador, entrada)
     expect(resultado).toMatchObject({ tipo: 'conflito', marcas: { fome: 3 }, revisao: 1 })
-    const avisos = await db.select().from(notificacao).where(eq(notificacao.usuarioId, narradorId))
-    expect(avisos).toHaveLength(0)
-    const registros = await db.select().from(operacaoMarcacao).where(eq(operacaoMarcacao.usuarioId, jogador.id))
+    const registros = await db.select().from(operacaoMarcacao).where(eq(operacaoMarcacao.usuarioId, narrador.id))
     expect(registros).toHaveLength(1)
   })
 
   it('aceita campo independente e preserva dano concorrente', async () => {
     await db.update(personagem).set({ ficha: { ...fichaNeofito(), fome: 1, danoVitalidade: { superficial: 1, agravado: 0 } } })
       .where(eq(personagem.id, id))
-    const resultado = await aplicarMarcacao(jogador, entrada)
+    const resultado = await aplicarMarcacao(narrador, entrada)
     expect(resultado).toMatchObject({ tipo: 'salvo', revisao: 2, marcas: { fome: 4, danoVitalidade: { superficial: 1, agravado: 0 } } })
   })
 
-  it('revalida permissão antes de devolver resultado já registrado', async () => {
-    await aplicarMarcacao(jogador, entrada)
+  it('mantém o resultado registrado quando o Narrador desativa o Personagem', async () => {
+    const primeira = await aplicarMarcacao(narrador, entrada)
     await db.update(personagem).set({ status: 'arquivado' }).where(eq(personagem.id, id))
-    expect((await aplicarMarcacao(jogador, entrada)).tipo).toBe('recusado')
+    expect(await aplicarMarcacao(narrador, entrada)).toEqual(primeira)
   })
 
-  it('recusa pendência pertencente a outra conta sem criar registro', async () => {
-    const resultado = await aplicarMarcacao({ ...jogador, id: narradorId, papel: 'narrador' }, entrada)
+  it('recusa alteração do Jogador e não cria registro', async () => {
+    const resultado = await aplicarMarcacao(jogador, { ...entrada, usuarioId: jogador.id })
     expect(resultado.tipo).toBe('recusado')
     const registros = await db.select().from(operacaoMarcacao)
       .where(and(eq(operacaoMarcacao.usuarioId, jogador.id), eq(operacaoMarcacao.operacaoId, entrada.operacaoId)))

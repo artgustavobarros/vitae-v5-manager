@@ -13,7 +13,7 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
-  Download,
+  Copy,
   Edit3,
   Eye,
   EyeOff,
@@ -75,16 +75,8 @@ import {
 import { Combobox } from '#/components/combobox'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '#/components/ui/card'
 import { CarrosselBadges } from '#/components/ui/carrossel-badges'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '#/components/ui/dialog'
 import { Input, InputNumero } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { SelectMultiplo } from '#/components/ui/select-multiplo'
@@ -995,8 +987,9 @@ export function VisaoNarrador({
 }) {
   const router = useRouter()
 
-  const [dialogNovoCombate, setDialogNovoCombate] = useState(false)
-  const [dialogAdicionarParticipante, setDialogAdicionarParticipante] = useState(false)
+  const [mostrarParticipantes, setMostrarParticipantes] = useState(false)
+  const [iniciandoCombate, setIniciandoCombate] = useState(false)
+  const [adicionandoParticipantes, setAdicionandoParticipantes] = useState(false)
   const [dialogEncerrar, setDialogEncerrar] = useState(false)
   const [confirmacaoAgravado, setConfirmacaoAgravado] = useState<{
     participanteId: string
@@ -1027,9 +1020,7 @@ export function VisaoNarrador({
   const [inimigosParaAdicionar, setInimigosParaAdicionar] = useState<
     Array<{ id: string; modeloId: string; nome: string; recursos?: RecursosSobrenaturais }>
   >([])
-  const [modelosTemp, setModelosTemp] = useState<string[]>([])
-
-  const [dialogPreCombates, setDialogPreCombates] = useState(false)
+  const [mostrarPreCombates, setMostrarPreCombates] = useState(false)
   const [preCombateEmEdicao, setPreCombateEmEdicao] = useState<{
     id?: string
     nome: string
@@ -1038,11 +1029,6 @@ export function VisaoNarrador({
   const [modelosPreCombateTemp, setModelosPreCombateTemp] = useState<string[]>([])
   const [salvandoPreCombate, setSalvandoPreCombate] = useState(false)
   const [preCombateParaExcluir, setPreCombateParaExcluir] = useState<{ id: string; nome: string } | null>(null)
-  const [preCombateParaCarregar, setPreCombateParaCarregar] = useState<string>('')
-  const [coterieParaAdicionarNovoCombate, setCoterieParaAdicionarNovoCombate] = useState<string>('')
-  const [coterieParaAdicionarAvulso, setCoterieParaAdicionarAvulso] = useState<string>('')
-
-  const [tipoNovoPart, setTipoNovoPart] = useState<'personagem' | 'inimigo'>('inimigo')
   const [nomeInimigoAvulso, setNomeInimigoAvulso] = useState<string>('')
   const [personagensAvulsosTemp, setPersonagensAvulsosTemp] = useState<string[]>([])
   const [modelosAvulsosTemp, setModelosAvulsosTemp] = useState<string[]>([])
@@ -1342,40 +1328,28 @@ export function VisaoNarrador({
   }
 
   async function handleIniciarNovoCombate() {
+    if (iniciandoCombate) return
+    setIniciandoCombate(true)
     try {
       const participantes: ParticipanteCombate[] = []
 
       for (const pId of selecaoPersonagens) {
-        const char = personagens.find((p) => p.id === pId)
-        if (char) {
+        const personagemEscolhido = personagens.find((p) => p.id === pId)
+        if (personagemEscolhido) {
           participantes.push({
             id: crypto.randomUUID(),
             tipo: 'personagem',
-            personagemId: char.id,
-            nome: char.nome || '(Sem nome)',
-            jogadorNome: char.jogadorNome ?? null,
-            ehPdN: char.ehPdN,
-            ehPdn: char.ehPdN,
+            personagemId: personagemEscolhido.id,
+            nome: personagemEscolhido.nome || '(Sem nome)',
+            jogadorNome: personagemEscolhido.jogadorNome ?? null,
+            ehPdN: personagemEscolhido.ehPdN,
+            ehPdn: personagemEscolhido.ehPdN,
             condicoes: [],
           })
         }
       }
 
-      const inimigosFinais = [...inimigosParaAdicionar]
-      for (const mId of modelosTemp) {
-        const modelo = modelos.find((m) => m.id === mId)
-        if (modelo && modelo.id) {
-          const contagem = inimigosFinais.filter((i) => i.modeloId === modelo.id).length + 1
-          const nomeSugerido = `${modelo.nome} #${contagem}`
-          inimigosFinais.push({
-            id: crypto.randomUUID(),
-            modeloId: modelo.id,
-            nome: nomeSugerido,
-          })
-        }
-      }
-
-      for (const inimigoInfo of inimigosFinais) {
+      for (const inimigoInfo of inimigosParaAdicionar) {
         const modelo = modelos.find((m) => m.id === inimigoInfo.modeloId)
         if (modelo) {
           participantes.push(criarInimigoDeModelo(modelo, { id: inimigoInfo.id, nome: inimigoInfo.nome }, inimigoInfo.recursos ?? sortearRecursosSobrenaturais(modelo)))
@@ -1388,16 +1362,26 @@ export function VisaoNarrador({
       }
 
       await iniciarCombateServer({ data: { participantes } })
-      setDialogNovoCombate(false)
       setSelecaoPersonagens([])
       setInimigosParaAdicionar([])
-      setModelosTemp([])
       setPreCombateEmEdicao(null) // Se veio do carrossel de edição de um Pré-Combate, sai dele.
       toast.success('Combate iniciado!')
-      router.invalidate()
+      await router.invalidate()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Falha ao iniciar combate.')
+    } finally {
+      setIniciandoCombate(false)
     }
+  }
+
+  function adicionarInimigoNaMontagem(modeloId: string, recursos?: RecursosSobrenaturais) {
+    const modelo = modelos.find((m) => m.id === modeloId)
+    if (!modelo) return
+    setInimigosParaAdicionar((atuais) => {
+      let numero = atuais.filter((i) => i.modeloId === modeloId).length + 1
+      while (atuais.some((i) => i.nome === `${modelo.nome} #${numero}`)) numero++
+      return [...atuais, { id: crypto.randomUUID(), modeloId, nome: `${modelo.nome} #${numero}`, recursos: recursos ? structuredClone(recursos) : undefined }]
+    })
   }
 
   function handleAdicionarCoterieNaSelecao(
@@ -1432,14 +1416,11 @@ export function VisaoNarrador({
     }))
 
     setInimigosParaAdicionar([...inimigosParaAdicionar, ...novosInimigos])
-    setPreCombateParaCarregar('')
     toast.success(`"${pc.nome}" carregado (${novosInimigos.length} inimigo(s)).`)
   }
 
-  // Passo 1: só o nome. Depois de criado, o mesmo diálogo abre a lista de Inimigos
-  // (igual a "Iniciar Combate") e vira edição normal.
-  // Passo 1: só o nome, num diálogo rápido. Passo 2 (abaixo) já fica na própria página,
-  // igual o Combate real — cada mudança salva na hora, sem botão "Salvar" separado.
+  // O nome é preenchido na página. Depois de salvar, a edição dos Inimigos
+  // continua no carrossel, com salvamento automático.
   function abrirNovoPreCombate() {
     setPreCombateEmEdicao({ nome: '', inimigos: [] })
     setModelosPreCombateTemp([])
@@ -1457,7 +1438,7 @@ export function VisaoNarrador({
       })),
     })
     setModelosPreCombateTemp([])
-    setDialogPreCombates(false)
+    setMostrarPreCombates(false)
   }
 
   async function persistirPreCombateEmEdicao(novo: {
@@ -1544,7 +1525,7 @@ export function VisaoNarrador({
           })),
         },
       })
-      setDialogPreCombates(false)
+      setMostrarPreCombates(false)
       setPreCombateEmEdicao({
         id: salvo.id,
         nome: salvo.nome,
@@ -1570,7 +1551,7 @@ export function VisaoNarrador({
     }
     setPreCombateEmEdicao(null)
     setModelosPreCombateTemp([])
-    setDialogPreCombates(false)
+    setMostrarPreCombates(false)
   }
 
   async function handleExcluirPreCombate() {
@@ -1585,90 +1566,74 @@ export function VisaoNarrador({
     }
   }
 
-  function handleIniciarAPartirDoPreCombate(pc: PreCombate) {
-    setSelecaoPersonagens([])
-    setInimigosParaAdicionar(
-      pc.inimigos.map((i) => ({
-        id: crypto.randomUUID(),
-        modeloId: i.modeloId,
-        nome: i.nome,
-        recursos: i.recursosSobrenaturais,
-      })),
-    )
-    setModelosTemp([])
-    setPreCombateParaCarregar('')
-    setCoterieParaAdicionarNovoCombate('')
-    setDialogNovoCombate(true)
-  }
-
   // Botão "Ativar Combate" dentro do carrossel de edição: usa os Inimigos já salvos no rascunho.
   function handleAtivarCombateAPartirDoPreCombateEmEdicao() {
     if (!preCombateEmEdicao) return
-    setSelecaoPersonagens([])
     setInimigosParaAdicionar(preCombateEmEdicao.inimigos.map((i) => ({ ...i })))
-    setModelosTemp([])
-    setPreCombateParaCarregar('')
-    setCoterieParaAdicionarNovoCombate('')
-    setDialogNovoCombate(true)
+    setPreCombateEmEdicao(null)
   }
 
-  async function handleConfirmarAdicionarAvulso() {
-    if (tipoNovoPart === 'personagem') {
-      if (personagensAvulsosTemp.length === 0) {
-        toast.error('Selecione pelo menos um Personagem.')
-        return
-      }
-      try {
-        for (const pId of personagensAvulsosTemp) {
-          const char = personagens.find((p) => p.id === pId)
-          if (!char) continue
-          const part: ParticipantePersonagem = {
-            id: crypto.randomUUID(),
-            tipo: 'personagem',
-            personagemId: char.id,
-            nome: char.nome || '(Sem nome)',
-            jogadorNome: char.jogadorNome ?? null,
-            ehPdN: char.ehPdN,
-            ehPdn: char.ehPdN,
-            condicoes: [],
+  async function handleConfirmarAdicionarAvulso(tipoNovoPart: 'personagem' | 'inimigo') {
+    if (adicionandoParticipantes) return
+    setAdicionandoParticipantes(true)
+    try {
+      if (tipoNovoPart === 'personagem') {
+        if (personagensAvulsosTemp.length === 0) {
+          toast.error('Selecione pelo menos um Personagem.')
+          return
+        }
+        try {
+          for (const pId of personagensAvulsosTemp) {
+            const personagemEscolhido = personagens.find((p) => p.id === pId)
+            if (!personagemEscolhido) continue
+            const part: ParticipantePersonagem = {
+              id: crypto.randomUUID(),
+              tipo: 'personagem',
+              personagemId: personagemEscolhido.id,
+              nome: personagemEscolhido.nome || '(Sem nome)',
+              jogadorNome: personagemEscolhido.jogadorNome ?? null,
+              ehPdN: personagemEscolhido.ehPdN,
+              ehPdn: personagemEscolhido.ehPdN,
+              condicoes: [],
+            }
+            await adicionarParticipanteCombateServer({ data: { participante: part } })
           }
-          await adicionarParticipanteCombateServer({ data: { participante: part } })
+          setPersonagensAvulsosTemp([])
+          toast.success('Participante(s) adicionado(s) ao combate!')
+          router.invalidate()
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : 'Falha ao adicionar participante.')
         }
-        setDialogAdicionarParticipante(false)
-        setPersonagensAvulsosTemp([])
-        toast.success('Participante(s) adicionado(s) ao combate!')
-        router.invalidate()
-      } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : 'Falha ao adicionar participante.')
-      }
-    } else {
-      if (modelosAvulsosTemp.length === 0) {
-        toast.error('Selecione pelo menos um Modelo de antagonista.')
-        return
-      }
-      try {
-        for (const mId of modelosAvulsosTemp) {
-          const modelo = modelos.find((m) => m.id === mId)
-          if (!modelo) continue
-          const contagem =
-            (combate?.participantes.filter((p) => p.tipo === 'inimigo' && p.modeloId === modelo.id).length ?? 0) + 1
-          const nomeFinal =
-            modelosAvulsosTemp.length === 1 && nomeInimigoAvulso.trim()
-              ? nomeInimigoAvulso.trim()
-              : `${modelo.nome} #${contagem}`
+      } else {
+        if (modelosAvulsosTemp.length === 0) {
+          toast.error('Selecione pelo menos um Modelo de antagonista.')
+          return
+        }
+        try {
+          for (const mId of modelosAvulsosTemp) {
+            const modelo = modelos.find((m) => m.id === mId)
+            if (!modelo) continue
+            const contagem =
+              (combate?.participantes.filter((p) => p.tipo === 'inimigo' && p.modeloId === modelo.id).length ?? 0) + 1
+            const nomeFinal =
+              modelosAvulsosTemp.length === 1 && nomeInimigoAvulso.trim()
+                ? nomeInimigoAvulso.trim()
+                : `${modelo.nome} #${contagem}`
 
-          const part = criarInimigoDeModelo(modelo, { id: crypto.randomUUID(), nome: nomeFinal }, recursosAvulsos[mId] ?? sortearRecursosSobrenaturais(modelo))
-          await adicionarParticipanteCombateServer({ data: { participante: part } })
+            const part = criarInimigoDeModelo(modelo, { id: crypto.randomUUID(), nome: nomeFinal }, recursosAvulsos[mId] ?? sortearRecursosSobrenaturais(modelo))
+            await adicionarParticipanteCombateServer({ data: { participante: part } })
+          }
+          setModelosAvulsosTemp([])
+          setNomeInimigoAvulso('')
+          setRecursosAvulsos({})
+          toast.success('Inimigo(s) adicionado(s) ao combate!')
+          router.invalidate()
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : 'Falha ao adicionar participante.')
         }
-        setDialogAdicionarParticipante(false)
-        setModelosAvulsosTemp([])
-        setNomeInimigoAvulso('')
-        setRecursosAvulsos({})
-        toast.success('Inimigo(s) adicionado(s) ao combate!')
-        router.invalidate()
-      } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : 'Falha ao adicionar participante.')
       }
+    } finally {
+      setAdicionandoParticipantes(false)
     }
   }
 
@@ -1690,7 +1655,7 @@ export function VisaoNarrador({
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" onClick={handleFecharEdicaoPreCombate}>Voltar</Button>
-              <Button onClick={handleAtivarCombateAPartirDoPreCombateEmEdicao} disabled={preCombateEmEdicao.inimigos.length === 0} className="gap-2">
+              <Button onClick={handleAtivarCombateAPartirDoPreCombateEmEdicao} disabled={Boolean(combate) || preCombateEmEdicao.inimigos.length === 0} className="gap-2">
                 <Swords className="size-4" />
                 Ativar Combate
               </Button>
@@ -1791,25 +1756,11 @@ export function VisaoNarrador({
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setDialogPreCombates(true)}
+                onClick={abrirNovoPreCombate}
                 className="gap-2 self-start sm:self-auto"
               >
-                <Library className="size-4" />
-                Pré-Combates
-              </Button>
-              <Button
-                onClick={() => {
-                  setSelecaoPersonagens([])
-                  setInimigosParaAdicionar([])
-                  setModelosTemp([])
-                  setPreCombateParaCarregar('')
-                  setCoterieParaAdicionarNovoCombate('')
-                  setDialogNovoCombate(true)
-                }}
-                className="gap-2 self-start sm:self-auto"
-              >
-                <Swords className="size-4" />
-                Iniciar Combate
+                <Plus className="size-4" />
+                Novo Pré-Combate
               </Button>
             </div>
           ) : (
@@ -1848,23 +1799,19 @@ export function VisaoNarrador({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setTipoNovoPart('inimigo')
-                  setRecursosAvulsos({})
-                  setModelosAvulsosTemp([])
-                  setPersonagensAvulsosTemp([])
-                  setNomeInimigoAvulso('')
-                  setCoterieParaAdicionarAvulso('')
-                  setDialogAdicionarParticipante(true)
-                }}
+                aria-expanded={mostrarParticipantes}
+                aria-controls="participantes-combate"
+                onClick={() => setMostrarParticipantes(!mostrarParticipantes)}
               >
                 <Plus className="size-4 mr-1" />
-                Participante
+                Participantes
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setDialogPreCombates(true)}
+                aria-expanded={mostrarPreCombates}
+                aria-controls="pre-combates-salvos"
+                onClick={() => setMostrarPreCombates(!mostrarPreCombates)}
                 className="gap-1"
               >
                 <Library className="size-4" />
@@ -1882,35 +1829,308 @@ export function VisaoNarrador({
           )}
         </div>
 
-        {!combate && preCombates.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center">
-            <Swords className="size-12 text-muted-foreground/60 mb-3" />
-            <h3 className="font-serif text-2xl font-medium">Nenhum Combate em andamento</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-6">
-              Monte os participantes (Personagens, PdNs e Inimigos da lista de Antagonistas) para iniciar a ordem de turnos.
-            </p>
-            <Button
-              onClick={() => {
-                setSelecaoPersonagens([])
-                setInimigosParaAdicionar([])
-                setPreCombateParaCarregar('')
-                setCoterieParaAdicionarNovoCombate('')
-                setDialogNovoCombate(true)
-              }}
-              className="gap-2"
-            >
-              <Swords className="size-4" />
-              Iniciar Novo Combate
-            </Button>
-          </div>
-        )}
+      {/* Montagem rápida disponível sem abrir uma janela. */}
+      {!combate && <Card aria-labelledby="titulo-combate-agora">
+          <CardHeader>
+            <CardTitle id="titulo-combate-agora" role="heading" aria-level={2} className="font-serif text-xl flex items-center gap-2">
+              <Swords className="size-5" />
+              Combate agora
+            </CardTitle>
+            <CardDescription>
+              Escolha os participantes e inicie. Não precisa dar um nome nem salvar antes.
+            </CardDescription>
+          </CardHeader>
 
-        {!combate && preCombates.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <CardContent className="grid gap-8 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label className="font-semibold flex items-center gap-1">
+                <Users className="size-4" />
+                Personagens e PdNs da Crônica
+              </Label>
+              <SelectMultiplo
+                rotulo="Personagens do Combate"
+                opcoes={personagens.map((p) => ({
+                  valor: p.id,
+                  rotulo: p.nome || '(Sem nome)',
+                  detalhe: rotuloOrigemPersonagem(p) ?? undefined,
+                }))}
+                valores={selecaoPersonagens}
+                onChange={setSelecaoPersonagens}
+                placeholder="Selecionar personagens..."
+              />
+
+              {coteries.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Combobox
+                    opcoes={coteries.map((c) => ({
+                      valor: c.id,
+                      rotulo: c.nome,
+                      descricao: `${c.personagemIds.length} membro(s)`,
+                    }))}
+                    valor={null}
+                    rotulo="Chamar Coterie"
+                    onChange={(id) => handleAdicionarCoterieNaSelecao(id, selecaoPersonagens, setSelecaoPersonagens)}
+                    placeholder="...ou chamar uma Coterie inteira"
+                    mostrarDescricao={false}
+                    className="flex-1"
+                  />
+                </div>
+              )}
+
+              {selecaoPersonagens.length > 0 && (
+                <div className="flex flex-col gap-1 border rounded-md p-2 max-h-40 overflow-y-auto">
+                  {selecaoPersonagens.map((pId) => {
+                    const personagemEscolhido = personagens.find((p) => p.id === pId)
+                    if (!personagemEscolhido) return null
+                    return (
+                      <div key={pId} className="flex items-center justify-between text-sm py-1 border-b last:border-b-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{personagemEscolhido.nome || '(Sem nome)'}</span>
+                          {rotuloOrigemPersonagem(personagemEscolhido) && (
+                            <span className="text-xs text-muted-foreground">{rotuloOrigemPersonagem(personagemEscolhido)}</span>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-destructive"
+                          aria-label={`Remover ${personagemEscolhido.nome || 'Personagem'}`}
+                          onClick={() => {
+                            setSelecaoPersonagens(selecaoPersonagens.filter((id) => id !== pId))
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-semibold flex items-center gap-1">
+                <Skull className="size-4" />
+                Inimigos a partir da lista de Antagonistas
+              </Label>
+
+              {modelos.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum modelo cadastrado em Antagonistas.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <Combobox
+                    rotulo="Adicionar Inimigo"
+                    opcoes={modelos.map((m) => ({
+                      valor: m.id ?? '',
+                      rotulo: m.nome,
+                      descricao: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                    }))}
+                    valor={null}
+                    onChange={(id) => adicionarInimigoNaMontagem(id)}
+                    placeholder="Buscar e adicionar Inimigo..."
+                  />
+
+                  {inimigosParaAdicionar.length > 0 && (
+                    <div className="flex flex-col gap-4">
+                      {inimigosParaAdicionar.map((inimigo, idx) => {
+                        const mod = modelos.find((m) => m.id === inimigo.modeloId)
+                        return (
+                          <div
+                            key={inimigo.id}
+                            className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-b-0"
+                          >
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <Input
+                                aria-label={`Nome de ${inimigo.nome}`}
+                                value={inimigo.nome}
+                                onChange={(e) => {
+                                  setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, nome: e.target.value } : i))
+                                }}
+                                className="text-sm"
+                              />
+                              {mod?.categoria && (
+                                <span className="text-xs text-muted-foreground mt-1 ml-1">
+                                  Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
+                                </span>
+                              )}
+                              {mod && <ConfigurarPoderesAntagonista modelo={mod} valor={inimigo.recursos} onChange={recursos => setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, recursos } : i))} />}
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" aria-label={`Duplicar ${inimigo.nome}`}
+                              disabled={!mod} onClick={() => adicionarInimigoNaMontagem(inimigo.modeloId, inimigo.recursos)}>
+                              <Copy className="size-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-destructive shrink-0"
+                              aria-label={`Remover ${inimigo.nome}`}
+                              onClick={() => {
+                                setInimigosParaAdicionar(
+                                  inimigosParaAdicionar.filter((_, i) => i !== idx),
+                                )
+                              }}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {inimigosParaAdicionar.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="self-start gap-1"
+                      onClick={() => {
+                        setPreCombateEmEdicao({
+                          nome: '',
+                          inimigos: inimigosParaAdicionar.map((i) => ({ ...i })),
+                        })
+                        setModelosPreCombateTemp([])
+                      }}
+                    >
+                      <Save className="size-4" />
+                      Salvar esta lista como Pré-Combate
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex flex-wrap justify-between gap-4 border-t">
+            <span className="text-sm text-muted-foreground" role="status">
+              {selecaoPersonagens.length} Personagem(ns) · {inimigosParaAdicionar.length} Inimigo(s)
+            </span>
+            <Button type="button" onClick={handleIniciarNovoCombate}
+              disabled={iniciandoCombate || selecaoPersonagens.length + inimigosParaAdicionar.length === 0}>
+              <Play className="size-4" />
+              {iniciandoCombate ? 'Iniciando...' : 'Iniciar Combate'}
+            </Button>
+          </CardFooter>
+      </Card>}
+      {combate && mostrarParticipantes && !preCombateEmEdicao?.id && <Card id="participantes-combate" className="mb-8">
+          <CardHeader>
+            <CardTitle role="heading" aria-level={2} className="font-serif text-xl">Adicionar Participantes</CardTitle>
+            <CardDescription>
+              Inclui um novo combatente na ordem de turnos atual.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="grid gap-8 md:grid-cols-2">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <Label>Modelo(s) da lista de Antagonistas</Label>
+                  <SelectMultiplo
+                    rotulo="Modelos para adicionar"
+                    opcoes={modelos.map((m) => ({
+                      valor: m.id ?? '',
+                      rotulo: m.nome,
+                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
+                    }))}
+                    valores={modelosAvulsosTemp}
+                    onChange={(vals) => {
+                      setModelosAvulsosTemp(vals)
+                      setNomeInimigoAvulso('')
+                    }}
+                    placeholder="Selecionar modelo(s)..."
+                  />
+                </div>
+                {modelosAvulsosTemp.map(mId => {
+                  const modelo = modelos.find(m => m.id === mId)
+                  return modelo ? <div key={mId} className="flex flex-col items-start gap-1">
+                    {modelosAvulsosTemp.length > 1 && <span className="text-xs text-muted-foreground">{modelo.nome}</span>}
+                    <ConfigurarPoderesAntagonista modelo={modelo} valor={recursosAvulsos[mId]} onChange={recursos => setRecursosAvulsos({ ...recursosAvulsos, [mId]: recursos })} />
+                  </div> : null
+                })}
+                {modelosAvulsosTemp.length === 1 && (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="nome-inimigo-avulso">Rótulo / Nome no Combate (opcional)</Label>
+                      {(() => {
+                        const mod = modelos.find((m) => m.id === modelosAvulsosTemp[0])
+                        return mod ? (
+                          <span className="text-xs text-muted-foreground">
+                            Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
+                          </span>
+                        ) : null
+                      })()}
+                    </div>
+                    <Input
+                      id="nome-inimigo-avulso"
+                      value={nomeInimigoAvulso}
+                      onChange={(e) => setNomeInimigoAvulso(e.target.value)}
+                      placeholder="Ex: Guarda da Porta #1"
+                    />
+                  </div>
+                )}
+                <Button onClick={() => handleConfirmarAdicionarAvulso('inimigo')} disabled={adicionandoParticipantes || modelosAvulsosTemp.length === 0}>
+                  Adicionar Inimigos
+                </Button>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Personagem(ns) ou PdN(s)</Label>
+                <SelectMultiplo
+                  rotulo="Personagens para adicionar"
+                  opcoes={personagens.map((p) => ({
+                    valor: p.id,
+                    rotulo: p.nome || '(Sem nome)',
+                    detalhe: rotuloOrigemPersonagem(p) ?? undefined,
+                    desabilitado: combate?.participantes.some(
+                      (part) => part.tipo === 'personagem' && part.personagemId === p.id,
+                    ),
+                  }))}
+                  valores={personagensAvulsosTemp}
+                  onChange={setPersonagensAvulsosTemp}
+                  placeholder="Selecionar personagem(ns)..."
+                />
+
+                {coteries.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Combobox
+                      opcoes={coteries.map((c) => ({
+                        valor: c.id,
+                        rotulo: c.nome,
+                        descricao: `${c.personagemIds.length} membro(s)`,
+                      }))}
+                      valor={null}
+                      rotulo="Chamar Coterie ao Combate"
+                      onChange={(id) => {
+                        const jaNoCombate = combate.participantes.flatMap((p) => p.tipo === 'personagem' ? [p.personagemId] : [])
+                        handleAdicionarCoterieNaSelecao(id, personagensAvulsosTemp, setPersonagensAvulsosTemp, jaNoCombate)
+                      }}
+                      placeholder="...ou chamar uma Coterie inteira"
+                      mostrarDescricao={false}
+                      className="flex-1"
+                    />
+                  </div>
+                )}
+                <Button onClick={() => handleConfirmarAdicionarAvulso('personagem')} disabled={adicionandoParticipantes || personagensAvulsosTemp.length === 0}>
+                  Adicionar Personagens
+                </Button>
+              </div>
+          </CardContent>
+          <CardFooter className="justify-end">
+            <Button variant="outline" onClick={() => setMostrarParticipantes(false)}>Fechar participantes</Button>
+          </CardFooter>
+      </Card>}
+        {(!combate || mostrarPreCombates) && (
+          <section id="pre-combates-salvos" className="flex flex-col gap-4" aria-labelledby="titulo-pre-combates">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 id="titulo-pre-combates" className="font-serif text-xl">
               Pré-Combates salvos
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            </h2>
+            {combate && <Button variant="outline" onClick={abrirNovoPreCombate}><Plus className="size-4" />Novo Pré-Combate</Button>}
+            </div>
+            {preCombates.length === 0 && <p className="text-sm text-muted-foreground">Nenhum Pré-Combate salvo. Monte um Combate agora e salve os Inimigos para reutilizar.</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {preCombates.map((pc) => (
                 <Card key={pc.id} className="gap-3 py-4">
                   <CardHeader className="px-4">
@@ -1927,11 +2147,13 @@ export function VisaoNarrador({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => handleIniciarAPartirDoPreCombate(pc)}
+                        disabled={Boolean(combate) || pc.inimigos.length === 0}
+                        aria-label={`Carregar ${pc.nome}`}
+                        onClick={() => pc.id && handleCarregarPreCombate(pc.id)}
                         className="gap-1"
                       >
-                        <Play className="size-3.5 fill-current" />
-                        Iniciar
+                        <Play className="size-4 fill-current" />
+                        Carregar
                       </Button>
                       <Button
                         type="button"
@@ -1958,23 +2180,8 @@ export function VisaoNarrador({
                 </Card>
               ))}
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setSelecaoPersonagens([])
-                  setInimigosParaAdicionar([])
-                  setPreCombateParaCarregar('')
-                  setCoterieParaAdicionarNovoCombate('')
-                  setDialogNovoCombate(true)
-                }}
-                className="h-full min-h-24 flex-col gap-2 border-2 border-dashed text-muted-foreground hover:text-vinho hover:border-vinho/60 hover:bg-vinho/5"
-              >
-                <Plus className="size-6" />
-                <span className="text-sm font-medium">Combate agora</span>
-              </Button>
             </div>
-          </div>
+          </section>
         )}
 
         {combate && (
@@ -2090,349 +2297,19 @@ export function VisaoNarrador({
       </div>
       )}
 
-      {/* DIALOG: NOVO COMBATE */}
-      <Dialog open={dialogNovoCombate} onOpenChange={setDialogNovoCombate}>
-        <DialogContent className="max-w-xl max-h-9/10 overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-xl flex items-center gap-2">
-              <Swords className="size-5" />
-              Iniciar Novo Combate
-            </DialogTitle>
-            <DialogDescription>
-              Selecione os participantes iniciais. Você poderá reordenar ou adicionar mais participantes a qualquer momento.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-6 py-4">
-            <div className="flex flex-col gap-2">
-              <Label className="font-semibold flex items-center gap-1">
-                <Users className="size-4" />
-                Personagens e PdNs da Crônica
-              </Label>
-              <SelectMultiplo
-                opcoes={personagens.map((p) => ({
-                  valor: p.id,
-                  rotulo: p.nome || '(Sem nome)',
-                  detalhe: rotuloOrigemPersonagem(p) ?? undefined,
-                }))}
-                valores={selecaoPersonagens}
-                onChange={setSelecaoPersonagens}
-                placeholder="Selecionar personagens..."
-              />
-
-              {coteries.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Combobox
-                    opcoes={coteries.map((c) => ({
-                      valor: c.id,
-                      rotulo: c.nome,
-                      descricao: `${c.personagemIds.length} membro(s)`,
-                    }))}
-                    valor={coterieParaAdicionarNovoCombate || null}
-                    onChange={setCoterieParaAdicionarNovoCombate}
-                    placeholder="...ou chamar uma Coterie inteira"
-                    mostrarDescricao={false}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={!coterieParaAdicionarNovoCombate}
-                    onClick={() => {
-                      handleAdicionarCoterieNaSelecao(coterieParaAdicionarNovoCombate, selecaoPersonagens, setSelecaoPersonagens)
-                      setCoterieParaAdicionarNovoCombate('')
-                    }}
-                    className="gap-1 shrink-0"
-                  >
-                    <Users className="size-4" />
-                    Chamar Coterie
-                  </Button>
-                </div>
-              )}
-
-              {selecaoPersonagens.length > 0 && (
-                <div className="flex flex-col gap-1 border rounded-md p-2 max-h-40 overflow-y-auto">
-                  {selecaoPersonagens.map((pId) => {
-                    const char = personagens.find((p) => p.id === pId)
-                    if (!char) return null
-                    return (
-                      <div key={pId} className="flex items-center justify-between text-sm py-1 border-b last:border-b-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{char.nome || '(Sem nome)'}</span>
-                          {rotuloOrigemPersonagem(char) && (
-                            <span className="text-xs text-muted-foreground">{rotuloOrigemPersonagem(char)}</span>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 text-destructive"
-                          onClick={() => {
-                            setSelecaoPersonagens(selecaoPersonagens.filter((id) => id !== pId))
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label className="font-semibold flex items-center gap-1">
-                <Skull className="size-4" />
-                Inimigos a partir da lista de Antagonistas
-              </Label>
-
-              {preCombates.length > 0 && (
-                <div className="flex flex-col gap-2 rounded-md border border-dashed p-2.5 bg-muted/30">
-                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Library className="size-3.5" />
-                    Ou carregue um Pré-Combate salvo
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Combobox
-                      opcoes={preCombates.map((pc) => ({
-                        valor: pc.id ?? '',
-                        rotulo: pc.nome,
-                        descricao: `${pc.inimigos.length} inimigo(s)`,
-                      }))}
-                      valor={preCombateParaCarregar || null}
-                      onChange={setPreCombateParaCarregar}
-                      placeholder="Selecionar Pré-Combate..."
-                      mostrarDescricao={false}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      disabled={!preCombateParaCarregar}
-                      onClick={() => handleCarregarPreCombate(preCombateParaCarregar)}
-                      className="gap-1 shrink-0"
-                    >
-                      <Download className="size-4" />
-                      Carregar
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {modelos.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Nenhum modelo cadastrado em Antagonistas.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <SelectMultiplo
-                    opcoes={modelos.map((m) => ({
-                      valor: m.id ?? '',
-                      rotulo: m.nome,
-                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
-                    }))}
-                    valores={modelosTemp}
-                    onChange={setModelosTemp}
-                    placeholder="Selecionar modelos de inimigo..."
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={modelosTemp.length === 0}
-                    onClick={() => {
-                      const novosInimigos = [...inimigosParaAdicionar]
-                      for (const mId of modelosTemp) {
-                        const modelo = modelos.find((m) => m.id === mId)
-                        if (modelo && modelo.id) {
-                          const contagem = novosInimigos.filter((i) => i.modeloId === modelo.id).length + 1
-                          const nomeSugerido = `${modelo.nome} #${contagem}`
-                          novosInimigos.push({
-                            id: crypto.randomUUID(),
-                            modeloId: modelo.id,
-                            nome: nomeSugerido,
-                          })
-                        }
-                      }
-                      setInimigosParaAdicionar(novosInimigos)
-                      setModelosTemp([])
-                    }}
-                    className="self-start gap-1"
-                  >
-                    <Plus className="size-4" />
-                    Adicionar {modelosTemp.length > 0 ? `(${modelosTemp.length})` : ''}
-                  </Button>
-
-                  {inimigosParaAdicionar.length > 0 && (
-                    <div className="flex flex-col gap-1 border rounded-md p-2 max-h-48 overflow-y-auto">
-                      {inimigosParaAdicionar.map((inimigo, idx) => {
-                        const mod = modelos.find((m) => m.id === inimigo.modeloId)
-                        return (
-                          <div
-                            key={inimigo.id}
-                            className="flex items-center justify-between gap-2 text-sm py-1 border-b last:border-b-0"
-                          >
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <Input
-                                value={inimigo.nome}
-                                onChange={(e) => {
-                                  setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, nome: e.target.value } : i))
-                                }}
-                                className="h-7 text-xs"
-                              />
-                              {mod?.categoria && (
-                                <span className="text-xs text-muted-foreground mt-1 ml-1">
-                                  Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
-                                </span>
-                              )}
-                              {mod && <ConfigurarPoderesAntagonista modelo={mod} valor={inimigo.recursos} onChange={recursos => setInimigosParaAdicionar(inimigosParaAdicionar.map(i => i.id === inimigo.id ? { ...i, recursos } : i))} />}
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-destructive shrink-0"
-                              onClick={() => {
-                                setInimigosParaAdicionar(
-                                  inimigosParaAdicionar.filter((_, i) => i !== idx),
-                                )
-                              }}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {inimigosParaAdicionar.length > 0 && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="self-start gap-1"
-                      onClick={() => {
-                        setPreCombateEmEdicao({
-                          nome: '',
-                          inimigos: inimigosParaAdicionar.map((i) => ({ ...i })),
-                        })
-                        setModelosPreCombateTemp([])
-                        setDialogNovoCombate(false)
-                        setDialogPreCombates(true)
-                      }}
-                    >
-                      <Save className="size-4" />
-                      Salvar esta lista como Pré-Combate
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setDialogNovoCombate(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={handleIniciarNovoCombate}>
-              Iniciar Combate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* DIALOG: GERENCIAR PRÉ-COMBATES */}
-      <Dialog
-        open={dialogPreCombates}
-        onOpenChange={(aberto) => {
-          setDialogPreCombates(aberto)
-          if (!aberto) handleFecharEdicaoPreCombate()
-        }}
-      >
-        <DialogContent className="max-w-xl max-h-9/10 overflow-y-auto">
-          {!preCombateEmEdicao ? (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-serif text-xl flex items-center gap-2">
-                  <Library className="size-5" />
-                  Pré-Combates
-                </DialogTitle>
-                <DialogDescription>
-                  Grupos de Inimigos salvos para carregar rapidamente ao iniciar um Combate.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex flex-col gap-3 py-2">
-                <Button type="button" size="sm" className="self-start gap-1" onClick={abrirNovoPreCombate}>
-                  <Plus className="size-4" />
-                  Novo Pré-Combate
-                </Button>
-
-                {preCombates.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
-                    Nenhum Pré-Combate salvo ainda.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-1 border rounded-md divide-y">
-                    {preCombates.map((pc) => (
-                      <div key={pc.id} className="flex items-center justify-between gap-2 px-3 py-2">
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-medium text-sm truncate">{pc.nome}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {pc.inimigos.length} inimigo(s)
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            title="Editar Pré-Combate"
-                            onClick={() => abrirEditarPreCombate(pc)}
-                          >
-                            <Edit3 className="size-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive hover:text-destructive"
-                            title="Excluir Pré-Combate"
-                            onClick={() => pc.id && setPreCombateParaExcluir({ id: pc.id, nome: pc.nome })}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogPreCombates(false)}>
-                  Fechar
-                </Button>
-              </DialogFooter>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-serif text-xl flex items-center gap-2">
+      {preCombateEmEdicao && !preCombateEmEdicao.id && (
+        <Card className="mb-8" aria-labelledby="titulo-novo-pre-combate">
+              <CardHeader>
+                <CardTitle id="titulo-novo-pre-combate" role="heading" aria-level={2} className="font-serif text-xl flex items-center gap-2">
                   <Library className="size-5" />
                   Novo Pré-Combate
-                </DialogTitle>
-                <DialogDescription>
+                </CardTitle>
+                <CardDescription>
                   Dê um nome a esse grupo. Depois a própria página mostra o carrossel pra você montar os Inimigos, igual no Combate normal.
-                </DialogDescription>
-              </DialogHeader>
+                </CardDescription>
+              </CardHeader>
 
-              <div className="flex flex-col gap-1 py-4">
+              <CardContent className="flex flex-col gap-2">
                 <Label htmlFor="nome-pre-combate-inicial">Nome do Pré-Combate</Label>
                 <Input
                   id="nome-pre-combate-inicial"
@@ -2447,9 +2324,9 @@ export function VisaoNarrador({
                     }
                   }}
                 />
-              </div>
+              </CardContent>
 
-              <DialogFooter>
+              <CardFooter className="justify-end gap-4">
                 <Button type="button" variant="outline" onClick={handleFecharEdicaoPreCombate}>
                   Cancelar
                 </Button>
@@ -2458,13 +2335,11 @@ export function VisaoNarrador({
                   onClick={handleCriarPreCombateBase}
                   disabled={salvandoPreCombate || !preCombateEmEdicao.nome.trim()}
                 >
-                  Continuar
+                  {salvandoPreCombate ? 'Salvando...' : 'Salvar Pré-Combate'}
                 </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+              </CardFooter>
+        </Card>
+      )}
 
       {/* CONFIRMAÇÃO DE EXCLUSÃO DE PRÉ-COMBATE */}
       <AlertDialog open={Boolean(preCombateParaExcluir)} onOpenChange={(aberto) => { if (!aberto) setPreCombateParaExcluir(null) }}>
@@ -2487,172 +2362,6 @@ export function VisaoNarrador({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* DIALOG: ADICIONAR PARTICIPANTE AVULSO */}
-      <Dialog open={dialogAdicionarParticipante} onOpenChange={setDialogAdicionarParticipante}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-xl">Adicionar Participante</DialogTitle>
-            <DialogDescription>
-              Inclui um novo combatente na ordem de turnos atual.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4 py-3">
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={tipoNovoPart === 'inimigo' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  setTipoNovoPart('inimigo')
-                  setRecursosAvulsos({})
-                  setModelosAvulsosTemp([])
-                  setNomeInimigoAvulso('')
-                }}
-              >
-                Inimigo (Antagonistas)
-              </Button>
-              <Button
-                type="button"
-                variant={tipoNovoPart === 'personagem' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  setTipoNovoPart('personagem')
-                  setPersonagensAvulsosTemp([])
-                }}
-              >
-                Personagem / PdN
-              </Button>
-            </div>
-
-            {tipoNovoPart === 'inimigo' ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                  <Label>Modelo(s) da lista de Antagonistas</Label>
-                  <SelectMultiplo
-                    opcoes={modelos.map((m) => ({
-                      valor: m.id ?? '',
-                      rotulo: m.nome,
-                      detalhe: `${[m.categoria, ...(m.etiquetas ?? [])].join(' · ')} • Vit ${m.vitalidade}, Vont ${m.vontade}`,
-                    }))}
-                    valores={modelosAvulsosTemp}
-                    onChange={(vals) => {
-                      setModelosAvulsosTemp(vals)
-                      if (vals.length === 1) {
-                        const mod = modelos.find((m) => m.id === vals[0])
-                        if (mod) setNomeInimigoAvulso(mod.nome)
-                      }
-                    }}
-                    placeholder="Selecionar modelo(s)..."
-                  />
-                </div>
-                {modelosAvulsosTemp.map(mId => {
-                  const modelo = modelos.find(m => m.id === mId)
-                  return modelo ? <div key={mId} className="flex flex-col items-start gap-1">
-                    {modelosAvulsosTemp.length > 1 && <span className="text-xs text-muted-foreground">{modelo.nome}</span>}
-                    <ConfigurarPoderesAntagonista modelo={modelo} valor={recursosAvulsos[mId]} onChange={recursos => setRecursosAvulsos({ ...recursosAvulsos, [mId]: recursos })} />
-                  </div> : null
-                })}
-                {modelosAvulsosTemp.length === 1 && (
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="nome-inimigo-avulso">Rótulo / Nome no Combate (opcional)</Label>
-                      {(() => {
-                        const mod = modelos.find((m) => m.id === modelosAvulsosTemp[0])
-                        return mod ? (
-                          <span className="text-xs text-muted-foreground">
-                            Tipo: <strong className="font-medium text-foreground">{mod.categoria}</strong>{(mod.etiquetas?.length ?? 0) > 0 && <> · Etiquetas: {mod.etiquetas?.join(', ')}</>}
-                          </span>
-                        ) : null
-                      })()}
-                    </div>
-                    <Input
-                      id="nome-inimigo-avulso"
-                      value={nomeInimigoAvulso}
-                      onChange={(e) => setNomeInimigoAvulso(e.target.value)}
-                      placeholder="Ex: Guarda da Porta #1"
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Label>Personagem(ns) ou PdN(s)</Label>
-                <SelectMultiplo
-                  opcoes={personagens.map((p) => ({
-                    valor: p.id,
-                    rotulo: p.nome || '(Sem nome)',
-                    detalhe: rotuloOrigemPersonagem(p) ?? undefined,
-                    desabilitado: combate?.participantes.some(
-                      (part) => part.tipo === 'personagem' && part.personagemId === p.id,
-                    ),
-                  }))}
-                  valores={personagensAvulsosTemp}
-                  onChange={setPersonagensAvulsosTemp}
-                  placeholder="Selecionar personagem(ns)..."
-                />
-
-                {coteries.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Combobox
-                      opcoes={coteries.map((c) => ({
-                        valor: c.id,
-                        rotulo: c.nome,
-                        descricao: `${c.personagemIds.length} membro(s)`,
-                      }))}
-                      valor={coterieParaAdicionarAvulso || null}
-                      onChange={setCoterieParaAdicionarAvulso}
-                      placeholder="...ou chamar uma Coterie inteira"
-                      mostrarDescricao={false}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      disabled={!coterieParaAdicionarAvulso}
-                      onClick={() => {
-                        const jaNoCombate = combate?.participantes
-                          .filter((p) => p.tipo === 'personagem')
-                          .map((p) => (p as { personagemId: string }).personagemId) ?? []
-                        handleAdicionarCoterieNaSelecao(coterieParaAdicionarAvulso, personagensAvulsosTemp, setPersonagensAvulsosTemp, jaNoCombate)
-                        setCoterieParaAdicionarAvulso('')
-                      }}
-                      className="gap-1 shrink-0"
-                    >
-                      <Users className="size-4" />
-                      Chamar Coterie
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDialogAdicionarParticipante(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleConfirmarAdicionarAvulso}
-              disabled={
-                tipoNovoPart === 'inimigo'
-                  ? modelosAvulsosTemp.length === 0
-                  : personagensAvulsosTemp.length === 0
-              }
-            >
-              Adicionar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* CONFIRMAÇÃO DE ENCERRAMENTO */}
       <AlertDialog open={dialogEncerrar} onOpenChange={setDialogEncerrar}>
@@ -2675,30 +2384,24 @@ export function VisaoNarrador({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* DIALOG: EDITAR INSTÂNCIA DE INIMIGO NO COMBATE */}
-      <Dialog
-        open={Boolean(inimigoEmEdicao)}
-        onOpenChange={(aberto) => {
-          if (!aberto) setInimigoEmEdicao(null)
-        }}
-      >
-        <DialogContent className="max-w-lg max-h-9/10 overflow-y-auto">
-          {inimigoEmEdicao && (
+      {inimigoEmEdicao && !preCombateEmEdicao?.id && (
+        <Card className="mb-8" aria-labelledby="titulo-editar-inimigo">
             <form onSubmit={handleSalvarEdicaoInimigo}>
-              <DialogHeader>
-                <DialogTitle className="font-serif text-xl">
+              <CardHeader>
+                <CardTitle id="titulo-editar-inimigo" role="heading" aria-level={2} className="font-serif text-xl">
                   Editar Inimigo no Combate
-                </DialogTitle>
-                <DialogDescription>
+                </CardTitle>
+                <CardDescription>
                   Customizações feitas aqui afetam apenas este combate, sem alterar o Modelo original da lista de Antagonistas.
-                </DialogDescription>
-              </DialogHeader>
+                </CardDescription>
+              </CardHeader>
 
-              <div className="flex flex-col gap-4 py-4">
+              <CardContent className="flex flex-col gap-4 py-4">
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="nome-instancia">Rótulo / Nome no Combate</Label>
                   <Input
                     id="nome-instancia"
+                    autoFocus
                     value={inimigoEmEdicao.nome}
                     onChange={(e) =>
                       setInimigoEmEdicao({ ...inimigoEmEdicao, nome: e.target.value })
@@ -2983,9 +2686,9 @@ export function VisaoNarrador({
                     }
                   />
                 </div>
-              </div>
+              </CardContent>
 
-              <DialogFooter>
+              <CardFooter className="justify-end gap-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -2997,11 +2700,10 @@ export function VisaoNarrador({
                 <Button type="submit" disabled={salvandoEdicaoInimigo}>
                   {salvandoEdicaoInimigo ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
-              </DialogFooter>
+              </CardFooter>
             </form>
-          )}
-        </DialogContent>
-      </Dialog>
+        </Card>
+      )}
 
       {/* ALERT DIALOG: CONFIRMAR MATAR OU DESACORDAR AO PREENCHER VITALIDADE AGRAVADA */}
       <AlertDialog

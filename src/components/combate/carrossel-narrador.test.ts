@@ -33,9 +33,11 @@ describe('Carrossel do Narrador', () => {
     expect(html).toContain('Próximo Turno')
   })
 
-  it('preserva o estado vazio sem uma faixa de participantes', async () => {
+  it('oferece a montagem imediata sem uma faixa de participantes quando não há Combate', async () => {
     const html = await renderizar(null)
-    expect(html).toContain('Iniciar Novo Combate')
+    expect(html).toContain('aria-labelledby="titulo-combate-agora"')
+    expect(html).toContain('aria-label="Personagens do Combate"')
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>[\s\S]*?Iniciar Combate<\/button>/)
     expect(html).not.toContain('aria-roledescription="carrossel"')
   })
 })

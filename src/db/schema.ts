@@ -10,7 +10,7 @@ import type { EscolhaVantagem, Ficha } from '#/domain/ficha'
 import type { ParadaPersonalizada } from '#/domain/paradas'
 import type { EfeitoRelogio, Relogio, TendenciaRelogio } from '#/domain/relogios'
 import { OPCOES_CRIACAO_CRONICA_PADRAO, type OpcoesCriacaoCronica } from '#/domain/cronica'
-import { STATUS_PERSONAGEM } from '#/domain/permissoes-ficha'
+import { STATUS_PERSONAGEM, TIPOS_PERSONAGEM } from '#/domain/permissoes-ficha'
 import type { AlteracaoMarcas, ResultadoMarcacao } from '#/domain/sincronizacao-marcas'
 
 import { user } from './auth-schema.ts'
@@ -67,9 +67,10 @@ export const linkPublico = pgTable('link_publico', {
 })
 
 export const statusPersonagem = pgEnum('status_personagem', STATUS_PERSONAGEM)
+export const tipoPersonagem = pgEnum('tipo_personagem', TIPOS_PERSONAGEM)
 
 /**
- * Personagem da Crônica. O dono é o Jogador ou, se for PdN, o Narrador.
+ * Personagem da Crônica. O Narrador administra a Ficha; `donoId` preserva vínculos legados.
  * A Ficha fica em JSONB, validada por `fichaSchema` em `src/domain/ficha.ts`.
  */
 export const personagem = pgTable(
@@ -80,7 +81,9 @@ export const personagem = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'restrict' }),
     status: statusPersonagem().notNull().default('rascunho'),
-    /** Personagem atribuído: o Jogador que ainda vai aceitar ou recusar o Rascunho do Narrador. */
+    /** Classificação narrativa; independente da Atividade do Personagem e de quem edita a Ficha. */
+    tipo: tipoPersonagem().notNull().default('nao_jogador'),
+    /** Campo legado de atribuição; novas classificações usam `tipo`. */
     atribuidoA: text('atribuido_a').references(() => user.id, { onDelete: 'set null' }),
     nome: text().notNull().default(''),
     /** Nome do Jogador quando ele não tem conta própria no app. */

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import {
   acessoFicha,
-  aplicarRespostaAtribuicao,
   ehPdN,
   exigeRegrasCriacao,
   motivoNaoConcluir,
@@ -29,16 +28,11 @@ function personagem(donoId: string, status: StatusPersonagem, nome = 'Helena', a
 const atribuido = personagem('n1', 'rascunho', 'Helena', 'j1')
 
 describe('acessoFicha', () => {
-  it('o Jogador edita tudo no próprio Rascunho', () => {
-    expect(acessoFicha(jogador, personagem('j1', 'rascunho'))).toBe('editar')
-  })
-
-  it('com o Personagem Ativo, o Jogador só marca dano, Fome e Manchas', () => {
-    expect(acessoFicha(jogador, personagem('j1', 'ativo'))).toBe('marcar')
-  })
-
-  it('o Jogador só lê o próprio Personagem Arquivado', () => {
-    expect(acessoFicha(jogador, personagem('j1', 'arquivado'))).toBe('ler')
+  it('reserva todas as alterações internas ao Narrador', () => {
+    expect(acessoFicha(jogador, personagem('j1', 'rascunho'))).toBeNull()
+    expect(acessoFicha(jogador, personagem('j1', 'ativo'))).toBeNull()
+    expect(acessoFicha(narrador, personagem('j1', 'rascunho'))).toBe('editar')
+    expect(acessoFicha(narrador, personagem('j1', 'arquivado'))).toBe('editar')
   })
 
   it('o Jogador não vê Personagens de outro Jogador', () => {
@@ -48,10 +42,6 @@ describe('acessoFicha', () => {
 
   it('o Jogador não vê PdNs', () => {
     expect(acessoFicha(jogador, personagem('n1', 'ativo'))).toBeNull()
-  })
-
-  it('o Narrador só lê o Rascunho de um Jogador', () => {
-    expect(acessoFicha(narrador, personagem('j1', 'rascunho'))).toBe('ler')
   })
 
   it('o Narrador edita a Ficha Ativa de um Jogador', () => {
@@ -65,17 +55,14 @@ describe('acessoFicha', () => {
 })
 
 describe('podeConcluir', () => {
-  it('o dono conclui o Rascunho com nome', () => {
-    expect(podeConcluir(jogador, personagem('j1', 'rascunho'))).toBe(true)
+  it('só o Narrador conclui qualquer Rascunho com nome', () => {
+    expect(podeConcluir(jogador, personagem('j1', 'rascunho'))).toBe(false)
     expect(podeConcluir(narrador, personagem('n1', 'rascunho'))).toBe(true)
+    expect(podeConcluir(narrador, personagem('j1', 'rascunho'))).toBe(true)
   })
 
   it('exige nome', () => {
-    expect(podeConcluir(jogador, personagem('j1', 'rascunho', '   '))).toBe(false)
-  })
-
-  it('o Narrador não conclui o Rascunho de um Jogador', () => {
-    expect(podeConcluir(narrador, personagem('j1', 'rascunho'))).toBe(false)
+    expect(podeConcluir(narrador, personagem('j1', 'rascunho', '   '))).toBe(false)
   })
 
   it('só Rascunho é concluído', () => {
@@ -84,92 +71,54 @@ describe('podeConcluir', () => {
 })
 
 describe('podeApagar', () => {
-  it('o dono apaga o próprio Rascunho', () => {
-    expect(podeApagar(jogador, personagem('j1', 'rascunho'))).toBe(true)
+  it('só o Narrador apaga Rascunhos', () => {
+    expect(podeApagar(jogador, personagem('j1', 'rascunho'))).toBe(false)
+    expect(podeApagar(narrador, personagem('j1', 'rascunho'))).toBe(true)
   })
 
   it('ninguém apaga um Personagem Ativo', () => {
     expect(podeApagar(jogador, personagem('j1', 'ativo'))).toBe(false)
     expect(podeApagar(narrador, personagem('n1', 'ativo'))).toBe(false)
   })
-
-  it('o Narrador não apaga o Rascunho de um Jogador', () => {
-    expect(podeApagar(narrador, personagem('j1', 'rascunho'))).toBe(false)
-  })
 })
 
 describe('Personagem atribuído', () => {
-  it('o Narrador atribui o próprio Rascunho a um Jogador', () => {
-    expect(podeAtribuir(narrador, personagem('n1', 'rascunho'))).toBe(true)
-  })
-
-  it('não atribui Personagem Ativo, nem Rascunho de Jogador, nem um já atribuído', () => {
+  it('desativa a atribuição porque o Tipo substitui a posse pelo Jogador', () => {
+    expect(podeAtribuir(narrador, personagem('n1', 'rascunho'))).toBe(false)
     expect(podeAtribuir(narrador, personagem('n1', 'ativo'))).toBe(false)
     expect(podeAtribuir(narrador, personagem('j1', 'rascunho'))).toBe(false)
     expect(podeAtribuir(narrador, atribuido)).toBe(false)
-  })
-
-  it('Jogador não atribui', () => {
     expect(podeAtribuir(jogador, personagem('j1', 'rascunho'))).toBe(false)
-  })
-
-  it('o Jogador atribuído só lê a Ficha enquanto decide', () => {
-    expect(acessoFicha(jogador, atribuido)).toBe('ler')
-    expect(acessoFicha(outroJogador, atribuido)).toBeNull()
-  })
-
-  it('o Narrador continua editando enquanto espera', () => {
-    expect(acessoFicha(narrador, atribuido)).toBe('editar')
-  })
-
-  it('só o Jogador atribuído responde', () => {
-    expect(podeResponderAtribuicao(jogador, atribuido)).toBe(true)
+    expect(podeResponderAtribuicao(jogador, atribuido)).toBe(false)
     expect(podeResponderAtribuicao(outroJogador, atribuido)).toBe(false)
     expect(podeResponderAtribuicao(narrador, atribuido)).toBe(false)
-  })
-
-  it('o Narrador cancela uma atribuição pendente', () => {
-    expect(podeCancelarAtribuicao(narrador, atribuido)).toBe(true)
+    expect(podeCancelarAtribuicao(narrador, atribuido)).toBe(false)
     expect(podeCancelarAtribuicao(narrador, personagem('n1', 'rascunho'))).toBe(false)
     expect(podeCancelarAtribuicao(jogador, atribuido)).toBe(false)
-  })
-
-  it('Rascunho atribuído não pode ser concluído', () => {
-    expect(podeConcluir(narrador, atribuido)).toBe(false)
   })
 })
 
 describe('motivoNaoConcluir', () => {
   it('diz por que o Rascunho não pode ser concluído', () => {
-    expect(motivoNaoConcluir(jogador, personagem('j1', 'rascunho'))).toBeNull()
-    expect(motivoNaoConcluir(jogador, personagem('j1', 'rascunho', ' '))).toBe('sem-nome')
+    expect(motivoNaoConcluir(jogador, personagem('j1', 'rascunho'))).toBe('nao-dono')
+    expect(motivoNaoConcluir(narrador, personagem('j1', 'rascunho', ' '))).toBe('sem-nome')
     expect(motivoNaoConcluir(narrador, atribuido)).toBe('atribuido')
-    expect(motivoNaoConcluir(jogador, personagem('j1', 'ativo'))).toBe('nao-rascunho')
-    expect(motivoNaoConcluir(narrador, personagem('j1', 'rascunho'))).toBe('nao-dono')
+    expect(motivoNaoConcluir(narrador, personagem('j1', 'ativo'))).toBe('nao-rascunho')
+    expect(motivoNaoConcluir(narrador, personagem('j1', 'rascunho'))).toBeNull()
   })
 })
 
 describe('podeAtribuir a um alvo', () => {
-  it('só atribui a Jogador', () => {
+  it('não atribui a nenhum papel', () => {
     const rascunho = personagem('n1', 'rascunho')
-    expect(podeAtribuir(narrador, rascunho, { papel: 'jogador' })).toBe(true)
+    expect(podeAtribuir(narrador, rascunho, { papel: 'jogador' })).toBe(false)
     expect(podeAtribuir(narrador, rascunho, { papel: 'narrador' })).toBe(false)
   })
 })
 
-describe('aplicarRespostaAtribuicao', () => {
-  it('aceitar passa o Rascunho para o Jogador', () => {
-    expect(aplicarRespostaAtribuicao(jogador, true)).toEqual({ donoId: 'j1', atribuidoA: null })
-  })
-
-  it('recusar só desfaz a atribuição', () => {
-    expect(aplicarRespostaAtribuicao(jogador, false)).toEqual({ atribuidoA: null })
-  })
-})
-
 describe('exigeRegrasCriacao', () => {
-  it('o Jogador segue as regras de criação no próprio Rascunho', () => {
-    expect(exigeRegrasCriacao(jogador, personagem('j1', 'rascunho'))).toBe(true)
+  it('não aplica regras de criação ao Jogador porque só o Narrador edita', () => {
+    expect(exigeRegrasCriacao(jogador, personagem('j1', 'rascunho'))).toBe(false)
   })
 
   it('o Narrador edita sem validação, inclusive nos próprios Rascunhos', () => {
@@ -182,6 +131,13 @@ describe('exigeRegrasCriacao', () => {
 })
 
 describe('ehPdN', () => {
+  it('usa o tipo explícito, independente do dono e do estado', () => {
+    const deJogador = { papelDono: 'narrador' as const, status: 'ativo' as const, tipo: 'jogador' as const }
+    const naoJogador = { papelDono: 'jogador' as const, status: 'rascunho' as const, tipo: 'nao_jogador' as const }
+    expect(ehPdN(deJogador)).toBe(false)
+    expect(ehPdN(naoJogador)).toBe(true)
+  })
+
   it('PdN é Personagem do Narrador já concluído', () => {
     expect(ehPdN({ papelDono: 'narrador', status: 'ativo' })).toBe(true)
     expect(ehPdN({ papelDono: 'narrador', status: 'arquivado' })).toBe(true)
@@ -215,47 +171,44 @@ describe('nomeJogador', () => {
 })
 
 describe('permissoesPersonagem', () => {
-  it('trava o Clã do Jogador após concluir e preserva a escolha no Rascunho e nos PdNs', () => {
+  it('só o Narrador altera o Clã, em qualquer estado', () => {
     expect(permissoesPersonagem(jogador, personagem('j1', 'ativo')).podeAlterarCla).toBe(false)
-    expect(permissoesPersonagem(narrador, personagem('j1', 'arquivado')).podeAlterarCla).toBe(false)
-    expect(permissoesPersonagem(jogador, personagem('j1', 'rascunho')).podeAlterarCla).toBe(true)
+    expect(permissoesPersonagem(narrador, personagem('j1', 'arquivado')).podeAlterarCla).toBe(true)
+    expect(permissoesPersonagem(jogador, personagem('j1', 'rascunho')).podeAlterarCla).toBe(false)
     expect(permissoesPersonagem(narrador, personagem('n1', 'ativo')).podeAlterarCla).toBe(true)
   })
 
-  it('o Narrador não pode trocar o Clã de um Personagem Ativo de Jogador', () => {
+  it('o Narrador edita integralmente um Personagem de Jogador', () => {
     expect(permissoesPersonagem(narrador, personagem('j1', 'ativo'))).toMatchObject({
       acesso: 'editar',
-      podeAlterarCla: false,
-    })
-  })
-
-  it('Rascunho próprio do Jogador abre no wizard, pode ser apagado e segue as regras de criação', () => {
-    expect(permissoesPersonagem(jogador, personagem('j1', 'rascunho'))).toEqual({
-      acesso: 'editar',
-      abreNoWizard: true,
       podeAlterarCla: true,
-      podeApagar: true,
-      podeConcluir: true,
-      podeAtribuir: false,
-      podeCancelarAtribuicao: false,
-      regrasCriacao: true,
     })
   })
 
-  it('Rascunho de Jogador visto pelo Narrador só abre a Ficha para leitura', () => {
-    expect(permissoesPersonagem(narrador, personagem('j1', 'rascunho'))).toMatchObject({
-      acesso: 'ler',
-      abreNoWizard: false,
+  it('o Jogador não recebe controles internos nem no Rascunho', () => {
+    expect(permissoesPersonagem(jogador, personagem('j1', 'rascunho'))).toEqual({
+      acesso: null,
+      podeAlterarCla: false,
       podeApagar: false,
-    })
-  })
-
-  it('Rascunho atribuído: o Narrador edita e cancela, mas não conclui nem atribui de novo', () => {
-    expect(permissoesPersonagem(narrador, atribuido)).toMatchObject({
-      abreNoWizard: true,
       podeConcluir: false,
       podeAtribuir: false,
-      podeCancelarAtribuicao: true,
+      podeCancelarAtribuicao: false,
+      regrasCriacao: false,
+    })
+  })
+
+  it('o Narrador pode editar e apagar qualquer Rascunho', () => {
+    expect(permissoesPersonagem(narrador, personagem('j1', 'rascunho'))).toMatchObject({
+      acesso: 'editar',
+      podeApagar: true,
+    })
+  })
+
+  it('Rascunho atribuído: o Narrador edita, mas não conclui nem atribui de novo', () => {
+    expect(permissoesPersonagem(narrador, atribuido)).toMatchObject({
+      podeConcluir: false,
+      podeAtribuir: false,
+      podeCancelarAtribuicao: false,
     })
   })
 })

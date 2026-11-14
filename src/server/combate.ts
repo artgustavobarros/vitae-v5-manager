@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, asc, eq, inArray, ne, or } from 'drizzle-orm'
+import { asc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
@@ -110,6 +110,7 @@ export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
         id: personagem.id,
         nome: personagem.nome,
         status: personagem.status,
+        tipo: personagem.tipo,
         atribuidoA: personagem.atribuidoA,
         jogadorNome: personagem.jogadorNome,
         ficha: personagem.ficha,
@@ -118,16 +119,13 @@ export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
       })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
-      .where(
-        or(
-          eq(personagem.status, 'ativo'),
-          and(eq(user.papel, 'narrador'), ne(personagem.status, 'arquivado')),
-        ),
-      )
+      .where(eq(personagem.status, 'ativo'))
       .orderBy(asc(personagem.nome), asc(personagem.criadoEm))
 
     return linhas.map((l) => {
-      const npc = ehPdN({ papelDono: l.donoPapel as Papel, status: l.status, jogadorNome: l.jogadorNome })
+      const pdn = ehPdN({
+        papelDono: l.donoPapel as Papel, status: l.status, jogadorNome: l.jogadorNome, tipo: l.tipo,
+      })
       return {
         id: l.id,
         nome: l.nome,
@@ -136,8 +134,8 @@ export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
         atribuidoA: l.atribuidoA,
         jogadorNome: l.jogadorNome,
         donoNome: l.donoNome,
-        ehPdN: npc,
-        ehPdn: npc,
+        ehPdN: pdn,
+        ehPdn: pdn,
       }
     })
   })

@@ -123,6 +123,7 @@ export const buscarCoterie = createServerFn({ method: 'GET' })
         id: personagem.id,
         nome: personagem.nome,
         status: personagem.status,
+        tipo: personagem.tipo,
         donoId: personagem.donoId,
         jogadorNome: personagem.jogadorNome,
         nomeDono: user.name,
@@ -143,7 +144,7 @@ export const buscarCoterie = createServerFn({ method: 'GET' })
         nome: m.nome,
         donoId: m.donoId,
         jogador: nomeJogador({ papelDono, nomeDono: m.nomeDono, jogadorNome: m.jogadorNome }),
-        pdn: ehPdN({ papelDono, status: m.status, jogadorNome: m.jogadorNome }),
+        pdn: ehPdN({ papelDono, status: m.status, jogadorNome: m.jogadorNome, tipo: m.tipo }),
         ehMeu: m.donoId === usuario.id,
         compartilhaCondicao: m.compartilhaCondicao,
         condicao: podeVerCondicao(usuario, m) ? condicaoDe(m.ficha) : null,
@@ -179,6 +180,8 @@ export const buscarCoterie = createServerFn({ method: 'GET' })
           id: personagem.id,
           nome: personagem.nome,
           status: personagem.status,
+          tipo: personagem.tipo,
+          jogadorNome: personagem.jogadorNome,
           papelDono: user.papel,
           nomeDono: user.name,
         })
@@ -189,11 +192,13 @@ export const buscarCoterie = createServerFn({ method: 'GET' })
 
       for (const p of todosPersonagens) {
         if (idsMembros.has(p.id)) continue
-        const jogador = nomeJogador({ papelDono: p.papelDono as Papel, nomeDono: p.nomeDono })
-        if (jogador === null) {
+        const jogador = nomeJogador({
+          papelDono: p.papelDono as Papel, nomeDono: p.nomeDono, jogadorNome: p.jogadorNome,
+        })
+        if (p.tipo === 'nao_jogador') {
           pdnsDisponiveis.push({ id: p.id, nome: p.nome })
         } else if (!idsConvidados.has(p.id)) {
-          candidatosConvite.push({ id: p.id, nome: p.nome, jogador })
+          candidatosConvite.push({ id: p.id, nome: p.nome, jogador: jogador ?? 'Jogador' })
         }
       }
     }
@@ -440,7 +445,10 @@ export const adicionarPdnCoterie = createServerFn({ method: 'POST' })
     if (!cot) throw new Error('Coterie não encontrada')
 
     const [p] = await db
-      .select({ status: personagem.status, papelDono: user.papel, jogadorNome: personagem.jogadorNome })
+      .select({
+        status: personagem.status, tipo: personagem.tipo,
+        papelDono: user.papel, jogadorNome: personagem.jogadorNome,
+      })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
       .where(eq(personagem.id, data.personagemId))
@@ -453,7 +461,9 @@ export const adicionarPdnCoterie = createServerFn({ method: 'POST' })
 
     if (
       !podeAdicionarPdn(context.usuario, {
-        ehPdN: ehPdN({ papelDono: p.papelDono as Papel, status: p.status, jogadorNome: p.jogadorNome }),
+        ehPdN: ehPdN({
+          papelDono: p.papelDono as Papel, status: p.status, jogadorNome: p.jogadorNome, tipo: p.tipo,
+        }),
         ativo: p.status === 'ativo',
         ehMembro: !!ehMembro,
       })

@@ -1,6 +1,6 @@
 # Vitae
 
-Gerenciador de fichas de Vampiro: A Máscara 5ª Edição para uma única crônica presencial, em que o Narrador administra e os Jogadores controlam as próprias fichas pelo celular.
+Gerenciador de fichas de Vampiro: A Máscara 5ª Edição para uma única crônica presencial, administrada pelo Narrador.
 
 ## Pessoas e papéis
 
@@ -9,7 +9,7 @@ Quem conduz a Crônica e administra o sistema; vê e edita todas as Fichas e pod
 _Avoid_: Mestre, ST, Storyteller, admin
 
 **Jogador**:
-Pessoa que participa da Crônica e controla as Fichas dos próprios Personagens.
+Pessoa que participa da Crônica e consulta as informações que o Narrador tornou públicas.
 _Avoid_: Player, usuário
 
 **Convite para a Crônica**:
@@ -23,20 +23,20 @@ A campanha única que o sistema atende; contém todos os Personagens.
 _Avoid_: Campanha, mesa, jogo
 
 **Personagem**:
-Um vampiro (ou outra criatura) com Ficha na Crônica; pertence a um Jogador ou, se for PdN, ao Narrador.
+Um vampiro (ou outra criatura) com Ficha na Crônica; o Narrador administra sua Ficha e define seu Tipo de Personagem e sua Atividade.
 _Avoid_: Char, PC
 
+**Tipo de Personagem**:
+Classificação reversível definida pelo Narrador: Jogador para Personagens de players e Não Jogador para PdNs.
+_Avoid_: Dono, proprietário, tipo de ficha
+
 **PdN**:
-Personagem sem Jogador, controlado pelo Narrador; um Personagem de Jogador pode virar PdN, nunca o contrário.
+Personagem com o Tipo de Personagem Não Jogador.
 _Avoid_: NPC, figurante
 
-**Personagem atribuído**:
-Rascunho que o Narrador criou e atribuiu a um Jogador, à espera de que ele aceite; ao aceitar, o Rascunho passa a ser do Jogador. Um Rascunho do Narrador ainda não é PdN.
-_Avoid_: Oferta de Personagem, Convite de Personagem
-
-**Arquivado**:
-Estado de um Personagem que deixou de existir na história (morte, saída definitiva); ele sai de todas as Coteries. Virar PdN não é arquivar.
-_Avoid_: Morto, excluído, inativo
+**Atividade do Personagem**:
+Estado reversível definido pelo Narrador. Um Personagem Ativo participa das áreas correntes da Crônica; um Rascunho permanece guardado e pode ser editado, reativado ou excluído.
+_Avoid_: Inativo, arquivado
 
 **Coterie**:
 Grupo de Personagens que o Narrador cria, edita e apaga; um Personagem pode estar em várias. O Jogador só enxerga as Coteries em que tem Personagem e só entra por Convite de Coterie e pode sair quando quiser.
@@ -51,19 +51,15 @@ Proposta do Narrador para um Personagem entrar numa Coterie; o Jogador aceita ou
 _Avoid_: Convite (sozinho), solicitação, pedido de entrada. Exceção: numa tela que já é da Coterie (ex.: "Convites pendentes" na página da Coterie), "Convite" sozinho pode ficar, porque o contexto já diz qual é.
 
 **Condição**:
-O conjunto Vitalidade, Força de Vontade e Fome de um Personagem; o Jogador compartilha tudo ou nada com a Coterie.
+O conjunto Vitalidade, Força de Vontade e Fome de um Personagem; o Narrador decide se ela aparece nas visões compartilhadas.
 _Avoid_: Status, estado vital, vida
 
 **Ficha**:
 O registro completo das características de um Personagem.
 _Avoid_: Sheet, character sheet
 
-**Ficha Liberada**:
-Estado em que o Narrador permite ao Jogador editar a Ficha além do dano e dos recursos do dia a dia; é o mecanismo de evolução no lugar de XP.
-_Avoid_: Ficha desbloqueada, modo edição, gastar XP
-
 **Nota**:
-Anotação livre que só o Jogador escreve na Ficha do próprio Personagem; o Narrador lê, a menos que o Jogador marque a Nota como privada.
+Anotação livre da Ficha, escrita e administrada pelo Narrador.
 _Avoid_: Observação, comentário, diário
 
 **Antagonistas**:
