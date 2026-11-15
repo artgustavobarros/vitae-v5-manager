@@ -1,0 +1,1 @@
+ALTER TABLE "relogio" ADD COLUMN "titulo_publico" text DEFAULT '' NOT NULL;

@@ -9,18 +9,24 @@ export const efeitoRelogioSchema = z.object({
   textoDesativacao: z.string().trim().min(1, 'Escreva o aviso de desativação.').max(2000),
 })
 
-export const relogioSchema = z.object({
+export const configuracaoRelogioSchema = z.object({
   id: z.string().uuid(),
   nome: z.string().trim().min(1, 'Dê um nome ao Relógio.').max(120),
-  tipo: z.string().trim().min(1, 'Informe o tipo de evento.').max(60, 'Use até 60 caracteres no tipo de evento.'),
-  descricao: z.string().trim().max(2000),
+  tituloPublico: z.string().trim().max(120, 'Use até 120 caracteres no título público.').optional(),
   total: z.number().int().min(1, 'Use pelo menos uma etapa.').max(100, 'Use até 100 etapas.'),
   atual: z.number().int().min(0),
-  perigo: z.enum(['aumenta', 'diminui']),
   visivel: z.boolean(),
-  efeitos: z.array(efeitoRelogioSchema).max(30),
 }).superRefine((relogio, ctx) => {
   if (relogio.atual > relogio.total) ctx.addIssue({ code: 'custom', path: ['atual'], message: 'O valor atual não pode ultrapassar o total de etapas.' })
+})
+
+// Compatibilidade com os dados antigos e o experimento de talismãs.
+export const relogioSchema = configuracaoRelogioSchema.safeExtend({
+  tipo: z.string().trim().min(1, 'Informe o tipo de evento.').max(60, 'Use até 60 caracteres no tipo de evento.'),
+  descricao: z.string().trim().max(2000),
+  perigo: z.enum(['aumenta', 'diminui']),
+  efeitos: z.array(efeitoRelogioSchema).max(30),
+}).superRefine((relogio, ctx) => {
   const ids = new Set<string>()
   for (const [i, efeito] of relogio.efeitos.entries()) {
     if (efeito.etapa > relogio.total) ctx.addIssue({ code: 'custom', path: ['efeitos', i, 'etapa'], message: 'A etapa do efeito não pode ultrapassar o total.' })
@@ -30,6 +36,7 @@ export const relogioSchema = z.object({
 })
 
 export type Relogio = z.infer<typeof relogioSchema>
+export type ConfiguracaoRelogio = z.infer<typeof configuracaoRelogioSchema>
 export type EfeitoRelogio = z.infer<typeof efeitoRelogioSchema>
 export type TendenciaRelogio = 'piora' | 'melhora'
 export type AvisoEfeitoRelogio = { efeitoId: string; titulo: string; texto: string; ativo: boolean }

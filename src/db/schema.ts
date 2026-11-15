@@ -138,6 +138,7 @@ export const preferenciaParadas = pgTable('preferencia_paradas', {
 export const relogio = pgTable('relogio', {
   id: uuid().primaryKey().defaultRandom(),
   nome: text().notNull(),
+  tituloPublico: text('titulo_publico').notNull().default(''),
   tipo: text().notNull(),
   descricao: text().notNull().default(''),
   total: integer().notNull(),
