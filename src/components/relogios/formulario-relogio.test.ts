@@ -26,27 +26,24 @@ function renderizar(relogio = dados) {
 }
 
 describe('Formulário do Relógio', () => {
-  it('oferece páginas numeradas e monta apenas os campos do efeito selecionado', () => {
+  it('oferece título, título público opcional, etapas e visibilidade sem configurações extras', () => {
     const html = renderizar()
-    expect(html.match(/role="tab"/g)).toHaveLength(3)
-    expect(html).toContain('Efeito 1')
-    expect(html).toContain('Efeito 2')
-    expect(html).toContain('Efeito 3')
-    expect(html).toContain('id="efeito-1-titulo"')
-    expect(html).not.toContain('id="efeito-2-titulo"')
-    expect(html).not.toContain('id="efeito-3-titulo"')
+    expect(html).toContain('Título público (opcional)')
+    expect(html).toContain('Total de etapas')
+    expect(html).toContain('Etapa inicial')
+    expect(html).toContain('Visível para o público')
+    expect(html).not.toMatch(/Tipo de evento|Descrição|perigo|Adicionar efeito|role="tab"/)
   })
 
   it('permite criar um Relógio sem efeitos', () => {
     const html = renderizar({ ...dados, efeitos: [] })
-    expect(html).toContain('Adicionar efeito')
+    expect(html).toContain('Título')
     expect(html).not.toContain('role="tab"')
     expect(html).toContain('Salvar Relógio')
   })
 
-  it('oferece controles acessíveis para percorrer a faixa de efeitos sem enviar o formulário', () => {
-    const html = renderizar()
-    expect(html).toMatch(/<button[^>]*type="button"[^>]*aria-label="Ver efeitos anteriores"/)
-    expect(html).toMatch(/<button[^>]*type="button"[^>]*aria-label="Ver próximos efeitos"/)
+  it('permite editar o título público existente', () => {
+    const html = renderizar({ ...dados, tituloPublico: 'A noite avança' })
+    expect(html).toContain('value="A noite avança"')
   })
 })

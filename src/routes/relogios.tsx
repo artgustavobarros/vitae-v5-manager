@@ -13,7 +13,8 @@ import {
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent } from '#/components/ui/card'
-import type { Relogio, RelogioSalvo } from '#/domain/relogios'
+import type { ConfiguracaoRelogio, RelogioSalvo } from '#/domain/relogios'
+import type { RelogioPublico } from '#/domain/exibicao-publica'
 import { carregarRelogios, moverRelogio, retirarRelogio, salvarRelogio } from '#/server/relogios'
 
 export const Route = createFileRoute('/relogios')({
@@ -29,20 +30,18 @@ export const Route = createFileRoute('/relogios')({
 
 function PaginaRelogios() {
   const relogios = Route.useLoaderData()
-  const { usuario } = Route.useRouteContext()
-  return <TelaRelogios relogios={relogios} narrador={usuario.papel === 'narrador'} />
+  return <TelaRelogios relogios={relogios} narrador={false} />
 }
 
-export function TelaRelogios({ relogios, narrador }: { relogios: RelogioSalvo[]; narrador: boolean }) {
+export function TelaRelogios({ relogios, narrador }: { relogios: (RelogioSalvo | RelogioPublico)[]; narrador: boolean }) {
   const router = useRouter()
-  const [edicao, setEdicao] = useState<{ relogio: Relogio; revisao: number | null } | null>(null)
-  const [retirada, setRetirada] = useState<RelogioSalvo | null>(null)
+  const [edicao, setEdicao] = useState<{ relogio: ConfiguracaoRelogio; revisao: number | null } | null>(null)
+  const [retirada, setRetirada] = useState<Pick<RelogioSalvo, 'id' | 'nome'> | null>(null)
   const [ocupado, setOcupado] = useState(false)
 
   function criar() {
     setEdicao({ revisao: null, relogio: {
-      id: crypto.randomUUID(), nome: '', tipo: 'Ameaça', descricao: '', total: 6, atual: 0,
-      perigo: 'aumenta', visivel: true, efeitos: [],
+      id: crypto.randomUUID(), nome: '', tituloPublico: '', total: 6, atual: 0, visivel: true,
     } })
   }
 
@@ -56,7 +55,7 @@ export function TelaRelogios({ relogios, narrador }: { relogios: RelogioSalvo[];
     } finally { setOcupado(false) }
   }
 
-  async function salvar(dados: Relogio) {
+  async function salvar(dados: ConfiguracaoRelogio) {
     if (!edicao) return
     await executar(async () => {
       await salvarRelogio({ data: { relogio: dados, revisao: edicao.revisao } })
@@ -72,7 +71,6 @@ export function TelaRelogios({ relogios, narrador }: { relogios: RelogioSalvo[];
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <h1 className="font-serif text-4xl">Relógios</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">Ameaças, objetivos e prazos da Crônica. Os efeitos acompanham cada avanço ou recuo.</p>
           </div>
           {narrador && <div className="flex flex-wrap gap-2">
             <LinkExibicaoPublica recurso="relogios" />
@@ -97,7 +95,6 @@ export function TelaRelogios({ relogios, narrador }: { relogios: RelogioSalvo[];
             ))}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Zero e o limite não encerram um Relógio. Somente o Narrador pode retirá-lo.</p>
       </div>
       {edicao && <FormularioRelogio dados={edicao.relogio} novo={edicao.revisao === null}
         onChange={(relogio) => setEdicao({ ...edicao, relogio })}
@@ -106,7 +103,7 @@ export function TelaRelogios({ relogios, narrador }: { relogios: RelogioSalvo[];
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Retirar Relógio?</AlertDialogTitle>
-            <AlertDialogDescription>“{retirada?.nome}” e seus efeitos sairão da página para todos. Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>“{retirada?.nome}” sairá da página para todos. Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={ocupado}>Cancelar</AlertDialogCancel>

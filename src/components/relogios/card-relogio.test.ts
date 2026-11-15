@@ -23,12 +23,20 @@ describe('Card do Relógio', () => {
     expect(html).not.toMatch(/aria-label="Diminuir Insônia"[^>]*disabled=""/)
   })
 
-  it('mostra o efeito ativo e a condição, sem controles para Jogadores', () => {
+  it('mostra somente título e etapas, sem extras nem controles para o público', () => {
     const html = renderizar()
-    expect(html).toContain('Ninguém dorme.')
-    expect(html).toContain('4 ou mais')
+    expect(html).toContain('Insônia')
+    expect(html).toContain('max="6" value="4"')
+    expect(html).not.toMatch(/Ameaça|Efeitos|Ninguém dorme|perigo|data-tendencia/)
     expect(html).not.toContain('<button')
-    expect(renderizar({ ...relogio, atual: 3 })).not.toContain('Ninguém dorme.')
+  })
+
+  it('usa o título público sem revelar o título interno, mas preserva o título do Narrador', () => {
+    const dados = { ...relogio, tituloPublico: 'A noite avança' }
+    const publico = renderizar(dados)
+    expect(publico).toContain('A noite avança')
+    expect(publico).not.toContain('Insônia')
+    expect(renderizar(dados, true)).toContain('Insônia')
   })
 
   it('mantém o card nos extremos e bloqueia apenas o movimento que ultrapassa o limite', () => {

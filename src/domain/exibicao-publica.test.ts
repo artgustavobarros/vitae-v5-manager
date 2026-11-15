@@ -82,11 +82,18 @@ describe('Exibição pública', () => {
     expect(publico.participantes[0].condicao).toBeUndefined()
   })
 
-  it('remove Relógios ocultos e não antecipa efeitos futuros nem textos de desativação', () => {
+  it('remove Relógios ocultos e envia apenas o título e as etapas públicas', () => {
     const publicos = filtrarRelogiosPublicos([relogio, { ...relogio, id: 'oculto', visivel: false }])
-    expect(publicos).toHaveLength(1)
-    expect(publicos[0].efeitos).toEqual([{ id: 'ativo', titulo: 'Alerta', etapa: 2, condicao: 'a_partir_de', textoAtivacao: 'Alarme!' }])
-    expect(JSON.stringify(publicos)).not.toMatch(/Emboscada|Armadilha|Fuga|alarme parou/)
+    expect(publicos).toEqual([{ id: 'relogio', nome: 'Cerco', total: 6, atual: 2, visivel: true, revisao: 1 }])
+  })
+
+  it('substitui o título interno pelo público antes de enviar os dados', () => {
+    const dados = { ...relogio, tituloPublico: 'Movimento nas ruas' }
+    const publicos = filtrarRelogiosPublicos([dados])
+    expect(publicos[0].nome).toBe('Movimento nas ruas')
+    expect(JSON.stringify(publicos)).not.toMatch(/Cerco|tituloPublico|Guardas|Emboscada/)
+    expect(dados.nome).toBe('Cerco')
+    expect(filtrarRelogiosPublicos([{ ...dados, tituloPublico: '  ' }])[0].nome).toBe('Cerco')
   })
 
   it('descarta notificações privadas e sanitiza invalidações', () => {

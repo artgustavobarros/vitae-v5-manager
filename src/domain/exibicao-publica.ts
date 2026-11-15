@@ -1,10 +1,8 @@
 import { filtrarCombateParaJogador, type Combate, type CombateVisivel, type InfoVisibilidadeJogador } from './combate'
 import type { EventoReal } from './eventos'
-import { efeitosAtivos, type RelogioSalvo } from './relogios'
+import type { RelogioSalvo } from './relogios'
 
-export type RelogioPublico = Omit<RelogioSalvo, 'efeitos'> & {
-  efeitos: Omit<RelogioSalvo['efeitos'][number], 'textoDesativacao'>[]
-}
+export type RelogioPublico = Pick<RelogioSalvo, 'id' | 'nome' | 'total' | 'atual' | 'visivel' | 'revisao'>
 
 /** A mesa não é um Jogador: não herda propriedade nem acesso por Coterie. */
 export function filtrarCombatePublico(
@@ -22,8 +20,12 @@ export function filtrarCombatePublico(
 
 export function filtrarRelogiosPublicos(relogios: RelogioSalvo[]): RelogioPublico[] {
   return relogios.filter((relogio) => relogio.visivel).map((relogio) => ({
-    ...relogio,
-    efeitos: efeitosAtivos(relogio).map(({ id, titulo, condicao, etapa, textoAtivacao }) => ({ id, titulo, condicao, etapa, textoAtivacao })),
+    id: relogio.id,
+    nome: relogio.tituloPublico?.trim() || relogio.nome,
+    total: relogio.total,
+    atual: relogio.atual,
+    visivel: relogio.visivel,
+    revisao: relogio.revisao,
   }))
 }
 

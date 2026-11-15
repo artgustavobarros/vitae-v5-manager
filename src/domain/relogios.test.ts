@@ -14,6 +14,12 @@ const relogio: Relogio = {
 }
 
 describe('Relógios', () => {
+  it('aceita e normaliza o título público opcional, limitando-o a 120 caracteres', () => {
+    expect(relogioSchema.parse({ ...relogio, tituloPublico: '  Nas ruas  ' })).toHaveProperty('tituloPublico', 'Nas ruas')
+    expect(relogioSchema.safeParse({ ...relogio, tituloPublico: 'A'.repeat(121) }).success).toBe(false)
+    expect(relogioSchema.safeParse(relogio).success).toBe(true)
+    expect(relogioSchema.safeParse({ ...relogio, tituloPublico: '' }).success).toBe(true)
+  })
   it('ativa em 4+, mantém em 5, desativa ao voltar para 3 e permite reativar', () => {
     const entrada = alterarValorRelogio(relogio, 4)
     expect(entrada.avisos).toEqual([{ efeitoId: efeito.id, titulo: efeito.titulo, texto: efeito.textoAtivacao, ativo: true }])

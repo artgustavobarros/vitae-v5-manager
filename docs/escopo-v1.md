@@ -119,14 +119,14 @@ Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem 
 ## Relógios
 
 - Página própria, acessível a Narrador e Jogadores, com cartões de situações da Crônica.
-- Só o Narrador cria, edita, aumenta, diminui e retira Relógios. Ele escolhe nome, tipo de evento, descrição, total de etapas e etapa inicial entre zero e o total.
+- Só o Narrador cria, edita, aumenta, diminui e retira Relógios. Ele escolhe título, título público opcional, total de etapas e etapa inicial entre zero e o total.
+- O cartão mostra somente o título e um Relógio grande com suas etapas. Os botões de aumentar e diminuir aparecem apenas para o Narrador; ele também pode editar ou retirar o Relógio.
+- Quando definido, o título público substitui o título interno para Jogadores e no link público, inclusive nos dados enviados. Sem título público, todos veem o título principal.
 - Chegar a zero ou ao total não encerra, oculta nem retira o Relógio. Os controles não ultrapassam esses limites.
 - O Narrador pode ocultar um cartão inteiro. Quando visível, todos os Jogadores da Crônica o consultam; não há seleção por Coterie nesta entrega.
-- Cada Efeito de Relógio define uma condição inclusiva (etapa ou acima; etapa ou abaixo), um título e textos próprios de ativação e desativação. Os efeitos são reavaliados em cada mudança, inclusive quando o valor pula uma etapa.
-- Entrar ou sair da condição mostra o modal correspondente para todos que veem o Relógio, com o site aberto, inclusive em outras páginas. Permanecer na mesma faixa não repete o aviso; entrar novamente repete. Os efeitos ativos ficam no cartão. Ao criar um Relógio em uma etapa com efeitos ativos, seus avisos de ativação também são exibidos.
-- O Narrador escolhe se aumentar ou diminuir o valor eleva o perigo. A piora recebe destaque vinho/vermelho; a melhora recebe verde. Texto e ícone acompanham a cor; movimento reduzido desliga o realce animado.
-- A atualização é manual e compartilhada via SSE. Reconectar atualiza os valores e efeitos ativos; não reproduz modais perdidos durante a desconexão. Sem vínculo automático com Fichas, Combate, dados ou tempo real de relógio.
-- Limites de entrada: até 100 etapas e 30 Efeitos por Relógio. A retirada manual exige confirmação.
+- Tipo, descrição, efeitos e indicadores de perigo não aparecem na interface. Dados antigos permanecem armazenados, mas não disparam avisos nem impedem alterar o total de etapas.
+- A atualização é manual e compartilhada via SSE. Reconectar atualiza os valores. Sem vínculo automático com Fichas, Combate, dados ou tempo real de relógio.
+- Limite de entrada: até 100 etapas. A retirada manual exige confirmação.
 
 ## Sorteios
 

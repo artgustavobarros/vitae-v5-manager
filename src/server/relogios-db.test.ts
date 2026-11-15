@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 
 import { db } from '#/db'
+import { relogio as tabelaRelogio } from '#/db/schema'
 import type { Relogio } from '#/domain/relogios'
 import { listarRelogiosNoBanco, moverRelogioNoBanco, retirarRelogioNoBanco, salvarRelogioNoBanco } from './relogios-db'
 
@@ -22,37 +23,48 @@ async function semPersistir(executar: (tx: Parameters<Parameters<typeof db.trans
 }
 
 describe('Relógios persistidos', () => {
-  it('ao revelar, anuncia apenas os efeitos atuais sem expor textos removidos do Relógio oculto', async () => {
+  it('salva o título público e permite reduzir etapas sem apagar os dados antigos', async () => {
     await semPersistir(async (tx) => {
-      const entrada = { ...novoRelogio(), atual: 6, visivel: false }
-      const criado = await salvarRelogioNoBanco('narrador', entrada, null, tx)
-      const efeitoPublico = { ...entrada.efeitos[0], id: randomUUID(), titulo: 'Alerta público', textoAtivacao: 'A cidade está em alerta.' }
-      const revelado = await salvarRelogioNoBanco('narrador', { ...entrada, visivel: true, efeitos: [efeitoPublico] }, criado.relogio.revisao, tx)
-      expect(revelado.avisos).toEqual([{ efeitoId: efeitoPublico.id, titulo: 'Alerta público', texto: 'A cidade está em alerta.', ativo: true }])
+      const entrada = novoRelogio()
+      const [antigo] = await tx.insert(tabelaRelogio).values(entrada).returning()
+      const editado = await salvarRelogioNoBanco('narrador', {
+        ...entrada, tituloPublico: 'Movimento nas ruas', total: 3, atual: 0,
+      }, antigo.revisao, tx)
+      expect(editado.relogio).toMatchObject({
+        tituloPublico: 'Movimento nas ruas', total: 3, atual: 0, efeitos: entrada.efeitos,
+      })
     })
   })
 
-  it('calcula a piora ao ampliar o total e mover além do limite antigo', async () => {
+  it('revela um Relógio sem avisos de efeitos nem perda do título público', async () => {
+    await semPersistir(async (tx) => {
+      const entrada = { ...novoRelogio(), tituloPublico: 'Nas ruas', atual: 6, visivel: false }
+      const criado = await salvarRelogioNoBanco('narrador', entrada, null, tx)
+      const revelado = await salvarRelogioNoBanco('narrador', { ...entrada, visivel: true }, criado.relogio.revisao, tx)
+      expect(revelado.relogio).toMatchObject({ visivel: true, tituloPublico: 'Nas ruas' })
+      expect(revelado).not.toHaveProperty('avisos')
+    })
+  })
+
+  it('permite ampliar o total e mover além do limite antigo sem indicadores de perigo', async () => {
     await semPersistir(async (tx) => {
       const entrada = { ...novoRelogio(), atual: 6 }
       const criado = await salvarRelogioNoBanco('narrador', entrada, null, tx)
       const editado = await salvarRelogioNoBanco('narrador', { ...entrada, total: 8, atual: 7 }, criado.relogio.revisao, tx)
-      expect(editado.relogio).toMatchObject({ total: 8, atual: 7, ultimaTendencia: 'piora' })
-      expect(editado.avisos).toEqual([])
+      expect(editado.relogio).toMatchObject({ total: 8, atual: 7, ultimaTendencia: null })
     })
   })
 
-  it('salva o início, reavalia efeitos nos dois sentidos e só retira manualmente', async () => {
+  it('salva o início, move nos dois sentidos e só retira manualmente', async () => {
     await semPersistir(async (tx) => {
       const entrada = novoRelogio()
       const criado = await salvarRelogioNoBanco('narrador', entrada, null, tx)
       expect(criado.relogio.atual).toBe(3)
-      expect(criado.avisos).toEqual([])
       const subiu = await moverRelogioNoBanco('narrador', entrada.id, 1, tx)
-      expect(subiu.relogio).toMatchObject({ atual: 4, ultimaTendencia: 'piora' })
-      expect(subiu.avisos[0]).toMatchObject({ ativo: true, texto: 'Ninguém dorme.' })
+      expect(subiu.relogio).toMatchObject({ atual: 4, ultimaTendencia: null })
+      expect(subiu).not.toHaveProperty('avisos')
       const desceu = await moverRelogioNoBanco('narrador', entrada.id, -1, tx)
-      expect(desceu.avisos[0]).toMatchObject({ ativo: false, texto: 'Algumas pessoas voltaram a dormir.' })
+      expect(desceu.relogio.atual).toBe(3)
       for (let i = 0; i < 8; i++) await moverRelogioNoBanco('narrador', entrada.id, -1, tx)
       expect((await listarRelogiosNoBanco('jogador', tx)).find((r) => r.id === entrada.id)?.atual).toBe(0)
       for (let i = 0; i < 8; i++) await moverRelogioNoBanco('narrador', entrada.id, 1, tx)
