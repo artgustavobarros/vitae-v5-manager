@@ -6,14 +6,13 @@ import { aplicarPredador } from '#/domain/criacao'
 import { tipoPredador } from '#/domain/catalogo'
 import { fichaSchema } from '#/domain/ficha'
 
-// O transporte, o banco e a entrega de notificações são as fronteiras externas.
+// O transporte e o banco são as fronteiras externas.
 const memoria = vi.hoisted(() => ({
   usuario: { id: 'n1', papel: 'narrador' as 'narrador' | 'jogador', nome: 'Narrador' },
   personagem: {} as {
     id: string; donoId: string; nome: string; status: 'ativo' | 'rascunho' | 'arquivado';
     tipo: 'jogador' | 'nao_jogador'; atribuidoA: null; ficha: Ficha; apagado?: boolean;
   },
-  notificacoes: [] as { usuarioId: string; texto: string }[],
 }))
 
 vi.mock('@tanstack/react-start', () => ({
@@ -29,12 +28,6 @@ vi.mock('@tanstack/react-start', () => ({
 }))
 vi.mock('#/server/sessao', () => ({ exigirUsuario: {}, exigirNarrador: {} }))
 vi.mock('#/server/eventos', () => ({ barramento: { emitir: () => {} } }))
-vi.mock('#/server/enviar-notificacao', () => ({
-  enviarNotificacao: async (notificacao: { usuarioId: string; texto: string }) => {
-    memoria.notificacoes.push(notificacao)
-  },
-  notificarNarradores: async () => {},
-}))
 vi.mock('#/db', async () => {
   const { cronica } = await import('#/db/schema')
   const banco = {
@@ -68,7 +61,6 @@ beforeEach(() => {
     id: 'p1', donoId: 'j1', nome: 'Helena', status: 'ativo', tipo: 'jogador', atribuidoA: null,
     ficha: { ...fichaNeofito(), cla: 'brujah', vantagens: [{ id: 'vantagem-modo-nuit', nivel: 2 }] },
   }
-  memoria.notificacoes = []
 })
 
 describe('salvarFicha', () => {
@@ -148,7 +140,7 @@ describe('salvarFicha', () => {
       } })
       expect(memoria.personagem.ficha.cla).toBe(cla)
     }
-    expect(memoria.notificacoes).toEqual([])
+
   })
 
   it('permite ao Narrador concluir sem validação de criação do Jogador', async () => {
@@ -158,24 +150,22 @@ describe('salvarFicha', () => {
     expect(memoria.personagem.status).toBe('ativo')
   })
 
-  it('usa a Potência final de Sanguessuga no Rascunho e notifica a perda uma única vez', async () => {
+  it('usa a Potência final de Sanguessuga no Rascunho', async () => {
     memoria.personagem.status = 'rascunho'
     const ficha = { ...memoria.personagem.ficha, tipoPredador: 'tipo-predador-sanguessuga' }
     const salva = await salvarFicha({ data: { id: 'p1', nome: 'Helena', ficha } })
     expect(salva.potenciaSangue).toBe(2)
     expect(salva.vantagens).toEqual([])
     await salvarFicha({ data: { id: 'p1', nome: 'Helena', ficha: salva } })
-    expect(memoria.notificacoes).toHaveLength(1)
+
     expect(memoria.personagem.ficha.potenciaSangue).toBe(2)
   })
 
-  it('avisa o Jogador quando a edição do Narrador remove Modo Nuit por Potência', async () => {
+  it('remove Modo Nuit por Potência', async () => {
     await salvarFicha({ data: {
       id: 'p1', nome: 'Helena', ficha: { ...memoria.personagem.ficha, potenciaSangue: 2 },
     } })
     expect(memoria.personagem.ficha.vantagens).toEqual([])
-    expect(memoria.notificacoes).toContainEqual(expect.objectContaining({
-      usuarioId: 'j1', texto: expect.stringContaining('Helena perdeu Modo Nuit'),
-    }))
+
   })
 })

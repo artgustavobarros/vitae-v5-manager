@@ -39,41 +39,8 @@ export type Relogio = z.infer<typeof relogioSchema>
 export type ConfiguracaoRelogio = z.infer<typeof configuracaoRelogioSchema>
 export type EfeitoRelogio = z.infer<typeof efeitoRelogioSchema>
 export type TendenciaRelogio = 'piora' | 'melhora'
-export type AvisoEfeitoRelogio = { efeitoId: string; titulo: string; texto: string; ativo: boolean }
 export type RelogioSalvo = Relogio & { revisao: number; ultimaTendencia: TendenciaRelogio | null }
-export type AvisoRelogio = AvisoEfeitoRelogio & {
-  id: string; relogioId: string; nomeRelogio: string; tendencia: TendenciaRelogio | null
-}
-
-function efeitoAtivo(efeito: Pick<EfeitoRelogio, 'etapa' | 'condicao'>, valor: number) {
-  return efeito.condicao === 'a_partir_de' ? valor >= efeito.etapa : valor <= efeito.etapa
-}
-
-export function efeitosAtivos<T extends Pick<EfeitoRelogio, 'etapa' | 'condicao'>>(relogio: { atual: number; efeitos: T[] }) {
-  return relogio.efeitos.filter((efeito) => efeitoAtivo(efeito, relogio.atual))
-}
-
-export function transicoesEfeitos(anterior: Relogio | null, atual: Relogio): AvisoEfeitoRelogio[] {
-  const anteriores = new Map(anterior?.efeitos.map((efeito) => [efeito.id, efeito]) ?? [])
-  const atuais = new Map(atual.efeitos.map((efeito) => [efeito.id, efeito]))
-  const avisos: AvisoEfeitoRelogio[] = []
-  for (const id of new Set([...anteriores.keys(), ...atuais.keys()])) {
-    const antes = anteriores.get(id)
-    const depois = atuais.get(id)
-    const estavaAtivo = Boolean(antes && anterior && efeitoAtivo(antes, anterior.atual))
-    const ativo = Boolean(depois && efeitoAtivo(depois, atual.atual))
-    const efeito = depois ?? antes
-    if (efeito && estavaAtivo !== ativo) avisos.push({
-      efeitoId: id, titulo: efeito.titulo, ativo,
-      texto: ativo ? efeito.textoAtivacao : efeito.textoDesativacao,
-    })
-  }
-  return avisos
-}
-
 export function alterarValorRelogio(relogio: Relogio, valor: number) {
   const atual = Math.max(0, Math.min(relogio.total, valor))
-  const tendencia: TendenciaRelogio | null = atual === relogio.atual ? null
-    : (atual > relogio.atual) === (relogio.perigo === 'aumenta') ? 'piora' : 'melhora'
-  return { atual, tendencia, avisos: transicoesEfeitos(relogio, { ...relogio, atual }) }
+  return { atual }
 }

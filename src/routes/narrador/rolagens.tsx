@@ -736,7 +736,7 @@ function PaginaSorteios() {
           <DialogHeader>
             <DialogTitle className="font-serif text-xl">Aplicar Compulsão Ativa</DialogTitle>
             <DialogDescription>
-              O Jogador receberá uma notificação imediata e a Compulsão ficará ativa em sua Ficha.
+              A Compulsão ficará ativa na Ficha do Personagem até você encerrá-la.
             </DialogDescription>
           </DialogHeader>
 

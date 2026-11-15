@@ -29,7 +29,7 @@ vi.mock('#/server/combate', () => ({
   alternarRevelarVitalidadeCombateServer: vi.fn(), definirRevelarCondicaoCombateServer: vi.fn(),
   aplicarDanoInimigoCombateServer: vi.fn(), atualizarParticipanteInimigoServer: vi.fn(),
   avancarTurnoCombateServer: vi.fn(), carregarCombate: vi.fn(), encerrarCombateServer: vi.fn(),
-  iniciarCombateServer: vi.fn(), listarCoteriesParaCombate: vi.fn(), listarPersonagensParaCombate: vi.fn(), removerParticipanteCombateServer: vi.fn(),
+  iniciarCombateServer: vi.fn(), listarPersonagensParaCombate: vi.fn(), removerParticipanteCombateServer: vi.fn(),
   reordenarParticipantesCombateServer: vi.fn(), voltarTurnoCombateServer: vi.fn(),
 }))
 vi.mock('#/server/pre-combate', () => ({
@@ -59,7 +59,7 @@ async function montar(visao: 'publico' | 'narrador') {
       <Button onClick={() => setCombate((atual) => removerParticipante(atual, atual.participantes[atual.turnoAtual].id))}>Remover quem age</Button>
       <Button onClick={() => setCombate(avancarTurno)}>Avançar turno de teste</Button>
       <output aria-label="Ordem salva">{combate.participantes.map((p) => p.nome).join(', ')}</output>
-      {visao === 'publico' ? <CombatePublico combate={filtrarCombatePublico(combate)} /> : <VisaoNarrador combate={combate} modelos={[]} personagens={[]} preCombates={[]} coteries={[]} />}
+      {visao === 'publico' ? <CombatePublico combate={filtrarCombatePublico(combate)} /> : <VisaoNarrador combate={combate} modelos={[]} personagens={[]} preCombates={[]} />}
     </>
   }
   const router = createRouter({ routeTree: createRootRoute({ component: Mesa }), history: createMemoryHistory({ initialEntries: ['/'] }) })

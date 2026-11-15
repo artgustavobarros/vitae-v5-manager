@@ -23,7 +23,7 @@
     "test": "vitest run",
     "test:browser": "vitest run --project browser",
     "check:production-assets": "tsx scripts/check-production-assets.ts",
-    "lint": "react-doctor --yes --no-score --no-supply-chain --blocking error 'src/routes/convite/$token.tsx' src/routes/paradas.tsx",
+    "lint": "react-doctor --yes --no-score --no-supply-chain --blocking error src/routes/paradas.tsx src/components/grid-paradas.tsx",
     "typecheck": "tsx scripts/check-ui-rules.ts && tsc --noEmit"
   },
   "dependencies": {

@@ -31,11 +31,7 @@ function Personagens() {
           <ListaPersonagens
             itens={personagens.map((p) => ({
               ...p,
-              detalhe:
-                p.jogador ??
-                (p.atribuidoA
-                  ? `Atribuído a ${p.atribuidoA} · esperando resposta`
-                  : undefined),
+              detalhe: p.jogador ?? undefined,
             }))}
             gerenciavel
             onAlterado={() => router.invalidate()}

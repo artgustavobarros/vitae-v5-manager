@@ -1,6 +1,7 @@
 import { createHmac } from 'node:crypto'
 import { betterAuth } from 'better-auth'
 import { memoryAdapter } from 'better-auth/adapters/memory'
+import { createAuthEndpoint } from 'better-auth/api'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 let auth: typeof import('./auth').auth
@@ -10,17 +11,18 @@ beforeAll(async () => {
   vi.stubEnv('BETTER_AUTH_SECRET', 'segredo-exclusivo-de-teste-com-mais-de-32-caracteres')
   vi.stubEnv('GOOGLE_CLIENT_ID', 'teste.apps.googleusercontent.com')
   vi.stubEnv('GOOGLE_CLIENT_SECRET', 'segredo-google-de-teste')
+  vi.stubEnv('NARRADOR_EMAIL', 'narrador@teste.invalid')
   auth = (await import('./auth')).auth
 })
 
 afterAll(() => vi.unstubAllEnvs())
 
-async function comSessaoAntiga(provedor: 'google' | 'credential') {
+async function comSessaoAntiga(provedor: 'google' | 'credential', narrador = false) {
   const agora = new Date()
   const banco = {
     user: [{
-      id: 'pessoa-legada', name: 'Pessoa legada', email: 'legado@teste.invalid',
-      emailVerified: true, image: null, papel: 'jogador', createdAt: agora, updatedAt: agora,
+      id: 'pessoa-legada', name: 'Pessoa legada', email: narrador ? 'narrador@teste.invalid' : 'legado@teste.invalid',
+      emailVerified: true, image: null, papel: narrador ? 'narrador' : 'jogador', createdAt: agora, updatedAt: agora,
     }],
     account: [{
       id: 'conta-legada', userId: 'pessoa-legada', accountId: 'pessoa-legada', providerId: provedor,
@@ -33,7 +35,13 @@ async function comSessaoAntiga(provedor: 'google' | 'credential') {
       ipAddress: null, userAgent: null,
     }],
   }
-  const instancia = betterAuth({ ...auth.options, database: memoryAdapter(banco) })
+  const instancia = betterAuth({ ...auth.options, database: memoryAdapter(banco), plugins: [{
+    id: 'sessao-de-teste',
+    endpoints: {
+      criarSessaoTeste: createAuthEndpoint('/sessao-de-teste', { method: 'GET' }, async (ctx) =>
+        ctx.json(await ctx.context.internalAdapter.createSession('pessoa-legada'))),
+    },
+  }] })
   const contexto = await instancia.$context
   const assinatura = createHmac('sha256', contexto.secret).update('token-de-teste').digest('base64')
   const headers = new Headers({
@@ -51,6 +59,21 @@ function enviar(caminho: string, body: Record<string, unknown>) {
 }
 
 describe('Acesso exclusivo pelo Google', () => {
+  it('não cria uma nova sessão para conta legada de Jogador', async () => {
+    const { instancia, banco } = await comSessaoAntiga('google')
+    const resposta = await instancia.handler(new Request('http://localhost:3005/api/auth/sessao-de-teste'))
+    expect(resposta.status).toBe(403)
+    expect(await resposta.json()).toHaveProperty('message', 'somente_narrador')
+    expect(banco.session).toHaveLength(1)
+  })
+
+  it('cria uma nova sessão para o Narrador configurado', async () => {
+    const { instancia } = await comSessaoAntiga('google', true)
+    const resposta = await instancia.handler(new Request('http://localhost:3005/api/auth/sessao-de-teste'))
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toHaveProperty('userId', 'pessoa-legada')
+  })
+
   it('recusa e revoga uma sessão anterior sem vínculo Google', async () => {
     const { instancia, headers, banco } = await comSessaoAntiga('credential')
     expect(await instancia.api.getSession({ headers })).toBeNull()
@@ -59,10 +82,18 @@ describe('Acesso exclusivo pelo Google', () => {
     expect(banco.account).toHaveLength(1)
   })
 
-  it('preserva uma sessão anterior com vínculo Google', async () => {
-    const { instancia, headers, banco } = await comSessaoAntiga('google')
+  it('preserva uma sessão Google do Narrador configurado', async () => {
+    const { instancia, headers, banco } = await comSessaoAntiga('google', true)
     expect(await instancia.api.getSession({ headers })).toMatchObject({ user: { id: 'pessoa-legada' } })
     expect(banco.session).toHaveLength(1)
+  })
+
+  it('revoga a sessão Google de Jogador sem apagar sua conta', async () => {
+    const { instancia, headers, banco } = await comSessaoAntiga('google')
+    expect(await instancia.api.getSession({ headers })).toBeNull()
+    expect(banco.session).toHaveLength(0)
+    expect(banco.user).toHaveLength(1)
+    expect(banco.account).toHaveLength(1)
   })
 
   it('mantém anônima uma requisição sem sessão', async () => {

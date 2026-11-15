@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import { fichaNeofito } from './ficha'
 import {
   listarParadas,
   encontrarParadasRepetidas,
@@ -18,7 +17,7 @@ const personalizada: ParadaPersonalizada = {
   nome: 'Interrogar com calma', atributo: 'manipulacao', habilidade: 'intimidacao',
 }
 
-describe('Paradas do Personagem', () => {
+describe('Catálogo de Paradas', () => {
   it('avisa o título de uma combinação padrão repetida, mesmo com outro nome', () => {
     expect(encontrarParadasRepetidas([], { ...personalizada, nome: 'Ameaçar', atributo: 'carisma' }).map((p) => p.nome))
       .toEqual(['Intimidar pela presença'])
@@ -31,12 +30,13 @@ describe('Paradas do Personagem', () => {
     expect(encontrarParadasRepetidas([personalizada], { ...personalizada, atributo: 'vigor' })).toEqual([])
   })
 
-  it('usa a mesma definição compartilhada e calcula os valores de cada Ficha', () => {
-    const primeira = fichaNeofito()
-    primeira.atributos.manipulacao = 4
-    primeira.habilidades.intimidacao.valor = 2
-    expect(listarParadas(primeira, [personalizada]).find((p) => p.id === personalizada.id)?.total).toBe(6)
-    expect(listarParadas(fichaNeofito(), [personalizada]).find((p) => p.id === personalizada.id)?.total).toBe(1)
+  it('descreve a composição sem valores de Ficha ou total de dados', () => {
+    const parada = listarParadas([personalizada]).find((p) => p.id === personalizada.id)!
+    expect(parada).toEqual({ ...personalizada, atributoNome: 'Manipulação', habilidadeNome: 'Intimidação',
+      grupo: 'social', personalizada: true })
+    expect(parada).not.toHaveProperty('total')
+    expect(parada).not.toHaveProperty('atributoValor')
+    expect(parada).not.toHaveProperty('habilidadeValor')
   })
 
   it('aplica ordens pessoais independentes ao mesmo catálogo, sem alterar as definições', () => {
@@ -57,7 +57,7 @@ describe('Paradas do Personagem', () => {
   })
 
   it('restaura a ordem salva, ignora ids removidos e duplicados e mantém Paradas novas', () => {
-    const paradas = listarParadas(fichaNeofito(), [personalizada], [personalizada.id, 'removida', 'padrao-atirar', personalizada.id])
+    const paradas = listarParadas([personalizada], [personalizada.id, 'removida', 'padrao-atirar', personalizada.id])
     expect(paradas.slice(0, 3).map((p) => p.id)).toEqual([personalizada.id, 'padrao-atirar', 'padrao-intimidar-presenca'])
     expect(paradas).toHaveLength(18)
     expect(paradas[0].personalizada).toBe(true)
@@ -65,20 +65,20 @@ describe('Paradas do Personagem', () => {
   })
 
   it('move uma Parada entre posições sem mudar os dados ou perder as demais', () => {
-    const paradas = listarParadas(fichaNeofito(), [])
+    const paradas = listarParadas([])
     const ids = reordenarParadas(paradas, 'padrao-convencer', 'padrao-intimidar-presenca')
     expect(ids.slice(0, 3)).toEqual(['padrao-convencer', 'padrao-intimidar-presenca', 'padrao-intimidar-ameacas'])
     expect(ids).toHaveLength(17)
     expect(paradas[0].id).toBe('padrao-intimidar-presenca')
-    const restauradas = listarParadas(fichaNeofito(), [], ids)
+    const restauradas = listarParadas([], ids)
     expect(reordenarParadas(restauradas, 'padrao-convencer', 'padrao-intimidar-ameacas').slice(0, 3))
       .toEqual(['padrao-intimidar-presenca', 'padrao-intimidar-ameacas', 'padrao-convencer'])
   })
 
   it('reordena os ids visíveis sem excluir Paradas ocultas pelo filtro', () => {
-    const paradas = listarParadas(fichaNeofito(), [])
+    const paradas = listarParadas([])
     const ids = reordenarParadas(paradas, 'padrao-atirar', 'padrao-furtividade')
-    const restauradas = listarParadas(fichaNeofito(), [], ids)
+    const restauradas = listarParadas([], ids)
     expect(filtrarParadas(restauradas, 'fisico').slice(0, 2).map((p) => p.id))
       .toEqual(['padrao-atirar', 'padrao-furtividade'])
     expect(filtrarParadas(restauradas, 'social').map((p) => p.id))
@@ -87,40 +87,30 @@ describe('Paradas do Personagem', () => {
   })
 
   it('recusa origem ou destino inexistentes e aceita soltar no mesmo lugar', () => {
-    const paradas = listarParadas(fichaNeofito(), [])
+    const paradas = listarParadas([])
     expect(() => reordenarParadas(paradas, 'inexistente', 'padrao-atirar')).toThrow('não encontrada')
     expect(() => reordenarParadas(paradas, 'padrao-atirar', 'inexistente')).toThrow('não encontrada')
     expect(reordenarParadas(paradas, 'padrao-atirar', 'padrao-atirar')).toEqual(paradas.map((p) => p.id))
   })
 
   it('classifica pelo grupo da Habilidade mesmo quando o Atributo é de outro grupo', () => {
-    const paradas = listarParadas(fichaNeofito(), [{ ...personalizada, atributo: 'forca' }])
+    const paradas = listarParadas([{ ...personalizada, atributo: 'forca' }])
     expect(paradas.find((p) => p.id === 'padrao-atirar')?.grupo).toBe('fisico')
     expect(paradas.find((p) => p.id === personalizada.id)?.grupo).toBe('social')
   })
 
   it('combina filtros de tipo e busca sem acentos, incluindo Personalizadas', () => {
-    const paradas = listarParadas(fichaNeofito(), [personalizada])
+    const paradas = listarParadas([personalizada])
     expect(filtrarParadas(paradas, 'fisico', 'AUTOCONTROLE').map((p) => p.nome)).toEqual(['Atirar com precisão'])
     expect(filtrarParadas(paradas, 'social', 'intimidacao')).toHaveLength(3)
     expect(filtrarParadas(paradas, 'mental', 'intimidacao')).toEqual([])
     expect(filtrarParadas(paradas, 'todos', '  ')).toHaveLength(18)
   })
 
-  it('calcula Atributo + Habilidade e acompanha mudanças na Ficha', () => {
-    const ficha = fichaNeofito()
-    ficha.atributos.manipulacao = 3
-    ficha.habilidades.intimidacao.valor = 2
-    const primeira = listarParadas(ficha, [personalizada]).find((p) => p.id === personalizada.id)!
-    expect(primeira).toMatchObject({ atributoValor: 3, habilidadeValor: 2, total: 5, personalizada: true })
-    ficha.atributos.manipulacao = 4
-    expect(listarParadas(ficha, [personalizada]).find((p) => p.id === personalizada.id)?.total).toBe(6)
-  })
-
-  it('mantém as sugestões padrão e calcula Habilidade zero sem penalidade inventada', () => {
-    const paradas = listarParadas(fichaNeofito(), [])
+  it('mantém as sugestões padrão e as combinações alternativas', () => {
+    const paradas = listarParadas([])
     expect(paradas.length).toBeGreaterThan(0)
-    expect(paradas.every((p) => p.total === 1 && !p.personalizada)).toBe(true)
+    expect(paradas.every((p) => !p.personalizada)).toBe(true)
     expect(paradas.filter((p) => p.habilidade === 'intimidacao').map((p) => p.atributo))
       .toEqual(expect.arrayContaining(['carisma', 'manipulacao']))
     expect(new Set(PARADAS_PADRAO.map((p) => p.id)).size).toBe(PARADAS_PADRAO.length)

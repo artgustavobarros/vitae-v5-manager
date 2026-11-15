@@ -1,10 +1,10 @@
-const SEM_CONVITE = 'Não foi possível criar a conta. Para entrar na Crônica, peça ao Narrador um Convite para a Crônica.'
+const SOMENTE_NARRADOR = 'Esta área é exclusiva do Narrador. Para acompanhar a mesa, use o link público compartilhado por ele.'
 
 const MENSAGENS: Record<string, string> = {
-  sem_convite: SEM_CONVITE,
-  unable_to_create_user: SEM_CONVITE,
-  failed_to_create_user: SEM_CONVITE,
-  signup_disabled: SEM_CONVITE,
+  somente_narrador: SOMENTE_NARRADOR,
+  unable_to_create_user: SOMENTE_NARRADOR,
+  failed_to_create_user: SOMENTE_NARRADOR,
+  signup_disabled: SOMENTE_NARRADOR,
   account_not_linked:
     'Esta conta ainda não tem Google vinculado. Peça ajuda ao Narrador.',
   account_already_linked_to_different_user: 'Essa conta Google já está ligada a outra conta da Crônica.',

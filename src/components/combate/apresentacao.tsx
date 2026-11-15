@@ -1,12 +1,8 @@
-import { useRouter } from '@tanstack/react-router'
 import { cn } from 'cn'
-import { ArrowRight, Play, Plus, Skull, Swords, X } from 'lucide-react'
+import { ArrowRight, Plus, Skull, Swords, X } from 'lucide-react'
 import { useState, type ComponentType, type ReactNode } from 'react'
-import { toast } from 'sonner'
 
-import { BarraApp } from '#/components/barra-app'
 import { CardCombate } from '#/components/combate/card-combate'
-import { BadgeEspecial } from '#/components/badge-especial'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { CardContent, CardHeader, CardTitle } from '#/components/ui/card'
@@ -20,8 +16,6 @@ import {
 } from '#/domain/combate'
 import { useCaixasDano } from '#/components/ficha/estado'
 import type { Dano } from '#/domain/trilhas'
-import { avancarTurnoCombateServer, alternarCondicaoParticipanteCombateServer } from '#/server/combate'
-import { marcar } from '#/server/personagens'
 
 function obterClasseCorEstadoSaude(estado: EstadoSaude): string {
   switch (estado) {
@@ -274,12 +268,13 @@ export function BadgesCondicoes({
   participanteId: string
   condicoes?: string[]
   podeEditar: boolean
-  onAlternarCondicao: (participanteId: string, condicaoId: string) => Promise<void>
+  onAlternarCondicao?: (participanteId: string, condicaoId: string) => Promise<void>
   ehVampiro?: boolean
 }) {
   const [salvandoId, setSalvandoId] = useState<string | null>(null)
 
   async function handleToggle(condId: string) {
+    if (!podeEditar || !onAlternarCondicao) return
     try {
       setSalvandoId(condId)
       await onAlternarCondicao(participanteId, condId)
@@ -393,6 +388,7 @@ export function BadgesCondicoes({
               valores={condicoes}
               disabled={salvandoId !== null}
               onChange={async (novasCondicoes) => {
+                if (!podeEditar || !onAlternarCondicao) return
                 const alteradas = [...new Set([...condicoes, ...novasCondicoes])]
                   .filter((id) => condicoes.includes(id) !== novasCondicoes.includes(id))
                 try {
@@ -413,7 +409,7 @@ export function BadgesCondicoes({
 }
 
 
-function CardInimigoIncapacitadoJogador({
+function CardInimigoIncapacitadoPublico({
   part,
 }: {
   part: ParticipanteVisivel
@@ -470,25 +466,16 @@ function CardInimigoIncapacitadoJogador({
 }
 
 // ==========================================
-// VISÃO DO JOGADOR
+// VISÃO PÚBLICA
 // ==========================================
 function ListaParticipantes({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-export function VisaoJogador({ combate: entrada, publico = false, ContainerParticipantes = ListaParticipantes }: {
+export function VisaoPublicaCombate({ combate, ContainerParticipantes = ListaParticipantes }: {
   combate: CombateVisivel | null
-  publico?: boolean
   ContainerParticipantes?: ComponentType<{ children: ReactNode; indiceAtual?: number; participanteAtualId?: string }>
 }) {
-  // A exibição coletiva nunca herda os controles do dono de um Personagem.
-  const combate = publico && entrada
-    ? { ...entrada, participantes: entrada.participantes.map((p) => ({ ...p, ehMeu: false })) }
-    : entrada
-  const Conteiner = publico ? 'section' : 'main'
-  const router = useRouter()
-  const [passandoTurno, setPassandoTurno] = useState(false)
-
   const participantesAtivos = combate
     ? combate.participantes.filter((p) => !ehInimigoIncapacitado(p))
     : []
@@ -497,65 +484,13 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
     : []
 
   const participanteAtual = combate?.participantes[combate.turnoAtual]
-  const ehMeuTurno = participanteAtual?.tipo === 'personagem' && participanteAtual?.ehMeu === true
 
   const proximoIndex = combate ? obterProximoIndiceAtivo(combate) : -1
   const proximoParticipante =
     proximoIndex !== -1 && combate ? combate.participantes[proximoIndex] : null
 
-  async function handlePassarMeuTurno() {
-    setPassandoTurno(true)
-    try {
-      await avancarTurnoCombateServer()
-      toast.success('Turno concluído com sucesso!')
-      router.invalidate()
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao passar turno.')
-    } finally {
-      setPassandoTurno(false)
-    }
-  }
-
-  async function handleAlternarCondicao(participanteId: string, condicaoId: string) {
-    try {
-      await alternarCondicaoParticipanteCombateServer({
-        data: { participanteId, condicaoId },
-      })
-      router.invalidate()
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao alterar condição.')
-    }
-  }
-
-  async function handleAlterarDanoMeuPersonagem(
-    personagemId: string,
-    tipoTrilha: 'vitalidade' | 'vontade',
-    novoDano: Dano,
-  ) {
-    try {
-      const marcas =
-        tipoTrilha === 'vitalidade'
-          ? { danoVitalidade: novoDano }
-          : { danoVontade: novoDano }
-      await marcar({ data: { id: personagemId, marcas } })
-      router.invalidate()
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar dano.')
-    }
-  }
-
-  async function handleAlterarFomeMeuPersonagem(personagemId: string, novaFome: number) {
-    try {
-      await marcar({ data: { id: personagemId, marcas: { fome: novaFome } } })
-      router.invalidate()
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar fome.')
-    }
-  }
-
   return (
-    <Conteiner className={publico ? undefined : "container-app mx-auto min-h-dvh"} aria-label="Combate">
-      {!publico && <BarraApp />}
+    <section aria-label="Combate">
       <div className="flex flex-col gap-6 pt-2 pb-12">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-3">
@@ -576,17 +511,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                     Próximo: {proximoParticipante.nome} {proximoParticipante.tipo === 'inimigo' ? '(Inimigo)' : ''}
                   </Badge>
                 )}
-                {ehMeuTurno && (
-                  <Button
-                    size="sm"
-                    onClick={handlePassarMeuTurno}
-                    disabled={passandoTurno}
-                    className="gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground ml-auto sm:ml-0"
-                  >
-                    <Play className="size-4 fill-current" />
-                    {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
-                  </Button>
-                )}
               </div>
             )}
           </div>
@@ -600,9 +524,9 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
         {!combate ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center">
             <Swords className="size-12 text-muted-foreground/60 mb-3" />
-            <h2 className="font-serif text-2xl font-medium">{publico ? 'Nenhum Combate ativo' : 'Nenhum Combate em andamento'}</h2>
+            <h2 className="font-serif text-2xl font-medium">Nenhum Combate ativo</h2>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
-              {publico ? 'O Combate aparecerá aqui quando o Narrador iniciar a cena.' : 'Aguarde o Narrador iniciar a cena de conflito. Você será notificado quando seu Personagem entrar em combate.'}
+              O Combate aparecerá aqui quando o Narrador iniciar a cena.
             </p>
           </div>
         ) : (
@@ -696,16 +620,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                               />
                             </div>
                           )}
-                          {part.especiais && part.especiais.length > 0 && (
-                            <div className="flex items-center gap-1 pt-1 border-t min-w-0">
-                              <span className="text-xs font-medium text-muted-foreground shrink-0">Especiais:</span>
-                              <CarrosselBadges>
-                                {part.especiais.map((esp, i) => (
-                                  <BadgeEspecial key={i} nome={esp.nome} descricao={esp.descricao} />
-                                ))}
-                              </CarrosselBadges>
-                            </div>
-                          )}
                           {(part.condicoes?.length ?? 0) > 0 && (
                             <div className="mt-auto flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
@@ -714,7 +628,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                                 ehVampiro={ehParticipanteVampiro(part)}
                                 condicoes={part.condicoes}
                                 podeEditar={false}
-                                onAlternarCondicao={handleAlternarCondicao}
                               />
                             </div>
                           )}
@@ -723,7 +636,7 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                         <div className="flex flex-1 flex-col gap-3">
                           {part.condicaoOculta ? (
                             <p className="text-xs text-muted-foreground italic">
-                              {publico ? 'Condição oculta pelo Narrador.' : 'Condição oculta (não compartilhada na Coterie).'}
+                              Condição oculta pelo Narrador.
                             </p>
                           ) : part.condicao ? (
                             <div data-condicao-combate="" className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -732,79 +645,39 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                                   rotulo="Vitalidade"
                                   dano={part.condicao.danoVitalidade}
                                   max={part.condicao.vitalidadeMax}
-                                  podeEditar={part.ehMeu === true}
-                                  onChange={
-                                    part.ehMeu
-                                      ? (dano) =>
-                                          handleAlterarDanoMeuPersonagem(
-                                            part.personagemId!,
-                                            'vitalidade',
-                                            dano,
-                                          )
-                                      : undefined
-                                  }
+                                  podeEditar={false}
                                 />
                                 <TrilhaTatilExpandida
                                   rotulo="Força de Vontade"
                                   dano={part.condicao.danoVontade}
                                   max={part.condicao.vontadeMax}
-                                  podeEditar={part.ehMeu === true}
-                                  onChange={
-                                    part.ehMeu
-                                      ? (dano) =>
-                                          handleAlterarDanoMeuPersonagem(
-                                            part.personagemId!,
-                                            'vontade',
-                                            dano,
-                                          )
-                                      : undefined
-                                  }
+                                  podeEditar={false}
                                 />
                               </div>
 
                               <FomeTatilExpandida
                                 fome={part.condicao.fome}
-                                podeEditar={part.ehMeu === true}
-                                onChange={
-                                  part.ehMeu
-                                    ? (novaFome) =>
-                                        handleAlterarFomeMeuPersonagem(part.personagemId!, novaFome)
-                                    : undefined
-                                }
+                                podeEditar={false}
                               />
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground">Condição indisponível.</p>
                           )}
 
-                          {((part.condicoes?.length ?? 0) > 0 || part.ehMeu === true) && (
+                          {(part.condicoes?.length ?? 0) > 0 && (
                             <div className="mt-auto flex items-center gap-1 pt-1 border-t min-w-0">
                               <span className="text-xs font-medium text-muted-foreground shrink-0">Condições:</span>
                               <BadgesCondicoes
                                 participanteId={part.id}
                                 ehVampiro={ehParticipanteVampiro(part)}
                                 condicoes={part.condicoes}
-                                podeEditar={part.ehMeu === true}
-                                onAlternarCondicao={handleAlternarCondicao}
+                                podeEditar={false}
                               />
                             </div>
                           )}
                         </div>
                       )}
 
-                      {ehTurnoAtual && part.ehMeu && (
-                        <div className="pt-2 border-t flex justify-end">
-                          <Button
-                            size="sm"
-                            onClick={handlePassarMeuTurno}
-                            disabled={passandoTurno}
-                            className="gap-1 font-semibold bg-vinho hover:bg-vinho/90 text-primary-foreground shadow-sm"
-                          >
-                            <Play className="size-4 fill-current" />
-                            {passandoTurno ? 'Passando...' : 'Concluir Meu Turno'}
-                          </Button>
-                        </div>
-                      )}
                     </CardContent>
                   </CardCombate>
                 </div>
@@ -812,7 +685,7 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
             })}
             </ContainerParticipantes>
 
-            {/* SEÇÃO INFERIOR: INIMIGOS FORA DE COMBATE (JOGADOR) */}
+            {/* SEÇÃO INFERIOR: INIMIGOS FORA DE COMBATE (PÚBLICO) */}
             {inimigosIncapacitados.length > 0 && (
               <div className="flex flex-col gap-2 pt-4 border-t border-dashed border-border/80 mt-2">
                 <div className="flex items-center justify-between">
@@ -828,7 +701,7 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
                 </div>
                 <div className="flex flex-col gap-2">
                   {inimigosIncapacitados.map((part) => (
-                    <CardInimigoIncapacitadoJogador
+                    <CardInimigoIncapacitadoPublico
                       key={part.id}
                       part={part}
                     />
@@ -839,6 +712,6 @@ export function VisaoJogador({ combate: entrada, publico = false, ContainerParti
           </div>
         )}
       </div>
-    </Conteiner>
+    </section>
   )
 }

@@ -14,7 +14,7 @@ type Personagem = {
   status: StatusPersonagem
   nome: string
   /** Jogador a quem o Narrador atribuiu o Rascunho, enquanto ele não responde. */
-  atribuidoA: string | null
+  atribuidoA?: string | null
   /** Nome do jogador quando a ficha é de um jogador sem conta no app. */
   jogadorNome?: string | null
 }
@@ -64,7 +64,7 @@ export function rotuloOrigemPersonagem(p: {
   jogadorNome?: string | null
 }): string | null {
   if (p.status === 'rascunho') {
-    return p.atribuidoA ? '(Rascunho atribuído)' : '(Rascunho)'
+    return '(Rascunho)'
   }
   const ehNpc = p.ehPdN ?? p.ehPdn ?? false
   if (ehNpc) {
@@ -76,18 +76,12 @@ export function rotuloOrigemPersonagem(p: {
   return null
 }
 
-/** A gestão exclusiva do Narrador não bloqueia escolhas pelas regras de criação do Jogador. */
-export function exigeRegrasCriacao(_usuario: Usuario, _personagem: Personagem): boolean {
-  return false
-}
-
-export type MotivoNaoConcluir = 'nao-dono' | 'nao-rascunho' | 'atribuido' | 'sem-nome'
+export type MotivoNaoConcluir = 'nao-dono' | 'nao-rascunho' | 'sem-nome'
 
 /** "Concluir" passa o Rascunho para Ativo; só exige nome, sem validação do V5. */
 export function motivoNaoConcluir(usuario: Usuario, personagem: Personagem): MotivoNaoConcluir | null {
   if (usuario.papel !== 'narrador') return 'nao-dono'
   if (personagem.status !== 'rascunho') return 'nao-rascunho'
-  if (personagem.atribuidoA !== null) return 'atribuido'
   if (personagem.nome.trim() === '') return 'sem-nome'
   return null
 }
@@ -100,28 +94,6 @@ export function podeApagar(usuario: Usuario, personagem: Personagem): boolean {
   return usuario.papel === 'narrador' && personagem.status === 'rascunho'
 }
 
-/** A atribuição antiga fica desativada; o Narrador usa o Tipo de Personagem. */
-export function podeAtribuir(_usuario: Usuario, _personagem: Personagem, _alvo?: { papel: Papel }): boolean {
-  return false
-}
-
-export function podeCancelarAtribuicao(_usuario: Usuario, _personagem: Personagem): boolean {
-  return false
-}
-
-/** A resposta à atribuição antiga fica desativada. */
-export function podeResponderAtribuicao(_usuario: Usuario, _personagem: Personagem): boolean {
-  return false
-}
-
-/** Aceitar: o Rascunho passa a ser do Jogador. Recusar: volta a ser só do Narrador. */
-export function aplicarRespostaAtribuicao(
-  usuario: Usuario,
-  aceitar: boolean,
-): { donoId?: string; atribuidoA: null } {
-  return aceitar ? { donoId: usuario.id, atribuidoA: null } : { atribuidoA: null }
-}
-
 /** Tudo o que a interface precisa saber sobre um Personagem, calculado num lugar só. */
 export function permissoesPersonagem(usuario: Usuario, personagem: Personagem) {
   const acesso = acessoFicha(usuario, personagem)
@@ -130,9 +102,6 @@ export function permissoesPersonagem(usuario: Usuario, personagem: Personagem) {
     podeAlterarCla: acesso === 'editar',
     podeApagar: podeApagar(usuario, personagem),
     podeConcluir: podeConcluir(usuario, personagem),
-    podeAtribuir: podeAtribuir(usuario, personagem),
-    podeCancelarAtribuicao: podeCancelarAtribuicao(usuario, personagem),
-    regrasCriacao: exigeRegrasCriacao(usuario, personagem),
   }
 }
 

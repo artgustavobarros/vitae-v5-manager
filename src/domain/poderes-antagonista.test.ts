@@ -1,9 +1,10 @@
+import { filtrarCombatePublico } from './exibicao-publica'
 import { describe, expect, it } from 'vitest'
 import { criarModeloAntagonistaPadrao, especialAntagonistaSchema, modeloAntagonistaSchema } from './bestiario'
 import { MODELOS_INICIAIS_BESTIARIO } from './bestiario-modelos-iniciais'
 import { PODERES, RITUAIS_TODOS } from './catalogo'
 import { requisitosItem, REQUISITOS_CATALOGO } from './catalogo/requisitos'
-import { atualizarParticipanteInimigo, criarInimigoDeModelo, filtrarCombateParaJogador, iniciarCombate, participanteInimigoSchema } from './combate'
+import { atualizarParticipanteInimigo, criarInimigoDeModelo, iniciarCombate, participanteInimigoSchema } from './combate'
 import {
   distribuirPoderes, obterPerfilSobrenatural, sortearRecursosSobrenaturais, validarRecursosSobrenaturais,
   opcoesSobrenaturais, trocarPoder, validarSelecaoParaModelo, type RecursosSobrenaturais,
@@ -176,7 +177,7 @@ describe('Poderes de Antagonistas', () => {
     expect(m).toEqual(antes)
     recursos.poderes.length = 0
     expect(inimigo.recursosSobrenaturais?.poderes).toHaveLength(2)
-    const visivel = filtrarCombateParaJogador(iniciarCombate([inimigo]), { jogadorId: 'j', meusPersonagemIds: [], coterieIdsDoJogador: [], coteriesPorPersonagem: {}, condicoesPersonagens: {} })
+    const visivel = filtrarCombatePublico(iniciarCombate([inimigo]), {})
     expect(visivel.participantes[0]).not.toHaveProperty('recursosSobrenaturais')
     expect(() => criarInimigoDeModelo(criarModeloAntagonistaPadrao(), { id: 'm', nome: 'Mortal' }, inimigo.recursosSobrenaturais!)).toThrow()
   })

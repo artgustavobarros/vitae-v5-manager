@@ -5,8 +5,6 @@ import { z } from 'zod'
 import { db } from '#/db'
 import {
   combate,
-  coterie,
-  membroCoterie,
   personagem,
   user,
 } from '#/db/schema'
@@ -19,7 +17,6 @@ import {
   atualizacaoInimigoSchema,
   avancarTurno,
   definirRevelarCondicao,
-  filtrarCombateParaJogador,
   iniciarCombate,
   participanteCombateSchema,
   removerParticipante,
@@ -27,19 +24,15 @@ import {
   voltarTurno,
   type AtualizacaoInimigo,
   type Combate,
-  type CombateVisivel,
-  type InfoVisibilidadeJogador,
   type ParticipanteCombate,
 } from '#/domain/combate'
 import type { Papel } from '#/domain/acesso'
 import { ehPdN } from '#/domain/permissoes-ficha'
 import { vitalidadeMax, vontadeMax } from '#/domain/ficha'
 import { identificadorSchema, LIMITE_ITENS } from '#/domain/limites-entrada'
-import { notificacoesEventos } from '#/domain/notificacoes'
 import type { Dano } from '#/domain/trilhas'
-import { enviarNotificacao } from '#/server/enviar-notificacao'
 import { barramento } from '#/server/eventos'
-import { exigirNarrador, exigirUsuario } from '#/server/sessao'
+import { exigirNarrador } from '#/server/sessao'
 
 export type EstadoCombateNarrador = {
   id: string
@@ -52,7 +45,6 @@ export type EstadoCombateNarrador = {
       danoVitalidade: Dano
       danoVontade: Dano
       fome: number
-      compartilhaCondicao: boolean
     }
   })[]
   ativo: boolean
@@ -60,47 +52,17 @@ export type EstadoCombateNarrador = {
 
 export type RespostaCarregarCombate =
   | { papel: 'narrador'; combate: EstadoCombateNarrador | null }
-  | { papel: 'jogador'; combate: CombateVisivel | null }
 
 export type PersonagemCombateOpcao = {
   id: string
   nome: string
   cla: string | null
   status: 'rascunho' | 'ativo' | 'arquivado'
-  atribuidoA: string | null
   jogadorNome: string | null
   ehPdN: boolean
   ehPdn: boolean
   donoNome: string
 }
-
-export type CoterieCombateOpcao = {
-  id: string
-  nome: string
-  personagemIds: string[]
-}
-
-export const listarCoteriesParaCombate = createServerFn({ method: 'GET' })
-  .middleware([exigirNarrador])
-  .handler(async (): Promise<CoterieCombateOpcao[]> => {
-    const linhas = await db
-      .select({
-        coterieId: coterie.id,
-        coterieNome: coterie.nome,
-        personagemId: membroCoterie.personagemId,
-      })
-      .from(coterie)
-      .innerJoin(membroCoterie, eq(coterie.id, membroCoterie.coterieId))
-      .orderBy(asc(coterie.nome))
-
-    const mapa = new Map<string, CoterieCombateOpcao>()
-    for (const l of linhas) {
-      const existente = mapa.get(l.coterieId)
-      if (existente) existente.personagemIds.push(l.personagemId)
-      else mapa.set(l.coterieId, { id: l.coterieId, nome: l.coterieNome, personagemIds: [l.personagemId] })
-    }
-    return [...mapa.values()]
-  })
 
 export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
   .middleware([exigirNarrador])
@@ -111,7 +73,6 @@ export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
         nome: personagem.nome,
         status: personagem.status,
         tipo: personagem.tipo,
-        atribuidoA: personagem.atribuidoA,
         jogadorNome: personagem.jogadorNome,
         ficha: personagem.ficha,
         donoNome: user.name,
@@ -131,7 +92,6 @@ export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
         nome: l.nome,
         cla: l.ficha.cla,
         status: l.status,
-        atribuidoA: l.atribuidoA,
         jogadorNome: l.jogadorNome,
         donoNome: l.donoNome,
         ehPdN: pdn,
@@ -141,10 +101,8 @@ export const listarPersonagensParaCombate = createServerFn({ method: 'GET' })
   })
 
 export const carregarCombate = createServerFn({ method: 'GET' })
-  .middleware([exigirUsuario])
-  .handler(async ({ context }): Promise<RespostaCarregarCombate> => {
-    const usuario = context.usuario
-
+  .middleware([exigirNarrador])
+  .handler(async (): Promise<RespostaCarregarCombate> => {
     const [combateAtivo] = await db
       .select()
       .from(combate)
@@ -152,9 +110,7 @@ export const carregarCombate = createServerFn({ method: 'GET' })
       .limit(1)
 
     if (!combateAtivo) {
-      return usuario.papel === 'narrador'
-        ? { papel: 'narrador', combate: null }
-        : { papel: 'jogador', combate: null }
+      return { papel: 'narrador', combate: null }
     }
 
     const combateEntidade: Combate = {
@@ -173,107 +129,41 @@ export const carregarCombate = createServerFn({ method: 'GET' })
       ? await db
           .select({
             id: personagem.id,
-            donoId: personagem.donoId,
             jogadorNome: personagem.jogadorNome,
             ficha: personagem.ficha,
-            compartilhaCondicao: personagem.compartilhaCondicao,
           })
           .from(personagem)
           .where(inArray(personagem.id, idsPersonagens))
       : []
 
-    if (usuario.papel === 'narrador') {
-      const mapaPersonagens = new Map(personagensNoBanco.map((p) => [p.id, p]))
+    const mapaPersonagens = new Map(personagensNoBanco.map((p) => [p.id, p]))
 
-      const participantesNarrador = combateEntidade.participantes.map((part) => {
-        if (part.tipo === 'personagem') {
-          const p = mapaPersonagens.get(part.personagemId)
-          if (p) {
-            return {
-              ...part,
-              jogadorNome: part.jogadorNome ?? p.jogadorNome ?? null,
-              condicaoPersonagem: {
-                vitalidadeMax: vitalidadeMax(p.ficha),
-                vontadeMax: vontadeMax(p.ficha),
-                danoVitalidade: p.ficha.danoVitalidade,
-                danoVontade: p.ficha.danoVontade,
-                fome: p.ficha.fome,
-                compartilhaCondicao: p.compartilhaCondicao,
-              },
-            }
+    const participantesNarrador = combateEntidade.participantes.map((part) => {
+      if (part.tipo === 'personagem') {
+        const p = mapaPersonagens.get(part.personagemId)
+        if (p) {
+          return {
+            ...part,
+            jogadorNome: part.jogadorNome ?? p.jogadorNome ?? null,
+            condicaoPersonagem: {
+              vitalidadeMax: vitalidadeMax(p.ficha),
+              vontadeMax: vontadeMax(p.ficha),
+              danoVitalidade: p.ficha.danoVitalidade,
+              danoVontade: p.ficha.danoVontade,
+              fome: p.ficha.fome,
+            },
           }
         }
-        return part
-      })
-
-      return {
-        papel: 'narrador',
-        combate: {
-          ...combateEntidade,
-          participantes: participantesNarrador,
-        },
       }
-    }
-
-    // Papel Jogador
-    // Buscar personagens do usuário
-    const meusPersonagens = await db
-      .select({ id: personagem.id })
-      .from(personagem)
-      .where(eq(personagem.donoId, usuario.id))
-    const meusPersonagemIds = meusPersonagens.map((p) => p.id)
-
-    // Buscar coteries onde o usuário tem personagem
-    const coteriesDoUsuario = meusPersonagemIds.length > 0
-      ? await db
-          .select({ coterieId: membroCoterie.coterieId })
-          .from(membroCoterie)
-          .where(inArray(membroCoterie.personagemId, meusPersonagemIds))
-      : []
-    const coterieIdsDoJogador = coteriesDoUsuario.map((c) => c.coterieId)
-
-    // Buscar coteries de cada personagem no combate
-    const coteriesDosPersonagensNoCombate = idsPersonagens.length > 0
-      ? await db
-          .select({
-            personagemId: membroCoterie.personagemId,
-            coterieId: membroCoterie.coterieId,
-          })
-          .from(membroCoterie)
-          .where(inArray(membroCoterie.personagemId, idsPersonagens))
-      : []
-
-    const coteriesPorPersonagem: Record<string, string[]> = {}
-    for (const c of coteriesDosPersonagensNoCombate) {
-      if (!coteriesPorPersonagem[c.personagemId]) {
-        coteriesPorPersonagem[c.personagemId] = []
-      }
-      coteriesPorPersonagem[c.personagemId].push(c.coterieId)
-    }
-
-    const condicoesPersonagens: InfoVisibilidadeJogador['condicoesPersonagens'] = {}
-    for (const p of personagensNoBanco) {
-      condicoesPersonagens[p.id] = {
-        compartilhaCondicao: p.compartilhaCondicao,
-        vitalidadeMax: vitalidadeMax(p.ficha),
-        vontadeMax: vontadeMax(p.ficha),
-        danoVitalidade: p.ficha.danoVitalidade,
-        danoVontade: p.ficha.danoVontade,
-        fome: p.ficha.fome,
-      }
-    }
-
-    const combateVisivel = filtrarCombateParaJogador(combateEntidade, {
-      jogadorId: usuario.id,
-      meusPersonagemIds,
-      coterieIdsDoJogador,
-      coteriesPorPersonagem,
-      condicoesPersonagens,
+      return part
     })
 
     return {
-      papel: 'jogador',
-      combate: combateVisivel,
+      papel: 'narrador',
+      combate: {
+        ...combateEntidade,
+        participantes: participantesNarrador,
+      },
     }
   })
 
@@ -296,35 +186,6 @@ export const iniciarCombateServer = createServerFn({ method: 'POST' })
       })
       .returning()
 
-    // Notificar jogadores cujos personagens estão no combate
-    const idsPersonagens = novo.participantes
-      .filter((p) => p.tipo === 'personagem')
-      .map((p) => (p as { personagemId: string }).personagemId)
-
-    if (idsPersonagens.length > 0) {
-      const donosJogadores = await db
-        .select({
-          personagemId: personagem.id,
-          nomePersonagem: personagem.nome,
-          donoId: personagem.donoId,
-          papel: user.papel,
-        })
-        .from(personagem)
-        .innerJoin(user, eq(personagem.donoId, user.id))
-        .where(inArray(personagem.id, idsPersonagens))
-
-      for (const pj of donosJogadores) {
-        if (pj.papel === 'jogador') {
-          const evento = notificacoesEventos.combateIniciado(pj.nomePersonagem)
-          await enviarNotificacao({
-            usuarioId: pj.donoId,
-            texto: evento.texto,
-            destino: evento.destino,
-          })
-        }
-      }
-    }
-
     barramento.emitir({ tipo: 'mudanca', escopo: 'combate' })
     return salvo
   })
@@ -338,10 +199,8 @@ export const encerrarCombateServer = createServerFn({ method: 'POST' })
   })
 
 export const avancarTurnoCombateServer = createServerFn({ method: 'POST' })
-  .middleware([exigirUsuario])
-  .handler(async ({ context }) => {
-    const usuario = context.usuario
-
+  .middleware([exigirNarrador])
+  .handler(async () => {
     const [combateAtivo] = await db
       .select()
       .from(combate)
@@ -349,24 +208,6 @@ export const avancarTurnoCombateServer = createServerFn({ method: 'POST' })
       .limit(1)
 
     if (!combateAtivo) throw new Error('Nenhum combate ativo')
-
-    // Se for jogador, só pode passar o turno se for a vez do seu próprio personagem
-    if (usuario.papel === 'jogador') {
-      const participanteAtual = combateAtivo.participantes[combateAtivo.turnoAtual]
-      if (!participanteAtual || participanteAtual.tipo !== 'personagem') {
-        throw new Error('Apenas o Narrador pode passar o turno de inimigos')
-      }
-
-      const [pj] = await db
-        .select({ id: personagem.id, donoId: personagem.donoId })
-        .from(personagem)
-        .where(eq(personagem.id, participanteAtual.personagemId))
-        .limit(1)
-
-      if (!pj || pj.donoId !== usuario.id) {
-        throw new Error('Você só pode passar o turno quando for a vez do seu próprio personagem')
-      }
-    }
 
     const atualizado = avancarTurno({
       id: combateAtivo.id,
@@ -481,27 +322,6 @@ export const adicionarParticipanteCombateServer = createServerFn({ method: 'POST
       .update(combate)
       .set({ participantes: atualizado.participantes })
       .where(eq(combate.id, combateAtivo.id))
-
-    if (data.participante.tipo === 'personagem') {
-      const [p] = await db
-        .select({
-          nome: personagem.nome,
-          donoId: personagem.donoId,
-          papel: user.papel,
-        })
-        .from(personagem)
-        .innerJoin(user, eq(personagem.donoId, user.id))
-        .where(eq(personagem.id, data.participante.personagemId))
-
-      if (p && p.papel === 'jogador') {
-        const evento = notificacoesEventos.combateIniciado(p.nome)
-        await enviarNotificacao({
-          usuarioId: p.donoId,
-          texto: evento.texto,
-          destino: evento.destino,
-        })
-      }
-    }
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'combate' })
     return atualizado
@@ -707,16 +527,14 @@ export const atualizarParticipanteInimigoServer = createServerFn({ method: 'POST
   )
 
 export const alternarCondicaoParticipanteCombateServer = createServerFn({ method: 'POST' })
-  .middleware([exigirUsuario])
+  .middleware([exigirNarrador])
   .validator(
     z.object({
       participanteId: identificadorSchema,
       condicaoId: identificadorSchema,
     }),
   )
-  .handler(async ({ context, data }) => {
-    const usuario = context.usuario
-
+  .handler(async ({ data }) => {
     const [combateAtivo] = await db
       .select()
       .from(combate)
@@ -727,22 +545,6 @@ export const alternarCondicaoParticipanteCombateServer = createServerFn({ method
 
     const participante = combateAtivo.participantes.find((p) => p.id === data.participanteId)
     if (!participante) throw new Error('Participante não encontrado no combate')
-
-    if (usuario.papel === 'jogador') {
-      if (participante.tipo !== 'personagem') {
-        throw new Error('Jogadores só podem alterar condições do seu próprio personagem')
-      }
-
-      const [pj] = await db
-        .select({ id: personagem.id, donoId: personagem.donoId })
-        .from(personagem)
-        .where(eq(personagem.id, participante.personagemId))
-        .limit(1)
-
-      if (!pj || pj.donoId !== usuario.id) {
-        throw new Error('Você só pode alterar condições do seu próprio personagem')
-      }
-    }
 
     const atualizado = alternarCondicaoParticipante(
       {

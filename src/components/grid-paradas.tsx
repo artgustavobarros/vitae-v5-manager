@@ -11,7 +11,7 @@ import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card } from '#/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '#/components/ui/popover'
-import { reordenarParadas, type ParadaCalculada, type ParadaPersonalizada } from '#/domain/paradas'
+import { reordenarParadas, type ParadaCatalogo, type ParadaPersonalizada } from '#/domain/paradas'
 import { reordenarParadasUsuario } from '#/server/paradas'
 
 const rotulosTipo = { fisico: 'Física', social: 'Social', mental: 'Mental' }
@@ -28,7 +28,7 @@ const plugins = [
 ]
 
 type Props = {
-  paradas: ParadaCalculada[]
+  paradas: ParadaCatalogo[]
   gerenciaveis: readonly string[]
   podeReordenar: boolean
   onEditar?: (parada: ParadaPersonalizada) => void
@@ -38,7 +38,7 @@ type Props = {
 export function GridParadas({ paradas, gerenciaveis, podeReordenar, onEditar, onExcluir }: Props) {
   const router = useRouter()
   // Mantém o arraste estável se o SSE atualizar os dados enquanto o cartão estiver sendo movido.
-  const [locais, setLocais] = useState<ParadaCalculada[] | null>(null)
+  const [locais, setLocais] = useState<ParadaCatalogo[] | null>(null)
   const [salvando, setSalvando] = useState(false)
   const exibidas = locais ?? paradas
   const editavel = podeReordenar
@@ -85,7 +85,7 @@ export function GridParadas({ paradas, gerenciaveis, podeReordenar, onEditar, on
 }
 
 function CartaoParada({ parada: p, indice, editavel, salvando, podeGerenciar, onEditar, onExcluir }: {
-  parada: ParadaCalculada
+  parada: ParadaCatalogo
   indice: number
   editavel: boolean
   salvando: boolean
@@ -130,13 +130,9 @@ function CartaoParada({ parada: p, indice, editavel, salvando, podeGerenciar, on
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-        <p className="text-xs text-muted-foreground">
-          {p.atributoNome} <span className="tabular-nums text-foreground">{p.atributoValor}</span>
-          {' + '}{p.habilidadeNome} <span className="tabular-nums text-foreground">{p.habilidadeValor}</span>
-        </p>
-        <p className="shrink-0 text-xl font-semibold tabular-nums" aria-label={`${p.total} dados base`}>{p.total}<span className="ml-1 text-xs font-normal text-muted-foreground">dados</span></p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        {p.atributoNome} + {p.habilidadeNome}
+      </p>
     </Card>
   )
 }

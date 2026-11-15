@@ -1,17 +1,14 @@
 import { useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { toast } from 'sonner'
 
 import type { EventoReal } from '#/domain/eventos'
-import { useAvisosRelogios } from '#/components/provedor-avisos-relogios'
 
 /**
  * Conecta ao fluxo SSE em /api/tempo-real enquanto o usuário estiver autenticado.
- * Invalida dados de rotas ativas do roteador quando dados mudam e exibe toasts para novas notificações.
+ * Invalida os dados das rotas ativas quando o estado persistido muda.
  */
 export function useTempoReal(usuarioLogado: boolean) {
   const router = useRouter()
-  const receberAvisos = useAvisosRelogios()
 
   useEffect(() => {
     if (!usuarioLogado || typeof window === 'undefined') return
@@ -27,14 +24,7 @@ export function useTempoReal(usuarioLogado: boolean) {
       try {
         const dados: EventoReal = JSON.parse(event.data)
 
-        if (dados.tipo === 'efeitos-relogio') {
-          receberAvisos?.(dados.avisos)
-        } else if (dados.tipo === 'notificacao') {
-          toast(dados.notificacao.texto)
-          router.invalidate()
-        } else if (dados.tipo === 'mudanca') {
-          router.invalidate()
-        }
+        if (dados.tipo === 'mudanca') void router.invalidate()
       } catch {
         // payload não json (ex: ping/comentário)
       }
@@ -47,5 +37,5 @@ export function useTempoReal(usuarioLogado: boolean) {
     return () => {
       fonte.close()
     }
-  }, [usuarioLogado, router, receberAvisos])
+  }, [usuarioLogado, router])
 }

@@ -7,31 +7,31 @@ const narradorEmail = 'narrador@exemplo.com'
 describe('decidirPapel', () => {
   it('reconhece o Narrador pelo e-mail configurado', () => {
     expect(
-      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail, temConvite: false }),
+      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail }),
     ).toBe('narrador')
   })
 
   it('ignora maiúsculas e espaços ao comparar o e-mail do Narrador', () => {
     expect(
-      decidirPapel({ email: '  Narrador@Exemplo.com ', narradorEmail, temConvite: false }),
+      decidirPapel({ email: '  Narrador@Exemplo.com ', narradorEmail }),
     ).toBe('narrador')
   })
 
-  it('aceita como Jogador quem tem Convite para a Crônica', () => {
+  it('recusa qualquer pessoa fora do e-mail configurado', () => {
     expect(
-      decidirPapel({ email: 'ana@exemplo.com', narradorEmail, temConvite: true }),
-    ).toBe('jogador')
-  })
-
-  it('recusa quem não é Narrador nem tem Convite', () => {
-    expect(
-      decidirPapel({ email: 'intruso@exemplo.com', narradorEmail, temConvite: false }),
+      decidirPapel({ email: 'ana@exemplo.com', narradorEmail }),
     ).toBeNull()
   })
 
-  it('recusa todo mundo sem convite quando o Narrador não está configurado', () => {
+  it('recusa um endereço vazio', () => {
     expect(
-      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail: '', temConvite: false }),
+      decidirPapel({ email: '', narradorEmail }),
+    ).toBeNull()
+  })
+
+  it('recusa acesso quando o Narrador não está configurado', () => {
+    expect(
+      decidirPapel({ email: 'narrador@exemplo.com', narradorEmail: '' }),
     ).toBeNull()
   })
 })

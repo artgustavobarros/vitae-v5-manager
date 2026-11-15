@@ -14,14 +14,12 @@ import {
 import { Button } from '#/components/ui/button'
 import { Card, CardContent } from '#/components/ui/card'
 import type { ConfiguracaoRelogio, RelogioSalvo } from '#/domain/relogios'
-import type { RelogioPublico } from '#/domain/exibicao-publica'
 import { carregarRelogios, moverRelogio, retirarRelogio, salvarRelogio } from '#/server/relogios'
 
 export const Route = createFileRoute('/relogios')({
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
-    if (context.usuario.papel === 'narrador') throw redirect({ to: '/narrador/relogios' })
-    return { usuario: context.usuario }
+    if (context.usuario.papel !== 'narrador') throw redirect({ to: '/entrar' })
   },
   loader: () => carregarRelogios(),
   head: () => ({ meta: [{ title: 'Relógios — Vitae' }] }),
@@ -29,11 +27,10 @@ export const Route = createFileRoute('/relogios')({
 })
 
 function PaginaRelogios() {
-  const relogios = Route.useLoaderData()
-  return <TelaRelogios relogios={relogios} narrador={false} />
+  return <TelaRelogios relogios={Route.useLoaderData()} />
 }
 
-export function TelaRelogios({ relogios, narrador }: { relogios: (RelogioSalvo | RelogioPublico)[]; narrador: boolean }) {
+export function TelaRelogios({ relogios }: { relogios: RelogioSalvo[] }) {
   const router = useRouter()
   const [edicao, setEdicao] = useState<{ relogio: ConfiguracaoRelogio; revisao: number | null } | null>(null)
   const [retirada, setRetirada] = useState<Pick<RelogioSalvo, 'id' | 'nome'> | null>(null)
@@ -72,24 +69,24 @@ export function TelaRelogios({ relogios, narrador }: { relogios: (RelogioSalvo |
           <div className="space-y-2">
             <h1 className="font-serif text-4xl">Relógios</h1>
           </div>
-          {narrador && <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <LinkExibicaoPublica recurso="relogios" />
             <Button disabled={ocupado} onClick={criar}><Plus className="size-4" />Novo Relógio</Button>
-          </div>}
+          </div>
         </div>
         {relogios.length === 0 ? (
           <Card>
             <CardContent className="space-y-3 py-8 text-center">
               <Clock3 className="mx-auto size-12 text-muted-foreground" />
               <h2 className="font-serif text-xl">Nenhum Relógio por aqui</h2>
-              <p className="text-sm text-muted-foreground">{narrador ? 'Crie um Relógio e escolha em qual etapa a história começa.' : 'Os Relógios que o Narrador compartilhar aparecerão aqui.'}</p>
-              {narrador && <Button variant="outline" onClick={criar}><Plus className="size-4" />Criar primeiro Relógio</Button>}
+              <p className="text-sm text-muted-foreground">Crie um Relógio e escolha em qual etapa a história começa.</p>
+              <Button variant="outline" onClick={criar}><Plus className="size-4" />Criar primeiro Relógio</Button>
             </CardContent>
           </Card>
         ) : (
           <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3" aria-busy={ocupado}>
             {relogios.map((relogio) => (
-              <CardRelogio key={relogio.id} relogio={relogio} narrador={narrador} ocupado={ocupado}
+              <CardRelogio key={relogio.id} relogio={relogio} narrador ocupado={ocupado}
                 onEditar={() => setEdicao({ relogio, revisao: relogio.revisao })} onRetirar={() => setRetirada(relogio)}
                 onMover={(delta) => { void executar(async () => { await moverRelogio({ data: { id: relogio.id, delta } }) }) }} />
             ))}

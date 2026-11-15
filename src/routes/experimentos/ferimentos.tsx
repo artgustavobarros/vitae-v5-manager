@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import { TrilhaTatilExpandida, VisaoJogador } from '#/components/combate/visao-jogador'
+import { TrilhaTatilExpandida, VisaoPublicaCombate } from '#/components/combate/apresentacao'
 import { BotaoVisibilidadeCondicao } from '#/components/combate/visibilidade-condicao'
 import { CarrosselCombate } from '#/components/combate/carrossel-combate'
 import { MarcaVitae } from '#/components/marca-vitae'
@@ -50,13 +50,13 @@ function PreviaFerimentos() {
     ],
   }
   const combate = filtrarCombatePublico(entradaCombate, {
-    'ficha-helena': { compartilhaCondicao: false, vitalidadeMax: 6, vontadeMax: 5, danoVitalidade: dano,
+    'ficha-helena': { vitalidadeMax: 6, vontadeMax: 5, danoVitalidade: dano,
       danoVontade: { superficial: 1, agravado: 0 }, fome: 3 },
-    'ficha-lia': { compartilhaCondicao: false, vitalidadeMax: 6, vontadeMax: 5,
+    'ficha-lia': { vitalidadeMax: 6, vontadeMax: 5,
       danoVitalidade: { superficial: 3, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 }, fome: 2 },
-    'ficha-vitor': { compartilhaCondicao: false, vitalidadeMax: 7, vontadeMax: 5,
+    'ficha-vitor': { vitalidadeMax: 7, vontadeMax: 5,
       danoVitalidade: { superficial: 5, agravado: 2 }, danoVontade: { superficial: 2, agravado: 0 }, fome: 4 },
-    'ficha-mirela': { compartilhaCondicao: false, vitalidadeMax: 5, vontadeMax: 4,
+    'ficha-mirela': { vitalidadeMax: 5, vontadeMax: 4,
       danoVitalidade: { superficial: 1, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 }, fome: 1 },
   })
 
@@ -72,7 +72,7 @@ function PreviaFerimentos() {
     <header className="flex flex-wrap items-center justify-between gap-3 py-4">
       <MarcaVitae />
       <p className="text-sm text-muted-foreground">Prévia local · Dados fictícios</p>
-      <Button asChild variant="ghost" className="h-11"><Link to="/narrador/combate">Combate do Narrador</Link></Button>
+      <Button asChild variant="ghost" className="h-11"><Link to="/combate">Combate do Narrador</Link></Button>
     </header>
     <Card className="gap-4 py-4">
       <CardHeader className="px-4">
@@ -108,6 +108,6 @@ function PreviaFerimentos() {
         <Button className="h-11" onClick={() => mudarTurno('proximo')}>Próximo turno</Button>
       </div>
     </section>
-    <VisaoJogador combate={combate} publico ContainerParticipantes={variant === 'carrossel' ? CarrosselCombate : undefined} />
+    <VisaoPublicaCombate combate={combate} ContainerParticipantes={variant === 'carrossel' ? CarrosselCombate : undefined} />
   </div>
 }

@@ -3,7 +3,7 @@ import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '#/db'
-import { paradaCompartilhada, personagem, preferenciaParadas } from '#/db/schema'
+import { paradaCompartilhada, preferenciaParadas } from '#/db/schema'
 import {
   encontrarParadasRepetidas,
   listarParadas,
@@ -13,45 +13,22 @@ import {
   podeGerenciarParada,
   reordenarParadas,
 } from '#/domain/paradas'
-import { carregar } from '#/server/carregar-personagem'
 import { barramento } from '#/server/eventos'
-import { exigirUsuario } from '#/server/sessao'
+import { exigirNarrador } from '#/server/sessao'
 
 export const carregarParadas = createServerFn({ method: 'GET' })
-  .middleware([exigirUsuario])
-  .validator(z.object({ personagemId: z.string().uuid().optional() }))
-  .handler(async ({ data, context }) => {
-    const [personagens, compartilhadas, preferencias] = await Promise.all([
-      db.select({ id: personagem.id, nome: personagem.nome, status: personagem.status })
-        .from(personagem)
-        .where(context.usuario.papel === 'narrador' ? undefined : eq(personagem.donoId, context.usuario.id))
-        .orderBy(asc(personagem.nome)),
+  .middleware([exigirNarrador])
+  .handler(async ({ context }) => {
+    const [compartilhadas, preferencias] = await Promise.all([
       db.select().from(paradaCompartilhada).orderBy(asc(paradaCompartilhada.criadoEm), asc(paradaCompartilhada.id)),
       db.select().from(preferenciaParadas).where(eq(preferenciaParadas.usuarioId, context.usuario.id)),
     ])
     const gerenciaveis = compartilhadas.filter((p) => podeGerenciarParada(context.usuario, p.criadoPorId)).map((p) => p.id)
-    const id = data.personagemId ?? personagens.find((p) => p.status === 'ativo')?.id ?? personagens[0]?.id
-    if (!id) return { personagens, compartilhadas, gerenciaveis, selecionado: null }
-    if (!personagens.some((p) => p.id === id)) throw new Error('Acesso negado')
-
-    const p = await carregar(context.usuario, id, ['editar', 'marcar', 'ler'])
-    return {
-      personagens,
-      compartilhadas,
-      gerenciaveis,
-      selecionado: {
-        id: p.id,
-        nome: p.nome,
-        status: p.status,
-        atributos: p.ficha.atributos,
-        habilidades: p.ficha.habilidades,
-        paradas: listarParadas(p.ficha, compartilhadas, preferencias[0]?.ordem),
-      },
-    }
+    return { compartilhadas, gerenciaveis, paradas: listarParadas(compartilhadas, preferencias[0]?.ordem) }
   })
 
 export const salvarParadaCompartilhada = createServerFn({ method: 'POST' })
-  .middleware([exigirUsuario])
+  .middleware([exigirNarrador])
   .validator(z.object({ parada: paradaPersonalizadaSchema }))
   .handler(async ({ data, context }) => {
     const repetidas = await db.transaction(async (tx) => {
@@ -71,7 +48,7 @@ export const salvarParadaCompartilhada = createServerFn({ method: 'POST' })
   })
 
 export const excluirParadaCompartilhada = createServerFn({ method: 'POST' })
-  .middleware([exigirUsuario])
+  .middleware([exigirNarrador])
   .validator(z.object({ paradaId: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     await db.transaction(async (tx) => {
@@ -85,7 +62,7 @@ export const excluirParadaCompartilhada = createServerFn({ method: 'POST' })
   })
 
 export const reordenarParadasUsuario = createServerFn({ method: 'POST' })
-  .middleware([exigirUsuario])
+  .middleware([exigirNarrador])
   .validator(z.object({
     origemId: z.string().min(1).max(100),
     destinoId: z.string().min(1).max(100),
@@ -100,6 +77,6 @@ export const reordenarParadasUsuario = createServerFn({ method: 'POST' })
       const ordem = reordenarParadas(paradas, data.origemId, data.destinoId)
       await tx.update(preferenciaParadas).set({ ordem }).where(eq(preferenciaParadas.usuarioId, context.usuario.id))
     })
-    barramento.emitir({ tipo: 'mudanca', escopo: 'paradas', paraUsuarioId: context.usuario.id })
+    barramento.emitir({ tipo: 'mudanca', escopo: 'paradas' })
     return { ok: true }
   })

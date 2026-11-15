@@ -54,7 +54,7 @@ import { BarraApp } from '#/components/barra-app'
 import { CardCombate } from '#/components/combate/card-combate'
 import { CarrosselCombate } from '#/components/combate/carrossel-combate'
 import { BotaoVisibilidadeCondicao } from '#/components/combate/visibilidade-condicao'
-import { BadgeSaude, TrilhaTatilExpandida, FomeTatilExpandida, BadgesCondicoes, VisaoJogador } from '#/components/combate/visao-jogador'
+import { BadgeSaude, TrilhaTatilExpandida, FomeTatilExpandida, BadgesCondicoes } from '#/components/combate/apresentacao'
 import { LinkExibicaoPublica } from '#/components/exibicao-publica/link-exibicao-publica'
 import { BadgeEspecial } from '#/components/badge-especial'
 import { ChipParadaExcepcional } from '#/components/chip-parada-excepcional'
@@ -102,6 +102,8 @@ import { listarModelosBestiario, salvarModeloBestiario } from '#/server/bestiari
 import { listarPreCombates, salvarPreCombate, excluirPreCombate } from '#/server/pre-combate'
 import { aplicarCustomizacaoAoModelo, type InimigoPreCombate, type PreCombate } from '#/domain/pre-combate'
 import {
+  carregarCombate,
+  listarPersonagensParaCombate,
   adicionarParticipanteCombateServer,
   alternarCondicaoParticipanteCombateServer,
   alternarRevelarVitalidadeCombateServer,
@@ -109,15 +111,11 @@ import {
   aplicarDanoInimigoCombateServer,
   atualizarParticipanteInimigoServer,
   avancarTurnoCombateServer,
-  carregarCombate,
   encerrarCombateServer,
   iniciarCombateServer,
-  listarCoteriesParaCombate,
-  listarPersonagensParaCombate,
   removerParticipanteCombateServer,
   reordenarParticipantesCombateServer,
   voltarTurnoCombateServer,
-  type CoterieCombateOpcao,
   type EstadoCombateNarrador,
   type PersonagemCombateOpcao,
 } from '#/server/combate'
@@ -128,35 +126,22 @@ import { marcar } from '#/server/personagens'
 export const Route = createFileRoute('/combate')({
   beforeLoad: ({ context }) => {
     if (!context.usuario) throw redirect({ to: '/entrar' })
-    if (context.usuario.papel === 'narrador') throw redirect({ to: '/narrador/combate' })
+    if (context.usuario.papel !== 'narrador') throw redirect({ to: '/entrar' })
   },
-  loader: async ({ context }) => {
-    const dados = await carregarCombate()
-    if (context.usuario?.papel === 'narrador') {
-      const [modelos, personagens, preCombates, coteries] = await Promise.all([
-        listarModelosBestiario(),
-        listarPersonagensParaCombate(),
-        listarPreCombates(),
-        listarCoteriesParaCombate(),
-      ])
-      return {
-        ...dados,
-        modelos,
-        personagens: personagens as PersonagemCombateOpcao[],
-        preCombates,
-        coteries,
-      }
-    }
-    return {
-      ...dados,
-      modelos: [] as ModeloAntagonista[],
-      personagens: [] as PersonagemCombateOpcao[],
-      preCombates: [] as PreCombate[],
-      coteries: [] as CoterieCombateOpcao[],
-    }
+  loader: async () => {
+    const [dados, modelos, personagens, preCombates] = await Promise.all([
+      carregarCombate(), listarModelosBestiario(), listarPersonagensParaCombate(), listarPreCombates(),
+    ])
+    if (dados.papel !== 'narrador') throw new Error('Acesso negado')
+    return { combate: dados.combate, modelos, personagens, preCombates }
   },
+  head: () => ({ meta: [{ title: 'Combate — Vitae' }] }),
   component: PaginaCombate,
 })
+
+function PaginaCombate() {
+  return <VisaoNarrador {...Route.useLoaderData()} />
+}
 
 type InimigoPreCombateRascunho = Omit<InimigoPreCombate, 'recursosSobrenaturais'> & {
   recursos?: RecursosSobrenaturais
@@ -478,24 +463,6 @@ function CardInimigoIncapacitadoNarrador({
   )
 }
 
-
-function PaginaCombate() {
-  const dados = Route.useLoaderData()
-
-  if (dados.papel === 'narrador') {
-    return (
-      <VisaoNarrador
-        combate={dados.combate}
-        modelos={dados.modelos}
-        personagens={dados.personagens}
-        preCombates={dados.preCombates}
-        coteries={dados.coteries}
-      />
-    )
-  }
-
-  return <VisaoJogador combate={dados.combate} />
-}
 
 type ParticipanteNarrador = EstadoCombateNarrador['participantes'][number]
 
@@ -858,13 +825,11 @@ export function VisaoNarrador({
   modelos,
   personagens,
   preCombates,
-  coteries,
 }: {
   combate: EstadoCombateNarrador | null
   modelos: ModeloAntagonista[]
   personagens: PersonagemCombateOpcao[]
   preCombates: PreCombate[]
-  coteries: CoterieCombateOpcao[]
 }) {
   const router = useRouter()
 
@@ -1360,26 +1325,6 @@ export function VisaoNarrador({
     setInimigosParaAdicionar((atuais) => duplicarInimigoRascunhoNaLista(atuais, inimigo, modelo?.nome))
   }
 
-  function handleAdicionarCoterieNaSelecao(
-    coterieId: string,
-    atual: string[],
-    setter: (ids: string[]) => void,
-    idsIndisponiveis: string[] = [],
-  ) {
-    const cot = coteries.find((c) => c.id === coterieId)
-    if (!cot) return
-    const idsDisponiveis = cot.personagemIds.filter(
-      (id) => personagens.some((p) => p.id === id) && !idsIndisponiveis.includes(id),
-    )
-    const novos = idsDisponiveis.filter((id) => !atual.includes(id))
-    if (novos.length === 0) {
-      toast.error(`Todos os personagens de "${cot.nome}" já estão em uso.`)
-      return
-    }
-    setter([...atual, ...novos])
-    toast.success(`${novos.length} personagem(ns) de "${cot.nome}" adicionado(s).`)
-  }
-
   function handleCarregarPreCombate(preCombateId: string) {
     const pc = preCombates.find((p) => p.id === preCombateId)
     if (!pc) return
@@ -1798,24 +1743,6 @@ export function VisaoNarrador({
                 placeholder="Selecionar personagens..."
               />
 
-              {coteries.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Combobox
-                    opcoes={coteries.map((c) => ({
-                      valor: c.id,
-                      rotulo: c.nome,
-                      descricao: `${c.personagemIds.length} membro(s)`,
-                    }))}
-                    valor={null}
-                    rotulo="Chamar Coterie"
-                    onChange={(id) => handleAdicionarCoterieNaSelecao(id, selecaoPersonagens, setSelecaoPersonagens)}
-                    placeholder="...ou chamar uma Coterie inteira"
-                    mostrarDescricao={false}
-                    className="flex-1"
-                  />
-                </div>
-              )}
-
               {selecaoPersonagens.length > 0 && (
                 <div className="flex flex-col gap-1 border rounded-md p-2">
                   {selecaoPersonagens.map((pId) => {
@@ -2009,26 +1936,6 @@ export function VisaoNarrador({
                   placeholder="Selecionar personagem(ns)..."
                 />
 
-                {coteries.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Combobox
-                      opcoes={coteries.map((c) => ({
-                        valor: c.id,
-                        rotulo: c.nome,
-                        descricao: `${c.personagemIds.length} membro(s)`,
-                      }))}
-                      valor={null}
-                      rotulo="Chamar Coterie ao Combate"
-                      onChange={(id) => {
-                        const jaNoCombate = combate.participantes.flatMap((p) => p.tipo === 'personagem' ? [p.personagemId] : [])
-                        handleAdicionarCoterieNaSelecao(id, personagensAvulsosTemp, setPersonagensAvulsosTemp, jaNoCombate)
-                      }}
-                      placeholder="...ou chamar uma Coterie inteira"
-                      mostrarDescricao={false}
-                      className="flex-1"
-                    />
-                  </div>
-                )}
                 <Button onClick={() => handleConfirmarAdicionarAvulso('personagem')} disabled={adicionandoParticipantes || personagensAvulsosTemp.length === 0}>
                   Adicionar Personagens
                 </Button>

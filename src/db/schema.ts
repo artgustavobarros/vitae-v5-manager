@@ -36,7 +36,7 @@ export type CompulsaoAtivaPersonagem = {
   descricao: string
 }
 
-/** Configurações da Crônica gerenciadas pelo Narrador (ex.: regras de criação da mesa). */
+/** Configuração legada da Crônica, preservada somente para compatibilidade de criação. */
 export const cronica = pgTable('cronica', {
   id: uuid().primaryKey().defaultRandom(),
   nome: text().notNull().default('Crônica'),
@@ -50,7 +50,7 @@ export const cronica = pgTable('cronica', {
     .$onUpdate(() => new Date()),
 })
 
-/** Convite para a Crônica: o link que o Narrador compartilha com a mesa; só o mais novo vale. */
+/** Legado inativo: preservado sem permitir novos cadastros ou convites. */
 export const conviteCronica = pgTable('convite_cronica', {
   id: uuid().primaryKey().defaultRandom(),
   token: text().notNull().unique(),
@@ -91,7 +91,7 @@ export const personagem = pgTable(
     ficha: jsonb().$type<Ficha>().notNull(),
     /** Incrementada pelo banco sempre que a Ficha muda, inclusive nas ações sem fila. */
     revisaoMarcas: integer('revisao_marcas').notNull().default(0),
-    /** Compartilhamento da Condição (Vitalidade + Força de Vontade + Fome) com quem divide Coterie. */
+    /** Legado inativo; a divulgação pública usa revelarCondicao no participante do Combate. */
     compartilhaCondicao: boolean('compartilha_condicao').notNull().default(false),
     /** Ressonância Atual aplicada pelo Narrador a partir de um Sorteio. */
     ressonanciaAtual: jsonb('ressonancia_atual').$type<RessonanciaAtualPersonagem | null>(),
@@ -108,7 +108,7 @@ export const personagem = pgTable(
   (t) => [index('personagem_dono_id_idx').on(t.donoId)],
 )
 
-/** Recibo da marcação: uma operação só altera a Ficha e gera notificações uma vez. */
+/** Recibo da marcação: uma operação só altera a Ficha uma vez. */
 export const operacaoMarcacao = pgTable('operacao_marcacao', {
   usuarioId: text('usuario_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   operacaoId: uuid('operacao_id').notNull(),
@@ -118,7 +118,7 @@ export const operacaoMarcacao = pgTable('operacao_marcacao', {
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [primaryKey({ columns: [t.usuarioId, t.operacaoId] })])
 
-/** Definições de Paradas compartilhadas pela mesa; os valores vêm da Ficha selecionada. */
+/** Definições de Paradas compartilhadas, sem vínculo com valores de uma Ficha. */
 export const paradaCompartilhada = pgTable('parada_compartilhada', {
   id: uuid().primaryKey().defaultRandom(),
   nome: text().notNull(),
@@ -129,7 +129,7 @@ export const paradaCompartilhada = pgTable('parada_compartilhada', {
   atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (t) => [index('parada_compartilhada_criado_por_id_idx').on(t.criadoPorId)])
 
-/** A ordem é pessoal, independente do Personagem que o usuário estiver consultando. */
+/** Ordem pessoal do catálogo de Paradas, vinculada à conta do Narrador. */
 export const preferenciaParadas = pgTable('preferencia_paradas', {
   usuarioId: text('usuario_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
   ordem: jsonb().$type<string[]>().notNull().default([]),
@@ -152,8 +152,8 @@ export const relogio = pgTable('relogio', {
 })
 
 /**
- * Coterie: grupo de Personagens que o Narrador gerencia.
- * A Coterie Padrão nasce com a Crônica e não pode ser apagada.
+ * Coterie legada: gestão retirada; tabela e vínculos preservados sem uso pela aplicação.
+ * A marca de Coterie Padrão permanece apenas como dado histórico.
  * Domínio: Caça, Abrigo e Porte (0 a 5 cada). Tipo, Vantagens e Defeitos vêm do Catálogo, por id.
  */
 export const coterie = pgTable('coterie', {
@@ -175,7 +175,7 @@ export const coterie = pgTable('coterie', {
     .$onUpdate(() => new Date()),
 })
 
-/** Associação entre Personagem e Coterie. */
+/** Associação legada entre Personagem e Coterie, sem uso nos fluxos atuais. */
 export const membroCoterie = pgTable(
   'membro_coterie',
   {
@@ -193,7 +193,7 @@ export const membroCoterie = pgTable(
   ],
 )
 
-/** Convite de Coterie: proposta do Narrador para um Personagem entrar numa Coterie. */
+/** Legado inativo: membros agora são adicionados diretamente pelo Narrador. */
 export const conviteCoterie = pgTable(
   'convite_coterie',
   {
@@ -218,7 +218,7 @@ export type DestinoNotificacao = {
   search?: Record<string, string | number | boolean>
 }
 
-/** Notificações no sino e toasts enviados via SSE. */
+/** Histórico legado inativo; o aplicativo não gera nem consulta notificações. */
 export const notificacao = pgTable(
   'notificacao',
   {

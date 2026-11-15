@@ -11,7 +11,6 @@ import {
   type RessonanciaAtualPersonagem,
 } from '#/db/schema'
 import type { Cla } from '#/domain/ficha'
-import { notificacoesEventos } from '#/domain/notificacoes'
 import {
   ehSangueFraco,
   sortearCompulsao,
@@ -19,7 +18,6 @@ import {
   sortearRessonancia,
   type TipoRessonancia,
 } from '#/domain/sorteios'
-import { enviarNotificacao } from '#/server/enviar-notificacao'
 import { barramento } from '#/server/eventos'
 import { exigirNarrador } from '#/server/sessao'
 
@@ -96,12 +94,9 @@ export const aplicarRessonanciaPersonagemServer = createServerFn({ method: 'POST
       .select({
         id: personagem.id,
         nome: personagem.nome,
-        donoId: personagem.donoId,
-        papelDono: user.papel,
         ficha: personagem.ficha,
       })
       .from(personagem)
-      .innerJoin(user, eq(personagem.donoId, user.id))
       .where(eq(personagem.id, data.personagemId))
 
     if (!p) throw new Error('Personagem não encontrado')
@@ -117,19 +112,6 @@ export const aplicarRessonanciaPersonagemServer = createServerFn({ method: 'POST
       .update(personagem)
       .set({ ressonanciaAtual: ressonancia })
       .where(eq(personagem.id, data.personagemId))
-
-    if (p.papelDono === 'jogador') {
-      const evento = notificacoesEventos.ressonanciaAplicada(
-        p.nome,
-        `${data.ressonancia.tipo} (${data.ressonancia.intensidade})`,
-        p.id,
-      )
-      await enviarNotificacao({
-        usuarioId: p.donoId,
-        texto: evento.texto,
-        destino: evento.destino,
-      })
-    }
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'personagem', id: data.personagemId })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })
@@ -169,11 +151,8 @@ export const aplicarCompulsaoPersonagemServer = createServerFn({ method: 'POST' 
       .select({
         id: personagem.id,
         nome: personagem.nome,
-        donoId: personagem.donoId,
-        papelDono: user.papel,
       })
       .from(personagem)
-      .innerJoin(user, eq(personagem.donoId, user.id))
       .where(eq(personagem.id, data.personagemId))
 
     if (!p) throw new Error('Personagem não encontrado')
@@ -182,15 +161,6 @@ export const aplicarCompulsaoPersonagemServer = createServerFn({ method: 'POST' 
       .update(personagem)
       .set({ compulsaoAtiva: data.compulsao })
       .where(eq(personagem.id, data.personagemId))
-
-    if (p.papelDono === 'jogador') {
-      const evento = notificacoesEventos.compulsaoAplicada(p.nome, data.compulsao.nome, p.id)
-      await enviarNotificacao({
-        usuarioId: p.donoId,
-        texto: evento.texto,
-        destino: evento.destino,
-      })
-    }
 
     barramento.emitir({ tipo: 'mudanca', escopo: 'personagem', id: data.personagemId })
     barramento.emitir({ tipo: 'mudanca', escopo: 'painel' })
@@ -224,7 +194,7 @@ export const listarPersonagensParaSorteio = createServerFn({ method: 'GET' })
         ressonanciaAtual: personagem.ressonanciaAtual,
         compulsaoAtiva: personagem.compulsaoAtiva,
         donoNome: user.name,
-        donoPapel: user.papel,
+        tipo: personagem.tipo,
       })
       .from(personagem)
       .innerJoin(user, eq(personagem.donoId, user.id))
@@ -237,6 +207,6 @@ export const listarPersonagensParaSorteio = createServerFn({ method: 'GET' })
       ressonanciaAtual: l.ressonanciaAtual,
       compulsaoAtiva: l.compulsaoAtiva,
       donoNome: l.donoNome,
-      ehPdn: l.donoPapel === 'narrador',
+      ehPdn: l.tipo === 'nao_jogador',
     }))
   })

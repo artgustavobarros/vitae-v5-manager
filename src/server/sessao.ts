@@ -21,7 +21,7 @@ async function lerUsuario(): Promise<Usuario | null> {
     if (isAPIError(erro) && erro.body?.code === 'FAILED_TO_GET_SESSION') return null
     throw erro
   })
-  if (!sessao) return null
+  if (!sessao || sessao.user.papel !== 'narrador') return null
   const { id, name, email, image, papel } = sessao.user
   return {
     id,

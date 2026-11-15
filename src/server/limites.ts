@@ -45,5 +45,4 @@ export function criarLimiteConexoes(maximo: number) {
 // shortcut: contadores por processo; usar armazenamento compartilhado ao subir mais de uma réplica.
 export const limitarHttp = criarLimitador(600, 60_000)
 export const limitarUsuario = criarLimitador(300, 60_000)
-export const limitarConvite = criarLimitador(30, 60_000)
 export const reservarConexaoTempoReal = criarLimiteConexoes(5)

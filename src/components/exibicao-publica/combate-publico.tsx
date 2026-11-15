@@ -1,7 +1,7 @@
-import { VisaoJogador } from '#/components/combate/visao-jogador'
+import { VisaoPublicaCombate } from '#/components/combate/apresentacao'
 import { CarrosselCombate } from '#/components/combate/carrossel-combate'
 import type { CombateVisivel } from '#/domain/combate'
 
 export function CombatePublico({ combate }: { combate: CombateVisivel | null }) {
-  return <VisaoJogador combate={combate} publico ContainerParticipantes={CarrosselCombate} />
+  return <VisaoPublicaCombate combate={combate} ContainerParticipantes={CarrosselCombate} />
 }

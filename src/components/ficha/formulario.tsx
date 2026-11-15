@@ -28,7 +28,6 @@ import {
   type Seita,
 } from '#/domain/ficha'
 
-import type { OpcoesCriacaoCronica } from '#/domain/cronica'
 import { CardPerdicaoCompulsaoCla } from './card-cla'
 import { CamposPoderes, CamposRituais, CamposVantagensPersonagem, ListaSoltos } from './catalogo'
 import { SeletorPontos } from './marcadores'
@@ -181,26 +180,14 @@ export function CamposIdentidade({
   edicao,
   regrasCriacao = false,
   podeAlterarCla = true,
-  opcoesCronica,
 }: {
   edicao: EdicaoFicha
   regrasCriacao?: boolean
   podeAlterarCla?: boolean
-  opcoesCronica?: OpcoesCriacaoCronica
 }) {
   const { nome, setNome, jogadorNome, setJogadorNome, ficha, mudar } = edicao
   const clas = regrasCriacao
     ? CLAS.filter((c) => {
-        if (opcoesCronica) {
-          if (c.id === 'caitiff' && !opcoesCronica.caitiffPermitido) return false
-          if (c.id === 'sangue-ralo' && !opcoesCronica.sangueRaloPermitido) return false
-          if (
-            c.id !== 'caitiff' &&
-            c.id !== 'sangue-ralo' &&
-            !opcoesCronica.clasPermitidos.includes(c.id)
-          )
-            return false
-        }
         return clasPermitidos(ficha.geracao).includes(c.id)
       })
     : CLAS
