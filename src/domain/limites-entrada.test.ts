@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import { fichaNeofito, fichaSchema } from './ficha'
-import { catalogoCoterieSchema } from './coterie'
 import { criarModeloAntagonistaPadrao, modeloAntagonistaSchema } from './bestiario'
 import { participantePersonagemSchema, atualizacaoInimigoSchema } from './combate'
 import { revisaoModeloSchema } from './revisao-bestiario'
@@ -32,10 +31,6 @@ describe('limites de entradas recebidas pela aplicação', () => {
     expect(ficha).not.toHaveProperty('donoId')
   })
 
-  it('limita as listas do Catálogo da Coterie', () => {
-    const vantagens = Array.from({ length: 101 }, () => ({ id: 'vantagem-contatos', nivel: 1 }))
-    expect(catalogoCoterieSchema.safeParse({ tipo: null, vantagens, defeitos: [] }).success).toBe(false)
-  })
 
   it('limita nomes, notas e listas dos Modelos de Antagonistas', () => {
     const modelo = criarModeloAntagonistaPadrao()

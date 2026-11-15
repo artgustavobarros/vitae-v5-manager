@@ -16,12 +16,9 @@ export type DadosCardPainel = {
   id: string
   nome: string
   jogador?: string | null
-  coteries: string[]
   condicao: Condicao | null
   humanidade?: number
   manchas?: number
-  ehMeu?: boolean
-  compartilhaCondicao?: boolean
   ressonanciaAtual?: RessonanciaAtualPersonagem | null
   compulsaoAtiva?: CompulsaoAtivaPersonagem | null
 }
@@ -29,12 +26,10 @@ export type DadosCardPainel = {
 type MarcasCondicao = Pick<Marcas, 'danoVitalidade' | 'danoVontade' | 'fome'>
 
 /**
- * Card de Personagem no Painel e nas Coteries. Só o nome leva à Ficha.
+ * Card de Personagem no Painel. Só o nome leva à Ficha.
  * Com `editavel`, a Condição usa as mesmas trilhas tocáveis da Ficha e salva no toque.
  */
 export function PainelCard({ item, editavel = false }: { item: DadosCardPainel; editavel?: boolean }) {
-  const naoCompartilhada = item.ehMeu && item.compartilhaCondicao === false
-
   return (
     <Card className="gap-2 rounded-lg p-4">
       <div className="flex items-start justify-between gap-2">
@@ -47,11 +42,7 @@ export function PainelCard({ item, editavel = false }: { item: DadosCardPainel; 
             >
               {item.nome}
             </Link>
-            {item.ehMeu && <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">· seu</span>}
           </h2>
-          {item.coteries.length > 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">{item.coteries.join(' · ')}</p>
-          )}
           {(item.ressonanciaAtual || item.compulsaoAtiva) && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {item.ressonanciaAtual && (
@@ -81,14 +72,13 @@ export function PainelCard({ item, editavel = false }: { item: DadosCardPainel; 
             id={item.id}
             condicao={item.condicao}
           />
-          {(item.humanidade !== undefined || naoCompartilhada) && (
+          {item.humanidade !== undefined && (
             <p className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
               {item.humanidade !== undefined && (
                 <span>
                   <TextoHumanidade humanidade={item.humanidade} manchas={item.manchas} />
                 </span>
               )}
-              {naoCompartilhada && <span className="italic">(não compartilhada)</span>}
             </p>
           )}
         </>
@@ -97,7 +87,6 @@ export function PainelCard({ item, editavel = false }: { item: DadosCardPainel; 
           condicao={item.condicao}
           humanidade={item.humanidade}
           manchas={item.manchas}
-          naoCompartilhada={naoCompartilhada}
         />
       )}
     </Card>
@@ -151,12 +140,10 @@ function CondicaoLeitura({
   condicao,
   humanidade,
   manchas,
-  naoCompartilhada,
 }: {
   condicao: Condicao
   humanidade?: number
   manchas?: number
-  naoCompartilhada?: boolean
 }) {
   return (
     <div className="flex flex-col gap-2 pt-1 text-xs">
@@ -180,7 +167,6 @@ function CondicaoLeitura({
           </span>
         )}
 
-        {naoCompartilhada && <span className="text-xs text-muted-foreground italic">(não compartilhada)</span>}
       </div>
     </div>
   )

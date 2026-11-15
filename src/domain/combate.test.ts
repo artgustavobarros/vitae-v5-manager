@@ -1,3 +1,4 @@
+import { filtrarCombatePublico } from './exibicao-publica'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -11,7 +12,6 @@ import {
   calcularEstadoSaude,
   CONDICOES_COMBATE_V5,
   ehInimigoIncapacitado,
-  filtrarCombateParaJogador,
   iniciarCombate,
   obterCondicaoCombate,
   obterProximoIndiceAtivo,
@@ -196,22 +196,16 @@ describe('Combate - Gerenciamento de Participantes', () => {
 describe('Combate - Visibilidade para Jogadores', () => {
   it('oculta vitalidade do inimigo quando não liberada pelo narrador', () => {
     const combate = iniciarCombate([mockPersonagem1, mockInimigo])
-    const visaoJogador = filtrarCombateParaJogador(combate, {
-      jogadorId: 'user-1',
-      meusPersonagemIds: ['char-1'],
-      coterieIdsDoJogador: ['cot-1'],
-      coteriesPorPersonagem: { 'char-1': ['cot-1'] },
-      condicoesPersonagens: {
+    const visaoJogador = filtrarCombatePublico(combate, {
         'char-1': {
-          compartilhaCondicao: false,
+
           vitalidadeMax: 6,
           vontadeMax: 5,
           danoVitalidade: { superficial: 1, agravado: 0 },
           danoVontade: { superficial: 0, agravado: 0 },
           fome: 2,
         },
-      },
-    })
+      })
 
     const inimigo = visaoJogador.participantes.find((p) => p.tipo === 'inimigo')!
     expect(inimigo.vitalidadeOculta).toBe(true)
@@ -222,13 +216,7 @@ describe('Combate - Visibilidade para Jogadores', () => {
   it('mostra vitalidade do inimigo se narrador liberou', () => {
     const inimigoLiberado = { ...mockInimigo, revelarVitalidade: true }
     const combate = iniciarCombate([inimigoLiberado])
-    const visaoJogador = filtrarCombateParaJogador(combate, {
-      jogadorId: 'user-1',
-      meusPersonagemIds: [],
-      coterieIdsDoJogador: [],
-      coteriesPorPersonagem: {},
-      condicoesPersonagens: {},
-    })
+    const visaoJogador = filtrarCombatePublico(combate, {})
 
     const inimigo = visaoJogador.participantes.find((p) => p.tipo === 'inimigo')!
     expect(inimigo.vitalidadeOculta).toBe(false)
@@ -236,22 +224,14 @@ describe('Combate - Visibilidade para Jogadores', () => {
     expect(inimigo.danoVitalidade).toEqual({ superficial: 0, agravado: 0 })
   })
 
-  it('aplica regra de compartilhamento de Condição quando ocultada pelo Narrador no combate', () => {
+  it('a escolha do Narrador prevalece sobre os vínculos legados de dono e Coterie', () => {
     const combate = iniciarCombate([
       { ...mockPersonagem1, revelarCondicao: false },
       { ...mockPersonagem2, revelarCondicao: false },
     ])
-    const visaoJogador = filtrarCombateParaJogador(combate, {
-      jogadorId: 'user-1',
-      meusPersonagemIds: ['char-1'],
-      coterieIdsDoJogador: ['cot-1'],
-      coteriesPorPersonagem: {
-        'char-1': ['cot-1'],
-        'char-2': ['cot-1'], // divide coterie com user-1
-      },
-      condicoesPersonagens: {
+    const visaoJogador = filtrarCombatePublico(combate, {
         'char-1': {
-          compartilhaCondicao: false, // mas é o próprio personagem do user-1, então ele vê!
+
           vitalidadeMax: 6,
           vontadeMax: 5,
           danoVitalidade: { superficial: 1, agravado: 0 },
@@ -259,19 +239,18 @@ describe('Combate - Visibilidade para Jogadores', () => {
           fome: 2,
         },
         'char-2': {
-          compartilhaCondicao: false, // char-2 não compartilha Condição! Logo deve vir oculto para char-1
+
           vitalidadeMax: 7,
           vontadeMax: 4,
           danoVitalidade: { superficial: 2, agravado: 0 },
           danoVontade: { superficial: 0, agravado: 0 },
           fome: 1,
         },
-      },
-    })
+      })
 
     const p1 = visaoJogador.participantes.find((p) => p.id === 'p1')!
-    expect(p1.condicaoOculta).toBe(false)
-    expect(p1.condicao?.fome).toBe(2)
+    expect(p1.condicaoOculta).toBe(true)
+    expect(p1.condicao).toBeUndefined()
 
     const p2 = visaoJogador.participantes.find((p) => p.id === 'p2')!
     expect(p2.condicaoOculta).toBe(true)
@@ -356,7 +335,7 @@ describe('Combate - Estado de Saúde e Condições V5', () => {
     expect(agarrado?.efeitoMecanico).toContain('-2 dados')
   })
 
-  it('propaga ehMeu e condicoes no filtro de combate para jogador', () => {
+  it('preserva condições sem conceder propriedade a quem consulta o Combate', () => {
     const p1ComCondicoes: ParticipanteCombate = {
       ...mockPersonagem1,
       condicoes: ['agarrado', 'em-chamas'],
@@ -371,16 +350,10 @@ describe('Combate - Estado de Saúde e Condições V5', () => {
     }
 
     const combate = iniciarCombate([p1ComCondicoes, p2ComCondicoes, inimigoComCondicoes])
-    const visao = filtrarCombateParaJogador(combate, {
-      jogadorId: 'user-1',
-      meusPersonagemIds: ['char-1'],
-      coterieIdsDoJogador: [],
-      coteriesPorPersonagem: {},
-      condicoesPersonagens: {},
-    })
+    const visao = filtrarCombatePublico(combate, {})
 
     const p1 = visao.participantes.find((p) => p.id === 'p1')!
-    expect(p1.ehMeu).toBe(true)
+    expect(p1.ehMeu).toBe(false)
     expect(p1.condicoes).toEqual(['agarrado', 'em-chamas'])
 
     const p2 = visao.participantes.find((p) => p.id === 'p2')!
@@ -393,22 +366,16 @@ describe('Combate - Estado de Saúde e Condições V5', () => {
 
   it('mostra tags de saude sem revelar os valores da Condicao oculta, conforme pedido do Narrador', () => {
     const combate = iniciarCombate([{ ...mockPersonagem1, revelarCondicao: false }, mockInimigo])
-    const visao = filtrarCombateParaJogador(combate, {
-      jogadorId: 'user-outro',
-      meusPersonagemIds: [],
-      coterieIdsDoJogador: [],
-      coteriesPorPersonagem: {},
-      condicoesPersonagens: {
+    const visao = filtrarCombatePublico(combate, {
         'char-1': {
-          compartilhaCondicao: false,
+
           vitalidadeMax: 6,
           vontadeMax: 5,
           danoVitalidade: { superficial: 3, agravado: 0 },
           danoVontade: { superficial: 0, agravado: 0 },
           fome: 2,
         },
-      },
-    })
+      })
 
     const ini = visao.participantes.find((p) => p.tipo === 'inimigo')!
     expect(ini.vitalidadeOculta).toBe(true)

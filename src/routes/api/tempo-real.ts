@@ -9,12 +9,11 @@ export const Route = createFileRoute('/api/tempo-real')({
     handlers: {
       GET: async ({ request }) => {
         const sessao = await auth.api.getSession({ headers: request.headers })
-        if (!sessao) {
+        if (!sessao || sessao.user.papel !== 'narrador') {
           return new Response('Não autorizado', { status: 401 })
         }
 
         const usuarioId = sessao.user.id
-        const papel = sessao.user.papel
         const liberarVaga = reservarConexaoTempoReal(usuarioId)
         if (!liberarVaga) return respostaLimite(20)
 
@@ -37,11 +36,11 @@ export const Route = createFileRoute('/api/tempo-real')({
 
             controller.enqueue(encoder.encode(': conectado\n\n'))
 
-            // A cada ping confere a sessão: Jogador removido ou que saiu em outro aparelho para de receber eventos.
+            // A cada ping confere se a sessão do Narrador continua válida.
             intervalPing = setInterval(async () => {
               try {
                 const ainda = await auth.api.getSession({ headers: request.headers })
-                if (ainda?.user.id !== usuarioId) return encerrar()
+                if (ainda?.user.id !== usuarioId || ainda.user.papel !== 'narrador') return encerrar()
                 controller.enqueue(encoder.encode(': ping\n\n'))
               } catch {
                 encerrar()
@@ -49,14 +48,6 @@ export const Route = createFileRoute('/api/tempo-real')({
             }, 20_000)
 
             desinscrever = barramento.escutar((evento: EventoReal) => {
-              // Filtragem por destinatário
-              if ('paraUsuarioId' in evento && evento.paraUsuarioId && evento.paraUsuarioId !== usuarioId) {
-                return
-              }
-              if ('apenasNarrador' in evento && evento.apenasNarrador && papel !== 'narrador') {
-                return
-              }
-
               try {
                 const payload = JSON.stringify(evento)
                 controller.enqueue(encoder.encode(`data: ${payload}\n\n`))

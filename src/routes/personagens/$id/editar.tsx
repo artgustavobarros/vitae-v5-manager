@@ -6,7 +6,6 @@ import { BarraApp } from '#/components/barra-app'
 import { BotaoExcluirPersonagem, SeletorAtividadePersonagem } from '#/components/controles-ficha-personagem'
 import { FormularioFicha, type ValoresFormulario } from '#/components/ficha/formulario'
 import { carregarEdicao } from '#/lib/carregar-edicao'
-import { obterOpcoesCriacaoCronica } from '#/server/cronica'
 import { buscarFicha, salvarFicha } from '#/server/personagens'
 import type { Ficha } from '#/domain/ficha'
 
@@ -17,7 +16,6 @@ export const Route = createFileRoute('/personagens/$id/editar')({
   loader: async ({ params }) => {
     const carregamento = await carregarEdicao(
       () => buscarFicha({ data: { id: params.id } }),
-      () => obterOpcoesCriacaoCronica(),
     )
     if (carregamento.tipo === 'inexistente') throw redirect({ to: '/' })
     if (carregamento.tipo === 'semEdicao') throw redirect({ to: '/personagens/$id', params })

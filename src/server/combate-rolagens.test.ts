@@ -18,7 +18,7 @@ const memoria = vi.hoisted(() => {
       ressonanciaAtual: RessonanciaAtualPersonagem | null
     }
     usuario: { id: string; papel: 'narrador' | 'jogador' }
-  } = { usuario: { id: 'jogador-1', papel: 'jogador' } }
+  } = { usuario: { id: 'narrador-1', papel: 'narrador' } }
   return estado
 })
 
@@ -38,7 +38,6 @@ vi.mock('@tanstack/react-start', () => ({
 }))
 
 vi.mock('#/server/sessao', () => ({ exigirUsuario: {}, exigirNarrador: {} }))
-vi.mock('#/server/enviar-notificacao', () => ({ enviarNotificacao: async () => {} }))
 vi.mock('#/db', async () => {
   const schema = await import('#/db/schema')
   const banco = {
@@ -88,7 +87,7 @@ const participante = {
 }
 
 beforeEach(() => {
-  memoria.usuario = { id: 'jogador-1', papel: 'jogador' }
+  memoria.usuario = { id: 'narrador-1', papel: 'narrador' }
   memoria.combate = iniciarCombate([participante, structuredClone(inimigo)])
   memoria.personagem = {
     id: participante.personagemId, nome: 'Lucas', donoId: 'jogador-1', papelDono: 'jogador',
@@ -116,13 +115,13 @@ describe('Ações de Combate no servidor', () => {
       .rejects.toThrow('Nenhum combate ativo')
   })
 
-  it('passa o próprio turno sem enviar os dados privados dos inimigos', async () => {
+  it('passa o turno atual sem enviar os dados privados dos inimigos', async () => {
     const resposta = await avancarTurnoCombateServer()
     expect(resposta).toEqual({ ok: true })
     expect(memoria.combate?.turnoAtual).toBe(1)
   })
 
-  it('altera a própria condição sem enviar os dados privados dos inimigos', async () => {
+  it('altera a condição do Personagem sem enviar os dados privados dos inimigos', async () => {
     const resposta = await alternarCondicaoParticipanteCombateServer({
       data: { participanteId: participante.id, condicaoId: 'agarrado' },
     })
@@ -145,10 +144,10 @@ describe('Ações de Combate no servidor', () => {
     expect(memoria.combate.turnoAtual).toBe(1)
   })
 
-  it('recusa passar o turno de outro Jogador', async () => {
-    memoria.usuario.id = 'outro-jogador'
-    await expect(avancarTurnoCombateServer()).rejects.toThrow('seu próprio personagem')
-    expect(memoria.combate?.turnoAtual).toBe(0)
+  it('passa o turno sem depender do vínculo legado de dono', async () => {
+    memoria.personagem!.donoId = 'outro-jogador'
+    await avancarTurnoCombateServer()
+    expect(memoria.combate?.turnoAtual).toBe(1)
   })
 })
 

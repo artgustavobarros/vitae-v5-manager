@@ -3,15 +3,11 @@ import { describe, expect, it } from 'vitest'
 import {
   acessoFicha,
   ehPdN,
-  exigeRegrasCriacao,
   motivoNaoConcluir,
   nomeJogador,
   permissoesPersonagem,
   podeApagar,
-  podeAtribuir,
-  podeCancelarAtribuicao,
   podeConcluir,
-  podeResponderAtribuicao,
   rotuloOrigemPersonagem,
   type StatusPersonagem,
 } from './permissoes-ficha'
@@ -82,51 +78,13 @@ describe('podeApagar', () => {
   })
 })
 
-describe('Personagem atribuído', () => {
-  it('desativa a atribuição porque o Tipo substitui a posse pelo Jogador', () => {
-    expect(podeAtribuir(narrador, personagem('n1', 'rascunho'))).toBe(false)
-    expect(podeAtribuir(narrador, personagem('n1', 'ativo'))).toBe(false)
-    expect(podeAtribuir(narrador, personagem('j1', 'rascunho'))).toBe(false)
-    expect(podeAtribuir(narrador, atribuido)).toBe(false)
-    expect(podeAtribuir(jogador, personagem('j1', 'rascunho'))).toBe(false)
-    expect(podeResponderAtribuicao(jogador, atribuido)).toBe(false)
-    expect(podeResponderAtribuicao(outroJogador, atribuido)).toBe(false)
-    expect(podeResponderAtribuicao(narrador, atribuido)).toBe(false)
-    expect(podeCancelarAtribuicao(narrador, atribuido)).toBe(false)
-    expect(podeCancelarAtribuicao(narrador, personagem('n1', 'rascunho'))).toBe(false)
-    expect(podeCancelarAtribuicao(jogador, atribuido)).toBe(false)
-  })
-})
-
 describe('motivoNaoConcluir', () => {
   it('diz por que o Rascunho não pode ser concluído', () => {
     expect(motivoNaoConcluir(jogador, personagem('j1', 'rascunho'))).toBe('nao-dono')
     expect(motivoNaoConcluir(narrador, personagem('j1', 'rascunho', ' '))).toBe('sem-nome')
-    expect(motivoNaoConcluir(narrador, atribuido)).toBe('atribuido')
+    expect(motivoNaoConcluir(narrador, atribuido)).toBeNull()
     expect(motivoNaoConcluir(narrador, personagem('j1', 'ativo'))).toBe('nao-rascunho')
     expect(motivoNaoConcluir(narrador, personagem('j1', 'rascunho'))).toBeNull()
-  })
-})
-
-describe('podeAtribuir a um alvo', () => {
-  it('não atribui a nenhum papel', () => {
-    const rascunho = personagem('n1', 'rascunho')
-    expect(podeAtribuir(narrador, rascunho, { papel: 'jogador' })).toBe(false)
-    expect(podeAtribuir(narrador, rascunho, { papel: 'narrador' })).toBe(false)
-  })
-})
-
-describe('exigeRegrasCriacao', () => {
-  it('não aplica regras de criação ao Jogador porque só o Narrador edita', () => {
-    expect(exigeRegrasCriacao(jogador, personagem('j1', 'rascunho'))).toBe(false)
-  })
-
-  it('o Narrador edita sem validação, inclusive nos próprios Rascunhos', () => {
-    expect(exigeRegrasCriacao(narrador, personagem('n1', 'rascunho'))).toBe(false)
-  })
-
-  it('fora do Rascunho não há regra de criação', () => {
-    expect(exigeRegrasCriacao(jogador, personagem('j1', 'ativo'))).toBe(false)
   })
 })
 
@@ -191,9 +149,6 @@ describe('permissoesPersonagem', () => {
       podeAlterarCla: false,
       podeApagar: false,
       podeConcluir: false,
-      podeAtribuir: false,
-      podeCancelarAtribuicao: false,
-      regrasCriacao: false,
     })
   })
 
@@ -204,11 +159,9 @@ describe('permissoesPersonagem', () => {
     })
   })
 
-  it('Rascunho atribuído: o Narrador edita, mas não conclui nem atribui de novo', () => {
+  it('a atribuição legada não impede o Narrador de concluir o Rascunho', () => {
     expect(permissoesPersonagem(narrador, atribuido)).toMatchObject({
-      podeConcluir: false,
-      podeAtribuir: false,
-      podeCancelarAtribuicao: false,
+      podeConcluir: true,
     })
   })
 })
@@ -229,7 +182,7 @@ describe('rotuloOrigemPersonagem', () => {
   })
 
   it('identifica rascunho atribuido', () => {
-    expect(rotuloOrigemPersonagem({ status: 'rascunho', atribuidoA: 'user-1' })).toBe('(Rascunho atribuído)')
+    expect(rotuloOrigemPersonagem({ status: 'rascunho', atribuidoA: 'user-1' })).toBe('(Rascunho)')
   })
 
   it('identifica PdN', () => {

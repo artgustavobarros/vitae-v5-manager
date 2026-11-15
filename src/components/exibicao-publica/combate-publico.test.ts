@@ -4,12 +4,12 @@ import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } fr
 import { describe, expect, it } from 'vitest'
 
 import { CombatePublico } from './combate-publico'
-import { VisaoJogador } from '#/components/combate/visao-jogador'
+import { VisaoPublicaCombate } from '#/components/combate/apresentacao'
 import type { CombateVisivel, EstadoSaude } from '#/domain/combate'
 
 async function renderizar(combate: CombateVisivel | null, ContainerParticipantes?: ComponentType<{ children: ReactNode; indiceAtual?: number }>) {
   const routeTree = createRootRoute({ component: () => ContainerParticipantes
-    ? createElement(VisaoJogador, { combate, publico: true, ContainerParticipantes })
+    ? createElement(VisaoPublicaCombate, { combate, ContainerParticipantes })
     : createElement(CombatePublico, { combate }) })
   const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: ['/'] }) })
   await router.load()

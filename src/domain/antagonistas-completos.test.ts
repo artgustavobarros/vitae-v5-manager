@@ -1,7 +1,8 @@
+import { filtrarCombatePublico } from './exibicao-publica'
 import { describe, expect, it } from 'vitest'
 
 import { criarModeloAntagonistaPadrao, modeloAntagonistaSchema } from './bestiario'
-import { atualizarParticipanteInimigo, criarInimigoDeModelo, filtrarCombateParaJogador, iniciarCombate, participanteCombateSchema } from './combate'
+import { atualizarParticipanteInimigo, criarInimigoDeModelo, iniciarCombate, participanteCombateSchema } from './combate'
 
 const modelo = {
   ...criarModeloAntagonistaPadrao(),
@@ -51,9 +52,7 @@ describe('Antagonistas com ficha completa', () => {
   it('mantém a ficha completa privada mesmo quando a Vitalidade é revelada', () => {
     const inimigo = criarInimigoDeModelo(modeloAntagonistaSchema.parse(modelo), { id: 'fada-1', nome: 'Guardiã' })
     inimigo.revelarVitalidade = true
-    const visivel = filtrarCombateParaJogador(iniciarCombate([inimigo]), {
-      jogadorId: 'jogador', meusPersonagemIds: [], coterieIdsDoJogador: [], coteriesPorPersonagem: {}, condicoesPersonagens: {},
-    })
+    const visivel = filtrarCombatePublico(iniciarCombate([inimigo]), {})
     expect(visivel.participantes[0].vitalidadeMax).toBe(inimigo.vitalidadeMax)
     expect(visivel.participantes[0]).not.toHaveProperty('fichaCompleta')
     expect(visivel.participantes[0]).not.toHaveProperty('paradas')

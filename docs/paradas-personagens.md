@@ -1,18 +1,14 @@
-# Paradas dos Personagens
+# Paradas
 
-- Página `/paradas`, acessível pela navegação do Jogador e do Narrador e pela Ficha de cada Personagem.
-- O catálogo de Paradas Padrão e Personalizadas é compartilhado por toda a mesa. Uma nova definição fica disponível para todos.
-- Nome da ação, Atributo e Habilidade são compartilhados. Os valores de cada característica e o total de dados base são calculados a partir da Ficha selecionada, sem modificadores da cena.
-- Qualquer usuário autenticado pode adicionar Paradas. O autor pode editar e remover as próprias; o Narrador pode gerenciar todas as Personalizadas. As Padrão permanecem disponíveis.
-- Antes de salvar, o formulário avisa quando a combinação de Atributo + Habilidade já aparece em outro card e mostra os títulos encontrados. A verificação inclui padrões e compartilhadas, ignora o próprio card em edição e permite salvar outra ação com a mesma combinação. O servidor também retorna o aviso ao salvar.
-- Os Comboboxes de Atributos e Habilidades têm labels internos para os grupos Físico, Social e Mental, mantendo a busca direta.
-- A ordem do grid é pessoal, salva por usuário. Trocar de Personagem muda os valores, mas mantém a ordem do usuário. Reordenar nunca altera o grid de outra pessoa.
-- O conteúdo usa o container padrão de até 1440px. O grid compacto usa quatro colunas nas telas grandes e se adapta até uma coluna no celular. Título e badge de tipo ficam na primeira linha; composição e total, na segunda.
-- Reordenação por mouse, toque e teclado (Espaço, setas, Espaço; Escape cancela). Os filtros preservam as demais Paradas, novas entradas são acrescentadas ao catálogo e ids removidos são ignorados.
-- Filtros por Paradas Físicas, Sociais e Mentais seguem o grupo da Habilidade. O filtro de tipo combina com a busca textual.
-- As regras de acesso à Ficha continuam valendo para a seleção do Personagem e leitura dos valores. Fichas bloqueadas ou arquivadas não impedem gerenciar o catálogo compartilhado nem a ordem pessoal.
-- A página calcula valores e não rola dados, conforme confirmado pelo usuário.
+- Página `/paradas`, acessível pela navegação do Narrador e pela Ficha, sem selecionar Personagem.
+- Cada card mostra título da ação, Atributo + Habilidade e categoria. Não exibe valores das características nem total de dados.
+- O catálogo de Paradas Padrão e Personalizadas é compartilhado. Só o Narrador adiciona, edita e remove Personalizadas; as Padrão permanecem disponíveis.
+- A página funciona mesmo sem Personagens cadastrados.
+- Busca por ação, Atributo e Habilidade. Filtros por Físicas, Sociais e Mentais seguem o grupo da Habilidade.
+- Antes de salvar, o formulário avisa sobre combinações repetidas e permite mantê-las com outro título. O servidor também retorna esse aviso.
+- Os Comboboxes de Atributos e Habilidades oferecem busca direta e agrupamento Físico, Social e Mental.
+- A ordem permanece vinculada à conta do Narrador, com reordenação por mouse, toque ou teclado (Espaço, setas, Espaço; Escape cancela). Filtros preservam as demais posições.
+- Novas entradas são acrescentadas ao catálogo; ids removidos são ignorados. Definições e ordens já salvas são preservadas.
+- O grid usa quatro colunas em telas grandes e uma no celular. A página não rola dados.
 
-A migração do modelo anterior preserva as definições e seus ids. A ordem antiga do Personagem atualizado mais recentemente vira a ordem pessoal do dono. Se o mesmo id tiver versões diferentes, preserva a versão mais recente.
-
-Referência para o cálculo base: [mecânicas básicas de Vampire: The Masquerade, publicadas pela Paradox](https://www.paradoxinteractive.com/games/world-of-darkness/news/vampire-the-masquerade-basic-mechanics). As ações pré-definidas são sugestões de uso, não combinações obrigatórias para toda situação.
+As ações pré-definidas são sugestões de uso, não combinações obrigatórias para toda situação.

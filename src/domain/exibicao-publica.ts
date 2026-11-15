@@ -1,20 +1,106 @@
-import { filtrarCombateParaJogador, type Combate, type CombateVisivel, type InfoVisibilidadeJogador } from './combate'
+import { calcularEstadoSaude, type Combate, type CombateVisivel, type ParticipanteVisivel } from './combate'
+import type { Condicao } from './condicao'
 import type { EventoReal } from './eventos'
 import type { RelogioSalvo } from './relogios'
 
 export type RelogioPublico = Pick<RelogioSalvo, 'id' | 'nome' | 'total' | 'atual' | 'visivel' | 'revisao'>
+export type CondicoesPersonagens = Record<string, Condicao>
 
-/** A mesa não é um Jogador: não herda propriedade nem acesso por Coterie. */
+/** Só a escolha explícita do Narrador autoriza divulgar os valores. */
 export function filtrarCombatePublico(
   combate: Combate,
-  condicoesPersonagens: InfoVisibilidadeJogador['condicoesPersonagens'] = {},
+  condicoesPersonagens: CondicoesPersonagens = {},
 ): CombateVisivel {
-  const publico = filtrarCombateParaJogador(combate, {
-    jogadorId: '', meusPersonagemIds: [], coterieIdsDoJogador: [], coteriesPorPersonagem: {}, condicoesPersonagens,
+  const participantesVisiveis: ParticipanteVisivel[] = combate.participantes.map((p) => {
+    if (p.tipo === 'inimigo') {
+      const ehVampiro = p.categoria?.toLowerCase().includes('vampiro') ?? false
+      const estadoSaude = calcularEstadoSaude(
+        p.vitalidadeMax,
+        p.danoVitalidade,
+        ehVampiro,
+        p.condicoes,
+      )
+      if (p.revelarVitalidade) {
+        return {
+          id: p.id,
+          tipo: 'inimigo',
+          nome: p.nome,
+          categoria: p.categoria,
+          vitalidadeOculta: false,
+          vitalidadeMax: p.vitalidadeMax,
+          danoVitalidade: p.danoVitalidade,
+          revelarVitalidade: true,
+          condicoes: p.condicoes ?? [],
+          estadoSaude,
+        }
+      }
+      return {
+        id: p.id,
+        tipo: 'inimigo',
+        nome: p.nome,
+        categoria: p.categoria,
+        vitalidadeOculta: true,
+        revelarVitalidade: false,
+        condicoes: p.condicoes ?? [],
+        estadoSaude,
+      }
+    }
+
+    // p.tipo === 'personagem'
+    const condicaoInfo = condicoesPersonagens[p.personagemId]
+    const estadoSaude = condicaoInfo
+      ? calcularEstadoSaude(
+          condicaoInfo.vitalidadeMax,
+          condicaoInfo.danoVitalidade,
+          true,
+          p.condicoes,
+        )
+      : undefined
+
+    if (p.revelarCondicao !== false && condicaoInfo) {
+      return {
+        id: p.id,
+        tipo: 'personagem',
+        nome: p.nome,
+        ehPdn: p.ehPdN ?? p.ehPdn,
+        ehPdN: p.ehPdN ?? p.ehPdn,
+        jogadorNome: p.jogadorNome ?? null,
+        personagemId: p.personagemId,
+        ehMeu: false,
+        condicoes: p.condicoes ?? [],
+        estadoSaude,
+        condicaoOculta: false,
+        condicao: {
+          vitalidadeMax: condicaoInfo.vitalidadeMax,
+          vontadeMax: condicaoInfo.vontadeMax,
+          danoVitalidade: condicaoInfo.danoVitalidade,
+          danoVontade: condicaoInfo.danoVontade,
+          fome: condicaoInfo.fome,
+        },
+      }
+    }
+
+    return {
+      id: p.id,
+      tipo: 'personagem',
+      nome: p.nome,
+      ehPdn: p.ehPdN ?? p.ehPdn,
+      ehPdN: p.ehPdN ?? p.ehPdn,
+      jogadorNome: p.jogadorNome ?? null,
+      personagemId: p.personagemId,
+      ehMeu: false,
+      condicoes: p.condicoes ?? [],
+      estadoSaude,
+      condicaoOculta: true,
+    }
   })
+
   return {
-    ...publico,
-    participantes: publico.participantes.map(({ especiais: _especiais, ...participante }) => participante),
+    id: combate.id,
+    rodada: combate.rodada,
+    turnoAtual: combate.turnoAtual,
+    participantes: participantesVisiveis,
+    ativo: combate.ativo,
   }
 }
 
@@ -29,16 +115,9 @@ export function filtrarRelogiosPublicos(relogios: RelogioSalvo[]): RelogioPublic
   }))
 }
 
-export function filtrarEventoPublico(evento: EventoReal, relogiosVisiveis: string[]): EventoReal | null {
-  if ('apenasNarrador' in evento && evento.apenasNarrador) return null
-  if ('paraUsuarioId' in evento && evento.paraUsuarioId) return null
-  if (evento.tipo === 'mudanca') {
-    if (evento.escopo === 'combate' || evento.escopo === 'personagem') return { tipo: 'mudanca', escopo: 'combate' }
-    if (evento.escopo === 'relogios') return { tipo: 'mudanca', escopo: 'relogios' }
-  }
-  if (evento.tipo === 'efeitos-relogio') {
-    const avisos = evento.avisos.filter((aviso) => relogiosVisiveis.includes(aviso.relogioId))
-    if (avisos.length > 0) return { tipo: 'efeitos-relogio', apenasNarrador: false, avisos }
-  }
+export function filtrarEventoPublico(evento: EventoReal): EventoReal | null {
+  if (evento.apenasNarrador) return null
+  if (evento.escopo === 'combate' || evento.escopo === 'personagem') return { tipo: 'mudanca', escopo: 'combate' }
+  if (evento.escopo === 'relogios') return { tipo: 'mudanca', escopo: 'relogios' }
   return null
 }

@@ -2,15 +2,13 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 
 import { configuracaoRelogioSchema } from '#/domain/relogios'
-import { filtrarRelogiosPublicos } from '#/domain/exibicao-publica'
 import { barramento } from '#/server/eventos'
 import { listarRelogiosNoBanco, moverRelogioNoBanco, retirarRelogioNoBanco, salvarRelogioNoBanco } from '#/server/relogios-db'
-import { exigirNarrador, exigirUsuario } from '#/server/sessao'
+import { exigirNarrador } from '#/server/sessao'
 
-export const carregarRelogios = createServerFn({ method: 'GET' }).middleware([exigirUsuario])
+export const carregarRelogios = createServerFn({ method: 'GET' }).middleware([exigirNarrador])
   .handler(async ({ context }) => {
-    const relogios = await listarRelogiosNoBanco(context.usuario.papel)
-    return context.usuario.papel === 'narrador' ? relogios : filtrarRelogiosPublicos(relogios)
+    return listarRelogiosNoBanco(context.usuario.papel)
   })
 
 export const salvarRelogio = createServerFn({ method: 'POST' }).middleware([exigirNarrador])

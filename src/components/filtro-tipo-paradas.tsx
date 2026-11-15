@@ -1,5 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
-import { filtrarParadas, type ParadaCalculada, type TipoParadas } from '#/domain/paradas'
+import { filtrarParadas, type ParadaCatalogo, type TipoParadas } from '#/domain/paradas'
 
 const TIPOS = [
   { valor: 'todos', rotulo: 'Todas' },
@@ -9,7 +9,7 @@ const TIPOS = [
 ] as const
 
 export function FiltroTipoParadas({ paradas, tipo, busca, onChange }: {
-  paradas: readonly ParadaCalculada[]
+  paradas: readonly ParadaCatalogo[]
   tipo: TipoParadas
   busca: string
   onChange: (tipo: TipoParadas) => void

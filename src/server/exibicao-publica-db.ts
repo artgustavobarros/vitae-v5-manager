@@ -2,8 +2,7 @@ import { eq, inArray } from 'drizzle-orm'
 
 import { db } from '#/db'
 import { combate, personagem } from '#/db/schema'
-import type { InfoVisibilidadeJogador } from '#/domain/combate'
-import { filtrarCombatePublico, filtrarRelogiosPublicos } from '#/domain/exibicao-publica'
+import { filtrarCombatePublico, filtrarRelogiosPublicos, type CondicoesPersonagens } from '#/domain/exibicao-publica'
 import { vitalidadeMax, vontadeMax } from '#/domain/ficha'
 import { validarLinkPublicoNoBanco } from './link-publico-db'
 import { listarRelogiosNoBanco } from './relogios-db'
@@ -19,9 +18,9 @@ export async function carregarExibicaoPublicaNoBanco(token: string, banco: Banco
   const ids = ativo?.participantes.flatMap((p) => p.tipo === 'personagem' ? [p.personagemId] : []) ?? []
   const fichas = ids.length > 0 ? await banco.select({ id: personagem.id, ficha: personagem.ficha })
     .from(personagem).where(inArray(personagem.id, ids)) : []
-  const condicoes: InfoVisibilidadeJogador['condicoesPersonagens'] = {}
+  const condicoes: CondicoesPersonagens = {}
   for (const p of fichas) condicoes[p.id] = {
-    compartilhaCondicao: false, vitalidadeMax: vitalidadeMax(p.ficha), vontadeMax: vontadeMax(p.ficha),
+    vitalidadeMax: vitalidadeMax(p.ficha), vontadeMax: vontadeMax(p.ficha),
     danoVitalidade: p.ficha.danoVitalidade, danoVontade: p.ficha.danoVontade, fome: p.ficha.fome,
   }
   // Revogação durante a consulta também impede a entrega do snapshot.

@@ -6,40 +6,27 @@ import { MarcaVitae } from './marca-vitae'
 
 import { Button } from '#/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '#/components/ui/sheet'
-import type { Papel } from '#/domain/acesso'
 
 type ItemNavegacao = { rotulo: string; to: LinkProps['to'] }
 
 /** Ação da tela atual, como "Editar" na Ficha: botão no header ou item do hambúrguer conforme o espaço disponível. */
 export type AcaoTela = { rotulo: string; link: LinkOptions }
 
-const ITENS: Record<Papel, ItemNavegacao[]> = {
-  narrador: [
-    { rotulo: 'Painel', to: '/' },
-    { rotulo: 'Combate', to: '/narrador/combate' },
-    { rotulo: 'Relógios', to: '/narrador/relogios' },
-    { rotulo: 'Rolagens', to: '/narrador/rolagens' },
-    { rotulo: 'Paradas', to: '/paradas' },
-    { rotulo: 'Antagonistas', to: '/narrador/antagonistas' },
-    { rotulo: 'Personagens', to: '/narrador/personagens' },
-    { rotulo: 'Coteries', to: '/narrador/coteries' },
-    { rotulo: 'Jogadores', to: '/narrador/convites' },
-    { rotulo: 'Crônica', to: '/narrador/cronica' },
-  ],
-  jogador: [
-    { rotulo: 'Início', to: '/' },
-    { rotulo: 'Relógios', to: '/relogios' },
-    { rotulo: 'Paradas', to: '/paradas' },
-    { rotulo: 'Coteries', to: '/coteries' },
-    { rotulo: 'Combate', to: '/combate' },
-  ],
-}
+const ITENS: ItemNavegacao[] = [
+  { rotulo: 'Painel', to: '/' },
+  { rotulo: 'Combate', to: '/combate' },
+  { rotulo: 'Relógios', to: '/relogios' },
+  { rotulo: 'Rolagens', to: '/narrador/rolagens' },
+  { rotulo: 'Paradas', to: '/paradas' },
+  { rotulo: 'Antagonistas', to: '/narrador/antagonistas' },
+  { rotulo: 'Personagens', to: '/narrador/personagens' },
+]
 
-/** Links inline a partir de `lg` para o Jogador e de `xl` para o menu maior do Narrador. */
-export function NavegacaoInline({ papel }: { papel: Papel }) {
+/** Links inline a partir de `xl`. */
+export function NavegacaoInline() {
   return (
-    <nav aria-label="Principal" className={`hidden items-center gap-1 ${papel === 'narrador' ? 'xl:flex' : 'lg:flex'}`}>
-      {ITENS[papel].map((item) => (
+    <nav aria-label="Principal" className="hidden items-center gap-1 xl:flex">
+      {ITENS.map((item) => (
         <Link
           key={item.to}
           to={item.to}
@@ -57,13 +44,13 @@ export function NavegacaoInline({ papel }: { papel: Papel }) {
 }
 
 /** Os mesmos links num Sheet abaixo do breakpoint da navegação inline de cada papel. */
-export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: AcaoTela[] }) {
+export function NavegacaoMenu({ acoes = [] }: { acoes?: AcaoTela[] }) {
   const [aberto, setAberto] = useState(false)
 
   return (
     <Sheet open={aberto} onOpenChange={setAberto}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon-lg" className={`-mr-2 size-12 ${papel === 'narrador' ? 'xl:hidden' : 'lg:hidden'}`} aria-label="Abrir menu">
+        <Button variant="ghost" size="icon-lg" className="-mr-2 size-12 xl:hidden" aria-label="Abrir menu">
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
@@ -73,7 +60,7 @@ export function NavegacaoMenu({ papel, acoes = [] }: { papel: Papel; acoes?: Aca
           <SheetDescription className="sr-only">Navegação principal</SheetDescription>
         </SheetHeader>
         <nav aria-label="Principal" className="flex flex-col gap-2 px-2 py-4">
-          {ITENS[papel].map((item) => (
+          {ITENS.map((item) => (
             <Link
               key={item.to}
               to={item.to}

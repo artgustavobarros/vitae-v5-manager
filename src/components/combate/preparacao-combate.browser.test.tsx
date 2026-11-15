@@ -19,7 +19,7 @@ vi.mock('#/server/combate', () => ({
   alternarRevelarVitalidadeCombateServer: vi.fn(), definirRevelarCondicaoCombateServer: vi.fn(),
   aplicarDanoInimigoCombateServer: vi.fn(), atualizarParticipanteInimigoServer: vi.fn(),
   avancarTurnoCombateServer: vi.fn(), carregarCombate: vi.fn(), encerrarCombateServer: vi.fn(),
-  iniciarCombateServer: vi.fn(), listarCoteriesParaCombate: vi.fn(), listarPersonagensParaCombate: vi.fn(),
+  iniciarCombateServer: vi.fn(), listarPersonagensParaCombate: vi.fn(),
   removerParticipanteCombateServer: vi.fn(), reordenarParticipantesCombateServer: vi.fn(), voltarTurnoCombateServer: vi.fn(),
 }))
 vi.mock('#/server/pre-combate', () => ({ listarPreCombates: vi.fn(), salvarPreCombate: vi.fn(), excluirPreCombate: vi.fn() }))
@@ -30,8 +30,8 @@ import { salvarPreCombate } from '#/server/pre-combate'
 
 const modelo = { ...criarModeloAntagonistaPadrao(), id: '123e4567-e89b-42d3-a456-426614174000', nome: 'Segurança', categoria: 'Mortal' as const }
 const personagens: PersonagemCombateOpcao[] = [
-  { id: 'ana', nome: 'Ana', ehPdN: false, ehPdn: false, jogadorNome: 'Alice', donoNome: 'Alice', cla: 'Brujah', status: 'ativo', atribuidoA: null },
-  { id: 'bia', nome: 'Bia', ehPdN: false, ehPdn: false, jogadorNome: 'Bruna', donoNome: 'Bruna', cla: 'Toreador', status: 'ativo', atribuidoA: null },
+  { id: 'ana', nome: 'Ana', ehPdN: false, ehPdn: false, jogadorNome: 'Alice', donoNome: 'Alice', cla: 'Brujah', status: 'ativo' },
+  { id: 'bia', nome: 'Bia', ehPdN: false, ehPdn: false, jogadorNome: 'Bruna', donoNome: 'Bruna', cla: 'Toreador', status: 'ativo' },
 ]
 const preCombate = {
   id: '123e4567-e89b-42d3-a456-426614174001', nome: 'Emboscada',
@@ -43,7 +43,7 @@ let recipiente: HTMLDivElement | undefined
 async function montar(combate: EstadoCombateNarrador | null = null) {
   const router = createRouter({
     routeTree: createRootRoute({ component: () => <VisaoNarrador combate={combate} modelos={[modelo]}
-      personagens={personagens} preCombates={[preCombate]} coteries={[{ id: 'coterie', nome: 'Noturnos', personagemIds: ['ana', 'bia'] }]} /> }),
+      personagens={personagens} preCombates={[preCombate]} /> }),
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
   await router.load()
@@ -66,10 +66,12 @@ afterEach(() => {
 })
 
 describe('Preparação do Combate sem diálogos', () => {
-  it('monta uma Coterie e dois Inimigos na página sem confirmação intermediária', async () => {
+  it('seleciona Personagens e dois Inimigos na página sem confirmação intermediária', async () => {
     await montar()
     await expect.element(page.getByRole('button', { name: 'Iniciar Combate', exact: true })).toBeDisabled()
-    await escolher('Chamar Coterie', 'Noturnos')
+    expect(document.body.textContent).not.toContain('Chamar Coterie')
+    await escolher('Personagens do Combate', 'Ana')
+    await escolher('Personagens do Combate', 'Bia')
     await escolher('Adicionar Inimigo', 'Segurança')
     await page.getByRole('button', { name: 'Duplicar Segurança #1' }).click()
     await expect.element(page.getByRole('textbox', { name: 'Nome de Segurança #2' })).toBeVisible()
@@ -85,7 +87,9 @@ describe('Preparação do Combate sem diálogos', () => {
 
   it('carrega um Pré-Combate sem perder os Personagens e sem consumir o grupo salvo', async () => {
     await montar()
-    await escolher('Chamar Coterie', 'Noturnos')
+    expect(document.body.textContent).not.toContain('Chamar Coterie')
+    await escolher('Personagens do Combate', 'Ana')
+    await escolher('Personagens do Combate', 'Bia')
     await page.getByRole('button', { name: 'Carregar Emboscada' }).click()
     await page.getByRole('button', { name: 'Iniciar Combate', exact: true }).click()
     expect(iniciarCombateServer).toHaveBeenCalledWith({ data: { participantes: [

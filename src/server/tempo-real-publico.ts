@@ -1,7 +1,3 @@
-import { eq } from 'drizzle-orm'
-
-import { db } from '#/db'
-import { relogio } from '#/db/schema'
 import type { EventoReal } from '#/domain/eventos'
 import { filtrarEventoPublico } from '#/domain/exibicao-publica'
 import { barramento } from './eventos'
@@ -11,7 +7,6 @@ import { criarLimiteConexoes, respostaLimite } from './limites'
 const reservar = criarLimiteConexoes(20)
 const padrao = {
   validar: validarLinkPublicoNoBanco,
-  relogiosVisiveis: async () => (await db.select({ id: relogio.id }).from(relogio).where(eq(relogio.visivel, true))).map((r) => r.id),
   escutar: (ouvinte: (evento: EventoReal) => void): (() => void) => barramento.escutar(ouvinte),
   reservar,
 }
@@ -58,8 +53,7 @@ export async function abrirTempoRealPublico(request: Request, token: string, dep
       desinscrever = deps.escutar((evento) => {
         fila = fila.then(async () => {
           if (!await conferir()) return
-          const ids = evento.tipo === 'efeitos-relogio' ? await deps.relogiosVisiveis() : []
-          const publico = filtrarEventoPublico(evento, ids)
+          const publico = filtrarEventoPublico(evento)
           if (publico && await conferir()) controller.enqueue(encoder.encode(`data: ${JSON.stringify(publico)}\n\n`))
         }).catch(encerrar)
       })

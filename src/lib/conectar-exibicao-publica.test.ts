@@ -14,16 +14,16 @@ class FonteTeste extends EventTarget {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('Conexão da exibição pública', () => {
-  it('atualiza ao conectar, encaminha avisos e fecha ao revogar sem depender de login', () => {
+  it('atualiza ao conectar e fecha ao revogar sem depender de login', () => {
     vi.stubGlobal('EventSource', FonteTeste)
-    const atualizar = vi.fn(), avisar = vi.fn(), revogar = vi.fn(), conexao = vi.fn()
-    const limpar = conectarExibicaoPublica('link-teste', { atualizar, avisar, revogar, conexao })
+    const atualizar = vi.fn(), revogar = vi.fn(), conexao = vi.fn()
+    const limpar = conectarExibicaoPublica('link-teste', { atualizar, revogar, conexao })
     const fonte = FonteTeste.ultima
     expect(fonte.url).toBe('/api/publico/link-teste/tempo-real')
     fonte.onopen?.()
     expect(atualizar).toHaveBeenCalledTimes(1)
     fonte.onmessage?.({ data: JSON.stringify({ tipo: 'efeitos-relogio', avisos: [{ id: 'aviso' }] }) })
-    expect(avisar).toHaveBeenCalledWith([{ id: 'aviso' }])
+    expect(atualizar).toHaveBeenCalledTimes(1)
     fonte.onmessage?.({ data: JSON.stringify({ tipo: 'mudanca', escopo: 'combate' }) })
     expect(atualizar).toHaveBeenCalledTimes(2)
     fonte.dispatchEvent(new Event('revogado'))
@@ -35,7 +35,7 @@ describe('Conexão da exibição pública', () => {
   it('reconsulta o link ao falhar e reconcilia o estado ao reconectar', () => {
     vi.stubGlobal('EventSource', FonteTeste)
     const atualizar = vi.fn(), conexao = vi.fn()
-    const limpar = conectarExibicaoPublica('token', { atualizar, avisar: vi.fn(), revogar: vi.fn(), conexao })
+    const limpar = conectarExibicaoPublica('token', { atualizar, revogar: vi.fn(), conexao })
     FonteTeste.ultima.onerror?.()
     expect(conexao).toHaveBeenLastCalledWith(false)
     expect(atualizar).toHaveBeenCalledOnce()

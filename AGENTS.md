@@ -2,7 +2,7 @@
 
 Gerenciador de fichas de Vampiro: A Máscara 5ª Edição.
 
-Antes de mudar comportamento, leia `GLOSSARY.md`, `docs/escopo-v1.md` e as decisões em `docs/adr/`.
+Antes de mudar comportamento, leia `GLOSSARY.md`, `docs/escopo-v2.md` e as decisões em `docs/adr/`.
 
 ## Interface
 

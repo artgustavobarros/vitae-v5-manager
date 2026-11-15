@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { casaBusca } from './catalogo/busca'
 import type { Papel } from './acesso'
-import { ATRIBUTOS, HABILIDADES, type Ficha, type Grupo } from './ficha'
+import { ATRIBUTOS, HABILIDADES, type Grupo } from './ficha'
 
 export const paradaPersonalizadaSchema = z.object({
   id: z.string().uuid(),
@@ -12,13 +12,10 @@ export const paradaPersonalizadaSchema = z.object({
 })
 
 export type ParadaPersonalizada = z.infer<typeof paradaPersonalizadaSchema>
-export type ParadaCalculada = ParadaPersonalizada & {
+export type ParadaCatalogo = ParadaPersonalizada & {
   grupo: Grupo
   atributoNome: string
-  atributoValor: number
   habilidadeNome: string
-  habilidadeValor: number
-  total: number
   personalizada: boolean
 }
 
@@ -43,23 +40,18 @@ export const PARADAS_PADRAO: readonly ParadaPersonalizada[] = [
   { id: 'padrao-dirigir', nome: 'Manobrar um veículo', atributo: 'destreza', habilidade: 'conducao' },
 ]
 
-export function listarParadas(ficha: Ficha, personalizadas: readonly ParadaPersonalizada[], ordem: readonly string[] = []): ParadaCalculada[] {
-  const calculadas = [...PARADAS_PADRAO, ...personalizadas].map((parada, indice) => {
-    const atributoValor = ficha.atributos[parada.atributo]
-    const habilidadeValor = ficha.habilidades[parada.habilidade].valor
+export function listarParadas(personalizadas: readonly ParadaPersonalizada[], ordem: readonly string[] = []): ParadaCatalogo[] {
+  const catalogo = [...PARADAS_PADRAO, ...personalizadas].map((parada, indice) => {
     const habilidade = HABILIDADES.find((h) => h.id === parada.habilidade)!
     return {
       ...parada,
       atributoNome: ATRIBUTOS.find((a) => a.id === parada.atributo)!.nome,
-      atributoValor,
       habilidadeNome: habilidade.nome,
       grupo: habilidade.grupo,
-      habilidadeValor,
-      total: atributoValor + habilidadeValor,
       personalizada: indice >= PARADAS_PADRAO.length,
     }
   })
-  return ordenarParadas(calculadas, ordem)
+  return ordenarParadas(catalogo, ordem)
 }
 
 export function ordenarParadas<T extends { id: string }>(paradas: readonly T[], ordem: readonly string[]): T[] {
@@ -97,7 +89,7 @@ export function reordenarParadas(paradas: readonly { id: string }[], origemId: s
   return ids
 }
 
-export function filtrarParadas(paradas: readonly ParadaCalculada[], tipo: TipoParadas, busca = ''): ParadaCalculada[] {
+export function filtrarParadas(paradas: readonly ParadaCatalogo[], tipo: TipoParadas, busca = ''): ParadaCatalogo[] {
   return paradas.filter((p) =>
     (tipo === 'todos' || p.grupo === tipo) && casaBusca(busca, [p.nome, p.atributoNome, p.habilidadeNome]),
   )

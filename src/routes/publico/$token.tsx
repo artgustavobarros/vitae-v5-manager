@@ -2,7 +2,6 @@ import { createFileRoute, Link, Outlet, useRouter } from '@tanstack/react-router
 import { useEffect, useState } from 'react'
 
 import { MarcaVitae } from '#/components/marca-vitae'
-import { ProvedorAvisosRelogios, useAvisosRelogios } from '#/components/provedor-avisos-relogios'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent } from '#/components/ui/card'
 import { conectarExibicaoPublica } from '#/lib/conectar-exibicao-publica'
@@ -30,21 +29,19 @@ function LinkIndisponivel() {
 function PaginaPublica() {
   const dados = Route.useLoaderData()
   const { token } = Route.useParams()
-  return dados.valido ? <ProvedorAvisosRelogios key={token}><ExibicaoConectada token={token} /></ProvedorAvisosRelogios> : <LinkIndisponivel />
+  return dados.valido ? <ExibicaoConectada key={token} token={token} /> : <LinkIndisponivel />
 }
 
 function ExibicaoConectada({ token }: { token: string }) {
   const router = useRouter()
-  const avisar = useAvisosRelogios()
   const [conectado, setConectado] = useState(false)
   const [revogado, setRevogado] = useState(false)
 
   useEffect(() => conectarExibicaoPublica(token, {
     atualizar: () => { void router.invalidate() },
-    avisar: (avisos) => avisar?.(avisos),
     revogar: () => { setRevogado(true); void router.invalidate() },
     conexao: setConectado,
-  }), [token, router, avisar])
+  }), [token, router])
 
   if (revogado) return <LinkIndisponivel />
   return <main className="container-app mx-auto min-h-dvh space-y-6 pb-12">

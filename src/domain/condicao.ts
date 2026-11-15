@@ -1,4 +1,3 @@
-import type { Papel } from './acesso'
 import { vitalidadeMax, vontadeMax, type Ficha } from './ficha'
 import type { Dano } from './trilhas'
 
@@ -19,22 +18,4 @@ export function condicaoDe(ficha: Ficha): Condicao {
     vitalidadeMax: vitalidadeMax(ficha),
     vontadeMax: vontadeMax(ficha),
   }
-}
-
-type Usuario = { id: string; papel: Papel }
-
-/** O Narrador vê toda Condição; Jogadores veem apenas o que foi compartilhado. */
-export function podeVerCondicao(
-  usuario: Usuario,
-  personagem: { donoId: string; compartilhaCondicao: boolean },
-): boolean {
-  return usuario.papel === 'narrador' || personagem.compartilhaCondicao
-}
-
-/** Só o Narrador decide quais Condições aparecem nas visões compartilhadas. */
-export function podeAlternarCompartilharCondicao(
-  usuario: Usuario,
-  _personagem: { donoId: string; pdn: boolean },
-): boolean {
-  return usuario.papel === 'narrador'
 }

@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState, useSyncExternalStore } from 'react'
 
 import { ProvedorMarcas } from '#/components/provedor-marcas'
-import { ProvedorAvisosRelogios } from '#/components/provedor-avisos-relogios'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
@@ -47,7 +46,7 @@ export const Route = createRootRoute({
       { property: 'og:image:type', content: 'image/png' },
       { property: 'og:image:width', content: '1200' },
       { property: 'og:image:height', content: '630' },
-      { property: 'og:image:alt', content: 'Vitæ — convite para uma Crônica de Vampiro: A Máscara' },
+      { property: 'og:image:alt', content: 'Vitæ — gerenciador de Crônica de Vampiro: A Máscara' },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: 'Vitae — Fichas e Crônicas' },
       { name: 'twitter:description', content: 'Fichas e Crônicas de Vampiro: A Máscara 5ª Edição.' },
@@ -69,7 +68,7 @@ function ConteudoApp() {
   const { usuario } = Route.useRouteContext()
   return usuario ? (
     <ProvedorMarcas key={usuario.id} usuarioId={usuario.id}>
-      <ProvedorAvisosRelogios><Outlet /></ProvedorAvisosRelogios>
+      <Outlet />
     </ProvedorMarcas>
   ) : <Outlet />
 }
@@ -77,7 +76,7 @@ function ConteudoApp() {
 // Endereço que não existe (inclusive /favicon.ico e o .well-known do Chrome DevTools) cai aqui.
 function NaoEncontrada() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0 flex-col items-start justify-center gap-4">
+    <main className="mx-auto flex min-h-dvh max-w-[1440px] px-4 min-[1472px]:px-0 flex-col items-center justify-center gap-4 text-center">
       <h1 className="font-serif text-display text-balance">Página não encontrada</h1>
       <p className="text-sm text-muted-foreground">Esse endereço não existe no Vitae.</p>
       <Button asChild variant="secondary" size="lg">

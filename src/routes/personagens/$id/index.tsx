@@ -44,7 +44,7 @@ function TelaFicha() {
 
   const acoes: AcaoTela[] = [{
     rotulo: 'Paradas',
-    link: { to: '/paradas', search: { personagemId: personagem.id } },
+    link: { to: '/paradas' },
   }]
   return (
     <FichaPersonagem

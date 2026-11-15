@@ -83,18 +83,18 @@ describe('Recuperação de sessão', () => {
     if (isRedirect(resultado.error)) expect(resultado.error.options.to).toBe('/entrar')
   })
 
-  it('preserva o usuário autenticado no contexto da ação', async () => {
+  it('não reconhece sessão legada de Jogador como acesso interno', async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue(sessao)
+    expect(await buscarUsuario()).toBeNull()
     const resultado = await executar([exigirUsuario], 'server', opcoes)
-    expect(resultado.error).toBeUndefined()
-    expect(resultado.context.usuario).toEqual({ id: 'pessoa', nome: 'Ana', email: 'ana@teste.invalid', imagem: null, papel: 'jogador' })
+    expect(isRedirect(resultado.error)).toBe(true)
+    expect(resultado.context.usuario).toBeUndefined()
   })
 
   it('continua negando ao Jogador uma ação exclusiva do Narrador', async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue(sessao)
     const resultado = await executar([exigirNarrador], 'server', opcoes)
-    expect(resultado.error).toEqual(new Error('Acesso negado'))
-    expect(isRedirect(resultado.error)).toBe(false)
+    expect(isRedirect(resultado.error)).toBe(true)
   })
 
   it('preserva o contexto e permite a ação quando o usuário é Narrador', async () => {

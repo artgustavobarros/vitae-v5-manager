@@ -12,7 +12,6 @@ function preparar() {
   const abortar = new AbortController()
   const deps = {
     validar: async () => valido,
-    relogiosVisiveis: async () => ['visivel'],
     escutar: (receber: (evento: EventoReal) => void) => { ouvinte = receber; return () => { ouvinte = null } },
     reservar: () => { conexoes++; return () => { conexoes-- } },
   }

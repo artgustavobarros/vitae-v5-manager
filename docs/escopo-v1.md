@@ -1,5 +1,7 @@
 # Escopo da v1
 
+Documento histórico. Para o comportamento atual, consulte [Escopo da v2](escopo-v2.md), que prevalece em caso de conflito.
+
 Decisões confirmadas na sessão de definição de 2026-10-21. Os termos seguem o `GLOSSARY.md`.
 
 ## Base

@@ -1,33 +1,18 @@
-import { Link, useRouter } from '@tanstack/react-router'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useRouter } from '@tanstack/react-router'
+import { useMemo, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { TermoRegra } from '#/components/consulta-regra'
 import { Alert, AlertDescription } from '#/components/ui/alert'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '#/components/ui/alert-dialog'
 import { VisualizadorMarkdown } from '#/components/ui/editor-rich-text'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { Label } from '#/components/ui/label'
-import { Switch } from '#/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import type { CompulsaoAtivaPersonagem, RessonanciaAtualPersonagem } from '#/db/schema'
 import type { Papel } from '#/domain/acesso'
 import { marcasDe, vitalidadeMax, vontadeMax, type Ficha, type Marcas } from '#/domain/ficha'
 import type { AcessoFicha, StatusPersonagem } from '#/domain/permissoes-ficha'
 import { ehSangueFraco } from '#/domain/sorteios'
-import { sairDaCoterie } from '#/server/coteries'
-import { alternarCompartilharCondicao } from '#/server/personagens'
 import { useMarcasSincronizadas } from '#/lib/use-marcas-sincronizadas'
 import {
   encerrarCompulsaoPersonagemServer,
@@ -83,9 +68,6 @@ export function FichaPersonagem({
   ficha,
   revisaoMarcas,
   acesso,
-  compartilhaCondicao = false,
-  coteries = [],
-  podeCompartilharCondicao = false,
   ressonanciaAtual,
   compulsaoAtiva,
   papelUsuario,
@@ -98,10 +80,6 @@ export function FichaPersonagem({
   ficha: Ficha
   revisaoMarcas: number
   acesso: AcessoFicha
-  compartilhaCondicao?: boolean
-  coteries?: { id: string; nome: string }[]
-  /** Regra de `podeAlternarCompartilharCondicao`, calculada no servidor. */
-  podeCompartilharCondicao?: boolean
   ressonanciaAtual?: RessonanciaAtualPersonagem | null
   compulsaoAtiva?: CompulsaoAtivaPersonagem | null
   papelUsuario?: Papel
@@ -111,39 +89,7 @@ export function FichaPersonagem({
   const marcasRecebidas = useMemo(() => marcasDe(ficha), [ficha])
   const sincronizacao = useMarcasSincronizadas(id, marcasRecebidas, revisaoMarcas)
   const { marcas } = sincronizacao
-  const [compartilhando, setCompartilhando] = useState(compartilhaCondicao)
-  const [salvandoCondicao, setSalvandoCondicao] = useState(false)
-  const [coterieSaindo, setCoterieSaindo] = useState<{ id: string; nome: string } | null>(null)
-
-  const podeMarcar = (acesso === 'marcar' || acesso === 'editar') && !sincronizacao.bloqueado
-
-  async function toggleCompartilhar() {
-    if (salvandoCondicao) return
-    const novoValor = !compartilhando
-    setCompartilhando(novoValor)
-    setSalvandoCondicao(true)
-    try {
-      await alternarCompartilharCondicao({ data: { id, compartilhar: novoValor } })
-      router.invalidate()
-    } catch {
-      setCompartilhando(!novoValor)
-      toast.error('Não foi possível alterar o compartilhamento.')
-    } finally {
-      setSalvandoCondicao(false)
-    }
-  }
-
-  async function confirmarSaidaCoterie() {
-    if (!coterieSaindo) return
-    try {
-      await sairDaCoterie({ data: { coterieId: coterieSaindo.id, personagemId: id } })
-      toast.success(`Saiu de ${coterieSaindo.nome}`)
-      setCoterieSaindo(null)
-      router.invalidate()
-    } catch {
-      toast.error('Não foi possível sair da Coterie.')
-    }
-  }
+  const podeMarcar = acesso === 'editar' && !sincronizacao.bloqueado
 
   const aoMarcar = <T,>(aplicar: (valor: T) => Partial<Marcas>) =>
     podeMarcar ? (valor: T) => sincronizacao.alterar(aplicar(valor)) : undefined
@@ -343,85 +289,6 @@ export function FichaPersonagem({
               <ListaVantagens titulo="Defeitos" escolhidas={ficha.defeitos} />
             </section>
 
-            {/* Bloco Coteries na aba Personagem */}
-            <section className="mt-8 flex flex-col gap-4 border-t pt-4">
-              <h2 className="font-serif text-2xl">Coteries</h2>
-
-              {/* Compartilhar Condição: linha de ajuste, sem cartão (DESIGN.md: linhas finas no lugar de cartões). */}
-              <div className="flex min-h-12 items-center justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="compartilhar-condicao" className="text-base font-semibold">
-                    Compartilhar Condição
-                  </Label>
-                  <span className="text-xs text-muted-foreground leading-relaxed">
-                    Vitalidade, Força de Vontade e Fome ficam visíveis para quem divide uma Coterie com este Personagem.
-                    {papelUsuario === 'narrador' && !podeCompartilharCondicao && ' Quem decide é o Jogador.'}
-                  </span>
-                </div>
-                <Switch
-                  id="compartilhar-condicao"
-                  checked={compartilhando}
-                  disabled={!podeCompartilharCondicao || salvandoCondicao}
-                  onCheckedChange={toggleCompartilhar}
-                />
-              </div>
-
-              {/* Lista de Coteries com botão Sair */}
-              <div className="flex flex-col divide-y border-y">
-                {coteries.length === 0 ? (
-                  <p className="py-4 text-sm text-muted-foreground">
-                    Este Personagem não faz parte de nenhuma Coterie.
-                  </p>
-                ) : (
-                  coteries.map((c) => (
-                    <div key={c.id} className="flex h-12 items-center justify-between">
-                      <Link
-                        to="/coteries/$id"
-                        params={{ id: c.id }}
-                        className="text-base font-medium outline-none hover:text-vinho focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        {c.nome}
-                      </Link>
-                      {papelUsuario === 'jogador' && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:bg-destructive/10"
-                              onClick={() => setCoterieSaindo(c)}
-                            >
-                              Sair
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Sair de {c.nome}?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {nome} deixará de fazer parte desta Coterie. Para voltar, o Narrador precisará enviar um novo convite.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setCoterieSaindo(null)}>
-                                Cancelar
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={confirmarSaidaCoterie}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Sair da Coterie
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
           </TabsContent>
         </Tabs>
       </div>

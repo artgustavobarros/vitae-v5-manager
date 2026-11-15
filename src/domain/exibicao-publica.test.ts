@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { definirRevelarCondicao, filtrarCombateParaJogador, iniciarCombate, participantePersonagemSchema, type ParticipanteInimigo } from './combate'
+import { definirRevelarCondicao, iniciarCombate, participantePersonagemSchema, type ParticipanteInimigo } from './combate'
 import { filtrarCombatePublico, filtrarEventoPublico, filtrarRelogiosPublicos } from './exibicao-publica'
 import type { RelogioSalvo } from './relogios'
 
@@ -23,7 +23,7 @@ const relogio: RelogioSalvo = {
 describe('Exibição pública', () => {
   const personagem = { id: 'pj', tipo: 'personagem' as const, nome: 'Ana',
     personagemId: '123e4567-e89b-12d3-a456-426614174000', ehPdn: false, condicoes: [] }
-  const condicao = { compartilhaCondicao: false, vitalidadeMax: 6, vontadeMax: 5,
+  const condicao = { vitalidadeMax: 6, vontadeMax: 5,
     danoVitalidade: { superficial: 2, agravado: 1 }, danoVontade: { superficial: 1, agravado: 0 }, fome: 3 }
 
   it('divulga a Condição de Personagens (PJ ou PdN) por padrão sem conceder edição ou acesso à Ficha', () => {
@@ -36,10 +36,7 @@ describe('Exibição pública', () => {
   })
 
   it('a visibilidade padrão também permite consultar a Condição sem dividir Coterie', () => {
-    const visivel = filtrarCombateParaJogador(iniciarCombate([personagem]), {
-      jogadorId: 'outro', meusPersonagemIds: [], coterieIdsDoJogador: [], coteriesPorPersonagem: {},
-      condicoesPersonagens: { [personagem.personagemId]: condicao },
-    })
+    const visivel = filtrarCombatePublico(iniciarCombate([personagem]), { [personagem.personagemId]: condicao })
     expect(visivel.participantes[0]).toMatchObject({ ehMeu: false, condicaoOculta: false, condicao: { fome: 3 } })
   })
 
@@ -76,7 +73,7 @@ describe('Exibição pública', () => {
   it('não concede privilégios de dono nem transforma compartilhamento de Coterie em divulgação pública quando ocultada pelo Narrador', () => {
     const publico = filtrarCombatePublico(iniciarCombate([
       { id: 'pj', tipo: 'personagem', nome: 'Ana', personagemId: 'ficha', ehPdn: false, revelarCondicao: false, condicoes: ['frenesi'] },
-    ]), { ficha: { compartilhaCondicao: true, vitalidadeMax: 6, vontadeMax: 5,
+    ]), { ficha: { vitalidadeMax: 6, vontadeMax: 5,
       danoVitalidade: { superficial: 1, agravado: 0 }, danoVontade: { superficial: 0, agravado: 0 }, fome: 3 } })
     expect(publico.participantes[0]).toMatchObject({ nome: 'Ana', ehMeu: false, condicaoOculta: true, condicoes: ['frenesi'] })
     expect(publico.participantes[0].condicao).toBeUndefined()
@@ -97,16 +94,9 @@ describe('Exibição pública', () => {
   })
 
   it('descarta notificações privadas e sanitiza invalidações', () => {
-    expect(filtrarEventoPublico({ tipo: 'mudanca', escopo: 'combate', id: 'privado' }, [])).toEqual({ tipo: 'mudanca', escopo: 'combate' })
-    expect(filtrarEventoPublico({ tipo: 'mudanca', escopo: 'personagem', id: 'privado' }, [])).toEqual({ tipo: 'mudanca', escopo: 'combate' })
-    expect(filtrarEventoPublico({ tipo: 'mudanca', escopo: 'combate', apenasNarrador: true }, [])).toBeNull()
-    expect(filtrarEventoPublico({ tipo: 'notificacao', paraUsuarioId: 'dono', notificacao: { id: 'n', texto: 'Segredo', quando: '', lida: false } }, [])).toBeNull()
+    expect(filtrarEventoPublico({ tipo: 'mudanca', escopo: 'combate', id: 'privado' })).toEqual({ tipo: 'mudanca', escopo: 'combate' })
+    expect(filtrarEventoPublico({ tipo: 'mudanca', escopo: 'personagem', id: 'privado' })).toEqual({ tipo: 'mudanca', escopo: 'combate' })
+    expect(filtrarEventoPublico({ tipo: 'mudanca', escopo: 'combate', apenasNarrador: true })).toBeNull()
   })
 
-  it('transmite avisos somente de Relógios que continuam visíveis', () => {
-    const aviso = { id: 'aviso', relogioId: 'relogio', nomeRelogio: 'Cerco', efeitoId: 'ativo', titulo: 'Alerta', texto: 'Alarme!', ativo: true, tendencia: null }
-    const evento = { tipo: 'efeitos-relogio', apenasNarrador: false, avisos: [aviso, { ...aviso, relogioId: 'oculto', texto: 'Segredo' }] } as const
-    expect(filtrarEventoPublico({ ...evento, avisos: [...evento.avisos] }, ['relogio'])).toEqual({ tipo: 'efeitos-relogio', apenasNarrador: false, avisos: [aviso] })
-    expect(filtrarEventoPublico({ ...evento, apenasNarrador: true, avisos: [aviso] }, ['relogio'])).toBeNull()
-  })
 })

@@ -8,7 +8,6 @@ import { useSincronizacaoMarcas } from './provedor-marcas'
 import { MarcaVitae } from './marca-vitae'
 import { MenuUsuario } from './menu-usuario'
 import { NavegacaoInline, NavegacaoMenu, type AcaoTela } from './navegacao'
-import { SinoConectado } from './notificacoes/sino-conectado'
 import { Button } from './ui/button'
 
 /**
@@ -47,17 +46,16 @@ export function BarraApp({ acoes = [] }: { acoes?: AcaoTela[] }) {
             <Link to="/" aria-label="Vitae" className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <MarcaVitae />
             </Link>
-            {usuario && <NavegacaoInline papel={usuario.papel} />}
+            {usuario && <NavegacaoInline />}
           </div>
           <div className="flex min-w-0 items-center gap-1">
             {acoes.map((acao) => (
-              <Button key={acao.rotulo} asChild variant="secondary" size="sm" className={`hidden ${usuario?.papel === 'narrador' ? 'xl:inline-flex' : 'lg:inline-flex'}`}>
+              <Button key={acao.rotulo} asChild variant="secondary" size="sm" className="hidden xl:inline-flex">
                 <Link {...acao.link}>{acao.rotulo}</Link>
               </Button>
             ))}
-            {usuario && <SinoConectado />}
             {usuario && <MenuUsuario usuario={usuario} />}
-            {usuario && <NavegacaoMenu papel={usuario.papel} acoes={acoes} />}
+            {usuario && <NavegacaoMenu acoes={acoes} />}
           </div>
         </div>
       </header>

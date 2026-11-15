@@ -5,16 +5,12 @@ Gerenciador de fichas de Vampiro: A Máscara 5ª Edição para uma única crôni
 ## Pessoas e papéis
 
 **Narrador**:
-Quem conduz a Crônica e administra o sistema; vê e edita todas as Fichas e pode travar campos.
+Quem conduz a Crônica e administra o sistema; é a única pessoa que entra na área interna e edita as Fichas.
 _Avoid_: Mestre, ST, Storyteller, admin
 
 **Jogador**:
-Pessoa que participa da Crônica e consulta as informações que o Narrador tornou públicas.
+Pessoa que participa da Crônica e consulta, sem conta, as visões que o Narrador tornou públicas.
 _Avoid_: Player, usuário
-
-**Convite para a Crônica**:
-Link da Crônica que o Narrador compartilha com a mesa; quem tem o link cria conta como Jogador. Gerar um link novo faz o anterior parar de valer.
-_Avoid_: Convite (sozinho), cadastro, acesso
 
 ## Mundo
 
@@ -37,18 +33,6 @@ _Avoid_: NPC, figurante
 **Atividade do Personagem**:
 Estado reversível definido pelo Narrador. Um Personagem Ativo participa das áreas correntes da Crônica; um Rascunho permanece guardado e pode ser editado, reativado ou excluído.
 _Avoid_: Inativo, arquivado
-
-**Coterie**:
-Grupo de Personagens que o Narrador cria, edita e apaga; um Personagem pode estar em várias. O Jogador só enxerga as Coteries em que tem Personagem e só entra por Convite de Coterie e pode sair quando quiser.
-_Avoid_: Grupo, party, bando
-
-**Coterie Padrão**:
-A Coterie que nasce com a Crônica e não pode ser apagada; o Narrador escolhe quais Personagens entram nela.
-_Avoid_: Grupo principal, coterie geral
-
-**Convite de Coterie**:
-Proposta do Narrador para um Personagem entrar numa Coterie; o Jogador aceita ou recusa.
-_Avoid_: Convite (sozinho), solicitação, pedido de entrada. Exceção: numa tela que já é da Coterie (ex.: "Convites pendentes" na página da Coterie), "Convite" sozinho pode ficar, porque o contexto já diz qual é.
 
 **Condição**:
 O conjunto Vitalidade, Força de Vontade e Fome de um Personagem; o Narrador decide se ela aparece nas visões compartilhadas.
@@ -73,7 +57,7 @@ Marcador de uma situação da Crônica, com etapas que o Narrador aumenta ou dim
 _Avoid_: Countdown, clock, cronômetro
 
 **Efeito de Relógio**:
-Condição narrativa ativa enquanto o Relógio estiver em uma faixa de etapas. O Narrador escreve os avisos de ativação e desativação que a mesa recebe.
+Condição narrativa ativa enquanto o Relógio estiver em uma faixa de etapas. Permanece apenas como registro de Relógios antigos, sem avisos automáticos.
 _Avoid_: Evento único, marco irreversível
 
 ## Combate
@@ -121,15 +105,15 @@ _Avoid_: Round, iniciativa
 ## Regras
 
 **Catálogo**:
-O conteúdo de regras dos livros suportados (clãs, Disciplinas, poderes, Rituais, Cerimônias, Fórmulas, Tipos de Predador, Vantagens e Defeitos) de onde o Jogador escolhe.
+O conteúdo de regras dos livros suportados (clãs, Disciplinas, poderes, Rituais, Cerimônias, Fórmulas, Tipos de Predador, Vantagens e Defeitos) de onde o Narrador escolhe.
 _Avoid_: Compêndio, base de dados, conteúdo
 
 **Valor Derivado**:
-Característica calculada a partir de outras (ex.: Vitalidade = Vigor + 3); o Jogador nunca a edita, só o Narrador a sobrescreve.
+Característica calculada a partir de outras (ex.: Vitalidade = Vigor + 3); o Narrador pode sobrescrevê-la.
 _Avoid_: Valor calculado, stat derivado
 
 **Parada**:
-Conjunto de dados para uma ação, formado pela soma de um Atributo e uma Habilidade. As Paradas Padrão são sugestões disponíveis para todos os Personagens; as Paradas Personalizadas são combinações criadas pelos usuários e compartilhadas com toda a mesa.
+Conjunto de dados para uma ação, formado pela soma de um Atributo e uma Habilidade. Na página Paradas, cada ação apresenta título, Atributo + Habilidade e categoria, sem vínculo com uma Ficha nem cálculo de valores. As Paradas Padrão são sugestões; as Personalizadas são criadas e administradas pelo Narrador.
 _Avoid_: Rodada de dados, rolagem padrão, macro
 
 **Rolagem**:
